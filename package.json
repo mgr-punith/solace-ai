@@ -1,0 +1,39 @@
+{
+  "name": "solace",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24.3.0 <25",
+    "npm": ">=11 <12"
+  },
+  "packageManager": "npm@11.19.0",
+  "scripts": {
+    "db:check": "npm run db:check -w @solace/api",
+    "dev:api": "npm run build -w @solace/shared && npm run dev -w @solace/api",
+    "dev:mobile": "npm run build -w @solace/shared && npm run start -w @solace/mobile",
+    "build": "npm run build -w @solace/shared && npm run build -w @solace/api",
+    "lint": "eslint . --max-warnings=0 && prettier . --check",
+    "format": "prettier . --write",
+    "typecheck": "npm run build -w @solace/shared && npm run typecheck --workspaces",
+    "test": "npm run build -w @solace/shared && npm run test --workspaces",
+    "verify": "npm run lint && npm run typecheck && npm run test",
+    "db:generate": "npm run db:generate -w @solace/api",
+    "db:migrate": "npm run db:migrate -w @solace/api",
+    "db:studio": "npm run db:studio -w @solace/api"
+  },
+  "devDependencies": {
+    "eslint": "^10.14.0",
+    "@eslint/js": "^10.0.1",
+    "typescript-eslint": "^8.72.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.9.10",
+    "vitest": "^5.1.0",
+    "typescript": "~6.0.3",
+    "@types/node": "^24.0.0"
+  }
+}

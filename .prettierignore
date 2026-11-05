@@ -1,0 +1,11 @@
+node_modules
+dist
+coverage
+.expo
+package-lock.json
+**/db/migrations/meta
+**/db/migrations/*.sql
+AGENTS.md
+docs/design/DESIGN.md
+.env
+**/.env

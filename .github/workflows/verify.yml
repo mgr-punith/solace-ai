@@ -1,0 +1,41 @@
+name: Verify
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+# One isolated Neon CI branch: serialize runs against it.
+concurrency:
+  group: solace-ci-database
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: 'true'
+      NODE_ENV: test
+      # Synthetic dev identity for the branch-isolation guard; never connected.
+      DATABASE_URL: postgresql://ci:unused@ep-development.invalid/db?sslmode=verify-full
+      DATABASE_URL_DIRECT: postgresql://ci:unused@ep-development.invalid/db?sslmode=verify-full
+      DATABASE_URL_TEST: ${{ secrets.DATABASE_URL_TEST }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Require isolated test database
+        run: |
+          if [ -z "$DATABASE_URL_TEST" ]; then
+            echo 'Configure DATABASE_URL_TEST with a dedicated Neon CI branch direct URL.'
+            exit 1
+          fi
+      - run: npm ci
+      - run: npm run verify
+      - run: npm run build
+      - run: npm run export:android -w @solace/mobile

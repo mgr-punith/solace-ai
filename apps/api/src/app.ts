@@ -1,0 +1,90 @@
+import { randomUUID } from 'node:crypto';
+import express, { type ErrorRequestHandler } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import { rateLimit } from 'express-rate-limit';
+import type { Logger } from 'pino';
+import type { HealthResponse, ReadyResponse, ErrorResponse } from '@solace/shared';
+
+type AppDependencies = {
+  checkDatabase: () => Promise<void>;
+  logger: Logger;
+  corsOrigins?: string[];
+};
+
+export function createApp({ checkDatabase, logger, corsOrigins = [] }: AppDependencies) {
+  const app = express();
+  app.disable('x-powered-by');
+  app.use((req, res, next) => {
+    const requestId = randomUUID();
+    res.setHeader('X-Request-Id', requestId);
+    res.locals.requestId = requestId;
+    res.on('finish', () => {
+      // Never log query strings, message bodies, headers, or IP addresses.
+      logger.info(
+        {
+          requestId,
+          method: req.method,
+          statusCode: res.statusCode,
+          route: ['/health', '/ready'].includes(req.path) ? req.path : 'other',
+        },
+        'Request completed',
+      );
+    });
+    next();
+  });
+  app.use(helmet());
+  app.use(cors({ origin: corsOrigins, methods: ['GET', 'POST', 'PATCH', 'DELETE'], maxAge: 600 }));
+  app.use(
+    rateLimit({
+      windowMs: 60_000,
+      limit: 120,
+      standardHeaders: 'draft-8',
+      legacyHeaders: false,
+      message: {
+        error: { code: 'RATE_LIMITED', message: 'Too many requests. Try again in a minute.' },
+      },
+    }),
+  );
+  app.use(express.json({ limit: '16kb' }));
+  app.get('/health', (_req, res) => {
+    res.json({ status: 'ok' } satisfies HealthResponse);
+  });
+  app.get('/ready', async (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      await checkDatabase();
+      res.json({ status: 'ok', database: 'connected' } satisfies ReadyResponse);
+    } catch {
+      logger.warn({ requestId: res.locals.requestId }, 'Database readiness check failed');
+      res.status(503).json({
+        error: {
+          code: 'DATABASE_UNAVAILABLE',
+          message: 'The service is not ready. Try again shortly.',
+        },
+      } satisfies ErrorResponse);
+    }
+  });
+  app.use((_req, res) => {
+    res.status(404).json({
+      error: { code: 'NOT_FOUND', message: 'This endpoint does not exist.' },
+    } satisfies ErrorResponse);
+  });
+  const handleError: ErrorRequestHandler = (error: unknown, _req, res, _next) => {
+    const kind =
+      typeof error === 'object' && error !== null && 'type' in error ? error.type : undefined;
+    const status = kind === 'entity.too.large' ? 413 : kind === 'entity.parse.failed' ? 400 : 500;
+    const code =
+      status === 413 ? 'PAYLOAD_TOO_LARGE' : status === 400 ? 'INVALID_JSON' : 'INTERNAL_ERROR';
+    const message =
+      status === 413
+        ? 'The request is too large.'
+        : status === 400
+          ? 'The request must contain valid JSON.'
+          : 'Something went wrong. Try again shortly.';
+    logger.warn({ requestId: res.locals.requestId, code }, 'Request failed');
+    res.status(status).json({ error: { code, message } } satisfies ErrorResponse);
+  };
+  app.use(handleError);
+  return app;
+}
