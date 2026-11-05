@@ -34,6 +34,7 @@
     "eas-build-post-install": "npm run build -w @solace/shared",
     "start": "expo start --dev-client",
     "android": "expo start --dev-client --android",
+    "build:android:local": "node scripts/build-android-local.mjs",
     "typecheck": "tsc --noEmit",
     "test": "jest --runInBand",
     "export:android": "expo export --platform android"
