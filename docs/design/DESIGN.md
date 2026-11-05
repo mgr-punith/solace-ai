@@ -2,6 +2,24 @@
 
 Source of truth for every visual and interaction decision. Status: **proposed v1, the user approves it at the Phase 2 gate (§15)**. If you need to deviate, propose the change and update this file first.
 
+Phase 1 uses the existing foundation tokens for a temporary sign-in and signed-in account screen. It uses Google's native branded button, a plain privacy/care notice, loading and recoverable error states, sign-out, and confirmed account deletion. Full onboarding, profile questions, fonts, sky, and mascot remain Phase 2 work. The Phase 2 prototype gate applies to the full visual implementation; it does not block the earlier authentication slice.
+
+```text
++----------------------------+
+| Solace                     |
+| Take a breath. You're here.|
+|                            |
+| Sign in to keep your space.|
+| [ Sign in with Google    ] |
+| Care and privacy notice    |
++----------------------------+
+| Welcome, Maya.             |
+| Your space is ready.       |
+| [ Sign out               ] |
+| [ Delete account         ] |
++----------------------------+
+```
+
 ## 1. Design idea
 
 > **A quiet sky, and a small friend who is glad you're here.**
@@ -286,7 +304,7 @@ Contrast per §2; touch targets ≥ 44 pt; every interactive element has an acce
 - [ ] 60 fps on a real mid-range Android (preview build)
 - [ ] Copy follows §10
 
-**Screenshot loop.** Codex cannot see the phone. After each UI slice the user sends a screenshot or a short screen recording from the real device; the agent compares it with this file and fixes mismatches before moving on.
+**Screenshot loop.** Inspect phone screenshots through ADB when available. Otherwise the user provides a screenshot or short screen recording; compare it with this file and fix mismatches before moving on.
 
 ## 15. Phase 2 prototype gate
 

@@ -15,23 +15,34 @@ export const databaseUrlSchema = z
     }
   }, 'Use a PostgreSQL URL with TLS enabled');
 
-const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().int().min(1).max(65535).default(4000),
-  HOST: z.string().min(1).default('0.0.0.0'),
-  LOG_LEVEL: z.enum(['silent', 'fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
-  DATABASE_URL: databaseUrlSchema,
-  CORS_ORIGINS: z
-    .string()
-    .default('')
-    .transform((value) =>
-      value
-        .split(',')
-        .map((origin) => origin.trim())
-        .filter(Boolean),
-    )
-    .pipe(z.array(z.string().url())),
-});
+const envSchema = z
+  .object({
+    NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+    PORT: z.coerce.number().int().min(1).max(65535).default(4000),
+    HOST: z.string().min(1).default('0.0.0.0'),
+    LOG_LEVEL: z
+      .enum(['silent', 'fatal', 'error', 'warn', 'info', 'debug', 'trace'])
+      .default('info'),
+    DATABASE_URL: databaseUrlSchema,
+    GOOGLE_WEB_CLIENT_ID: z.string().regex(/^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$/),
+    JWT_ACCESS_SECRET: z.string().min(32),
+    JWT_REFRESH_SECRET: z.string().min(32),
+    TRUST_PROXY: z.coerce.number().int().min(0).max(1).default(0),
+    CORS_ORIGINS: z
+      .string()
+      .default('')
+      .transform((value) =>
+        value
+          .split(',')
+          .map((origin) => origin.trim())
+          .filter(Boolean),
+      )
+      .pipe(z.array(z.string().url())),
+  })
+  .refine((value) => value.JWT_ACCESS_SECRET !== value.JWT_REFRESH_SECRET, {
+    message: 'Access and refresh secrets must differ',
+    path: ['JWT_REFRESH_SECRET'],
+  });
 
 export function parseEnv(source: NodeJS.ProcessEnv) {
   const parsed = envSchema.safeParse(source);
