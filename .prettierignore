@@ -5,6 +5,7 @@ coverage
 package-lock.json
 **/db/migrations/meta
 **/db/migrations/*.sql
+**/expo-env.d.ts
 AGENTS.md
 docs/design/DESIGN.md
 .env
