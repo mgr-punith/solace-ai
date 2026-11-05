@@ -22,7 +22,7 @@ On an existing checkout, keep your saved `.env` files instead of overwriting the
 
 In `apps/api/.env`, fill `DATABASE_URL` with the development branch's pooled URL, `DATABASE_URL_DIRECT` with its direct URL, and `DATABASE_URL_TEST` with the separate test branch's direct URL. Copy URLs from Neon's Connect dialog with SSL enabled. Never paste credentials into chat, commit them, or place them in mobile configuration.
 
-Google and AI keys are not needed for Phase 0. `CORS_ORIGINS` is a comma-separated allowlist for browser clients; native Android requests need no origin entry.
+Google authentication requires `GOOGLE_WEB_CLIENT_ID` and different random values of at least 32 characters for `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`. AI keys remain optional until Phase 4. `CORS_ORIGINS` is a comma-separated allowlist for browser clients; native Android requests need no origin entry.
 
 ```sh
 npm run db:check
@@ -43,13 +43,15 @@ Expected responses: `{"status":"ok"}` and `{"status":"ok","database":"connected"
 
 See [Android setup](docs/setup/android.md). The app uses a development build, your own installable test version of Solace. EAS builds it in the cloud; Metro serves JavaScript changes from the computer.
 
-Use an HTTPS tunnel to the local API and put its address in `apps/mobile/.env` as `EXPO_PUBLIC_API_URL`. The phone's `localhost` is the phone itself. No private keys or database URLs belong in `EXPO_PUBLIC_*` variables.
+The API is hosted at `https://solace-ai-n8s4.onrender.com`. Set this as `EXPO_PUBLIC_API_URL` and set `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` to the same public Web OAuth client ID as the API. EAS profiles include these public values so ignored local environment files are not required for a cloud build. No private keys or database URLs belong in `EXPO_PUBLIC_*` variables.
 
 ```sh
 npm run dev:mobile
 ```
 
-Open the installed development app and connect to Metro. The temporary foundation screen has a “Check connection” button. Once the API and Neon are available it shows “Connected. Solace is ready.”
+Rebuild the development APK after installing Google Sign-In and SecureStore, then connect it to Metro. The sign-in screen opens Google's native account picker; a successful sign-in shows your name. Tokens are saved in SecureStore and restored on relaunch. The foundation connection screen remains at `/connection`.
+
+Auth endpoints: `POST /v1/auth/google`, `POST /v1/auth/refresh`, `POST /v1/auth/logout`, `GET /v1/me`, and `DELETE /v1/me`. Protected requests use `Authorization: Bearer <access-token>`. Refresh tokens rotate once, replay revokes their session, and logout invalidates access immediately. See [authentication setup](docs/setup/google-auth.md).
 
 ## Checks and database changes
 
@@ -61,7 +63,7 @@ npm run db:migrate   # apply generated migrations to development
 npm run db:studio    # development database viewer; schema changes use migrations
 ```
 
-Tests migrate the separate test branch before running and roll back test data. They fail if its connection is missing or points to the development endpoint. Do not use production data for tests.
+Tests migrate the separate test branch before running and roll back or remove their own test data. They fail if its connection is missing or points to the development endpoint. Do not use production data for tests.
 
 GitHub Actions needs a `DATABASE_URL_TEST` repository secret pointing to a dedicated Neon CI branch. Its development URLs are synthetic values used only by the isolation guard; CI never connects to the development database. Fork PRs do not receive secrets and therefore cannot run the integration job without a trusted workflow arrangement. Never expose database secrets to untrusted PR code.
 
@@ -75,4 +77,4 @@ GitHub Actions needs a `DATABASE_URL_TEST` repository secret pointing to a dedic
 - `docs/decisions`: architecture choices.
 - `docs/qa-checklist.md`: device checks that automation cannot replace.
 
-Render is the selected hosting target; deployment is a later phase. See [foundation decisions](docs/decisions/0001-foundation.md).
+Render hosts the foundation API. Set `TRUST_PROXY=1` there and add the auth environment values before deploying the auth slice. The start command applies migrations before starting the API. See [foundation decisions](docs/decisions/0001-foundation.md).

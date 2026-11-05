@@ -1,1 +1,1 @@
-export { FoundationScreen as default } from '../features/foundation/FoundationScreen';
+export { AuthScreen as default } from '../features/auth/AuthScreen';

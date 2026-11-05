@@ -8,6 +8,13 @@
       "when": 1793884868010,
       "tag": "0000_quick_swordsman",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793899394188,
+      "tag": "0001_dry_drax",
+      "breakpoints": true
     }
   ]
 }

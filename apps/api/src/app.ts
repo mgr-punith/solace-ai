@@ -5,16 +5,28 @@ import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import type { Logger } from 'pino';
 import type { HealthResponse, ReadyResponse, ErrorResponse } from '@solace/shared';
+import type { AuthService } from './modules/auth/service.js';
+import { authRoutes } from './modules/auth/routes.js';
+import { ApiError } from './modules/auth/errors.js';
 
 type AppDependencies = {
   checkDatabase: () => Promise<void>;
   logger: Logger;
   corsOrigins?: string[];
+  auth?: AuthService;
+  trustProxy?: number;
 };
 
-export function createApp({ checkDatabase, logger, corsOrigins = [] }: AppDependencies) {
+export function createApp({
+  checkDatabase,
+  logger,
+  corsOrigins = [],
+  auth,
+  trustProxy = 0,
+}: AppDependencies) {
   const app = express();
   app.disable('x-powered-by');
+  if (trustProxy) app.set('trust proxy', trustProxy);
   app.use((req, res, next) => {
     const requestId = randomUUID();
     res.setHeader('X-Request-Id', requestId);
@@ -65,12 +77,19 @@ export function createApp({ checkDatabase, logger, corsOrigins = [] }: AppDepend
       } satisfies ErrorResponse);
     }
   });
+  if (auth) app.use('/v1', authRoutes(auth));
   app.use((_req, res) => {
     res.status(404).json({
       error: { code: 'NOT_FOUND', message: 'This endpoint does not exist.' },
     } satisfies ErrorResponse);
   });
   const handleError: ErrorRequestHandler = (error: unknown, _req, res, _next) => {
+    if (error instanceof ApiError) {
+      res
+        .status(error.status)
+        .json({ error: { code: error.code, message: error.message } } satisfies ErrorResponse);
+      return;
+    }
     const kind =
       typeof error === 'object' && error !== null && 'type' in error ? error.type : undefined;
     const status = kind === 'entity.too.large' ? 413 : kind === 'entity.parse.failed' ? 400 : 500;

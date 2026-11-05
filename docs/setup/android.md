@@ -18,7 +18,9 @@ Install the APK from that link on the phone, or use `adb install /path/to/solace
 
 ## Connect the phone
 
-Run from the repository root:
+The hosted API is `https://solace-ai-n8s4.onrender.com`. Set `EXPO_PUBLIC_API_URL` to that URL in `apps/mobile/.env`. Confirm `/ready` reports the database connected.
+
+For local backend development, run from the repository root:
 
 ```sh
 npm run dev:api
@@ -30,7 +32,7 @@ In another terminal, expose port 4000 through your HTTPS development tunnel. For
 cloudflared tunnel --url http://localhost:4000
 ```
 
-Set the printed HTTPS address in `apps/mobile/.env` as `EXPO_PUBLIC_API_URL`. A temporary tunnel address changes when restarted. It is for the Phase 0 diagnostic API only; Render will supply the stable server address later.
+Set the printed HTTPS address in `apps/mobile/.env` as `EXPO_PUBLIC_API_URL` only when testing the local backend. A temporary tunnel address changes when restarted.
 
 ```sh
 npm run dev:mobile
@@ -38,7 +40,7 @@ npm run dev:mobile
 
 Scan the terminal QR code from the installed development app, or press `a` to open Android over USB. For a USB Metro connection, run `adb reverse tcp:8081 tcp:8081` if necessary. This forwards the phone's port 8081 to the computer's Metro server; API traffic still uses HTTPS.
 
-You should see “Solace”, “Take a breath. You’re here.”, and “Check connection”. Tap the button: success reads “Connected. Solace is ready.” If it fails, check `/ready`, the tunnel, and the `.env` address. Restart Metro after changing environment values.
+The auth build shows “Solace” and Google's sign-in button. Sign in to see your name, then close and reopen the app to check session restoration. The foundation “Check connection” screen remains at `/connection`. A full app reload applies changed environment values; Expo SDK 58 does not require restarting Metro just to update them.
 
 Rebuild the development APK when native dependencies or native app settings change. Ordinary TypeScript and screen edits update through Metro without rebuilding the APK.
 
