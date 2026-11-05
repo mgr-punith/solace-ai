@@ -4,7 +4,8 @@ The setup uses Google Android command-line tools and a user-installed Temurin JD
 
 ## Installed paths
 
-- Java compiler: `~/.local/share/solace/jdk-21` (Temurin 21.0.13).
+- Gradle runtime JDK: `~/.local/share/solace/jdk-21` (Temurin 21.0.13).
+- React Native compiler toolchain: Temurin 17.0.21, installed automatically under `~/.gradle/jdks` because its Gradle plugin requires Java 17.
 - Android SDK: `~/Android/Sdk`.
 - SDK packages: platform 37.0, build-tools 37.0.0, platform-tools 37.0.1, NDK 27.1.12297006, CMake 3.22.1.
 - Shell environment: `~/.config/solace/android-env.sh`, sourced by `.zshrc`.
