@@ -248,10 +248,10 @@ DATABASE_URL_DIRECT=     # Neon direct URL, migrations only
 JWT_ACCESS_SECRET=
 JWT_REFRESH_SECRET=
 GOOGLE_WEB_CLIENT_ID=
-LLM_PROVIDER=vyceai     # OpenAI-compatible provider selected by the user
-LLM_BASE_URL=https://vyceai.com/v1
+LLM_PROVIDER=groq       # Groq selected after provider evaluation
+LLM_BASE_URL=https://api.groq.com/openai/v1
 LLM_API_KEY=
-LLM_MODEL=
+LLM_MODEL=openai/gpt-oss-120b
 CORS_ORIGINS=
 
 # mobile (public values only)
@@ -326,7 +326,7 @@ npm run db:check       # verify configured DB connections without printing crede
 
 - Work on this Linux machine; Android phone with USB debugging; start from scratch.
 - Host on Render; database on Neon; keep the companion name Sol.
-- AI provider: `vyceai`, display name `VyceAi`, OpenAI-format base URL `https://vyceai.com/v1`. Verify authentication, model ID, and API behavior in Phase 4.
+- AI provider updated 6 November 2026: `groq`, base URL `https://api.groq.com/openai/v1`, model `openai/gpt-oss-120b` with low reasoning effort and final text only. The user saved the key privately; six synthetic provider cases passed in 0.3–1.1 seconds. Enable Zero Data Retention in Groq Data Controls. VyceAi remains supported explicitly; no automatic cross-provider fallback. Verify Render and the phone after deployment.
 - Progress phase by phase without deadline assumptions. Phase 0 was explicitly approved.
 - Validate only configuration required by the current phase. Google and AI credentials are now mandatory for the Phase 4 API.
 

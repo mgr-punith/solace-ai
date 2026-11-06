@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 import { ChatScreen } from '../ChatScreen';
 import { chatApi } from '../api';
+import { providerInfoApi } from '../provider-info';
 import type { ChatMessage } from '@solace/shared';
 
 jest.mock('../api', () => ({ chatApi: { messages: jest.fn(), send: jest.fn() } }));
@@ -57,6 +58,7 @@ async function mount() {
 }
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.spyOn(providerInfoApi, 'get').mockResolvedValue({ provider: 'groq' });
   jest.mocked(chatApi.messages).mockResolvedValue({ items: [], nextCursor: null });
 });
 it('preserves a failed send and retries the same content and request ID', async () => {
@@ -111,4 +113,21 @@ it('offers recovery instead of an empty chat when loading fails', async () => {
   expect(screen.queryByLabelText('Message Sol')).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'Reload conversation' }));
   await waitFor(() => expect(screen.getByLabelText('Message Sol')).toBeTruthy());
+});
+
+it('shows the deployed provider and blocks sending until its privacy details load', async () => {
+  jest.mocked(providerInfoApi.get).mockRejectedValueOnce(new Error('offline'));
+  await mount();
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Reload chat details' })).toBeTruthy(),
+  );
+  await fireEvent.changeText(screen.getByLabelText('Message Sol'), 'Hello');
+  await fireEvent.press(screen.getByRole('button', { name: 'Send message' }));
+  expect(chatApi.send).not.toHaveBeenCalled();
+  jest.mocked(providerInfoApi.get).mockResolvedValue({ provider: 'vyceai' });
+  await fireEvent.press(screen.getByRole('button', { name: 'Reload chat details' }));
+  await waitFor(() => expect(screen.getByText(/sent to VyceAi for replies/)).toBeTruthy());
+  expect(
+    screen.getByRole('button', { name: 'Send message' }).props.accessibilityState.disabled,
+  ).toBe(false);
 });

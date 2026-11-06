@@ -48,3 +48,8 @@ export type Conversation = z.infer<typeof conversationSchema>;
 export type ChatMessage = z.infer<typeof chatMessageSchema>;
 export type SendMessageInput = z.infer<typeof sendMessageSchema>;
 export type ChatPageQuery = z.infer<typeof chatPageQuerySchema>;
+
+export const chatProviderSchema = z.enum(['vyceai', 'groq']);
+export type ChatProvider = z.infer<typeof chatProviderSchema>;
+export const chatProviderResponseSchema = z.object({ provider: chatProviderSchema });
+export const chatProviderNames: Record<ChatProvider, string> = { vyceai: 'VyceAi', groq: 'Groq' };

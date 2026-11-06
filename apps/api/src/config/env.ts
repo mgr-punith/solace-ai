@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { chatProviderSchema } from '@solace/shared';
 
 export const databaseUrlSchema = z
   .string()
@@ -24,7 +25,7 @@ const envSchema = z
       .enum(['silent', 'fatal', 'error', 'warn', 'info', 'debug', 'trace'])
       .default('info'),
     DATABASE_URL: databaseUrlSchema,
-    LLM_PROVIDER: z.literal('vyceai'),
+    LLM_PROVIDER: chatProviderSchema,
     LLM_BASE_URL: z.url().refine((value) => {
       const url = new URL(value);
       return (
@@ -48,6 +49,18 @@ const envSchema = z
       )
       .pipe(z.array(z.string().url())),
   })
+  .refine(
+    (value) =>
+      value.LLM_PROVIDER !== 'groq' ||
+      value.LLM_BASE_URL.replace(/\/$/, '') === 'https://api.groq.com/openai/v1',
+    { message: 'Use the Groq API base URL', path: ['LLM_BASE_URL'] },
+  )
+  .refine(
+    (value) =>
+      value.LLM_PROVIDER !== 'groq' ||
+      ['openai/gpt-oss-120b', 'openai/gpt-oss-20b'].includes(value.LLM_MODEL),
+    { message: 'Choose a supported Groq GPT-OSS model', path: ['LLM_MODEL'] },
+  )
   .refine((value) => value.JWT_ACCESS_SECRET !== value.JWT_REFRESH_SECRET, {
     message: 'Access and refresh secrets must differ',
     path: ['JWT_REFRESH_SECRET'],

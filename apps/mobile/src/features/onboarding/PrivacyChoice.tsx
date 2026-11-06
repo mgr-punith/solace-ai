@@ -20,8 +20,8 @@ export function PrivacyChoice({
       </AppText>
       <AppText tone="secondary">
         Google shares your name and email to create your account. Messages you send are stored by
-        Solace and sent to VyceAi to generate a reply. You can delete conversations and their
-        messages.
+        Solace and sent to the AI provider named on the chat screen to generate a reply. You can
+        delete conversations and their messages.
       </AppText>
       <View style={[styles.choice, { borderColor: sky.palette.secondary }]}>
         <View style={styles.row}>

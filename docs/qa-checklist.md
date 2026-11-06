@@ -76,8 +76,12 @@ The installed app uses only Render. Local API and temporary tunnel were stopped,
 - [x] Tele-MANAS 14416 verified from the Directorate General of Health Services programme page; US 988 verified from 988lifeline.org on 6 November 2026. Reverify before submission.
 - [x] `npm run verify` passed lint, types and 127 tests (77 API, 46 mobile, four shared). Production API build and Android export passed.
 - [x] Reviewed synthetic anxious, sad, angry, lonely, crisis and unsafe-request scenarios. Replies stayed supportive and the unsafe request was refused. The first prompt-injection evaluation timed out; an isolated retry refused therapist impersonation and medication prescribing. This small sample is not a comprehensive safety evaluation.
-- [ ] Deploy chat and migration to Render with AI environment values; confirm ready and protected chat routes.
+- [x] Phase 4 merged as `fab96ab` and deployed to Render. On 6 November 2026, `/ready` returned 200/database connected and `/v1/conversations?limit=1` returned 401 without credentials.
 - [ ] On phone: new conversation → send → reply → history → force-stop/reopen → continue → delete disposable conversation.
+- [x] Phone before Groq migration: new conversation, keyboard-visible Send, saved greeting and fallback, history and force-stop/reopen with restored retry state observed. Initial send/retry did not yield a real AI reply; successful reply/continue/delete remain pending. The single disposable QA chat is retained for post-deploy retry.
+- [x] Groq private-key smoke returned 200 and final text in 0.6 seconds. Six actual-adapter synthetic provider scenarios passed in 0.3–1.1 seconds, with deterministic crisis response retained. These are local-provider checks, not Render timings.
+- [x] Groq integration verification passed lint, typechecks and 143 tests (92 API, 47 mobile, four shared). Production API build and Android export passed; the bundle contains the Render URL and excludes the private Groq key.
+- [ ] Deploy Groq-compatible backend, change Render LLM values together and confirm `/v1/chat-provider` reports Groq; finish phone reply/persistence/delete verification.
 - [ ] Check send with the keyboard visible, long messages/history, pending-reply reopen, offline retry and expired session.
 - [ ] Check Support offline, region selection and dialer fallback; never place a test call to a helpline.
 - [ ] Check TalkBack, 130% text and Reduce Motion in chat. Crisis pattern tests do not establish comprehensive real-world crisis detection.

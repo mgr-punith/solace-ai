@@ -4,6 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Action, AppText, Surface } from '../../components/ui/primitives';
 import { tokens } from '../../theme/tokens';
+import { useChatProvider } from './provider-info';
+import { ProviderNotice } from './ProviderNotice';
 import {
   newChatRequestId,
   useConversations,
@@ -12,6 +14,7 @@ import {
 } from './hooks';
 
 export function TalkScreen() {
+  const provider = useChatProvider();
   const query = useConversations();
   const create = useCreateConversation();
   const deletion = useDeleteConversation();
@@ -57,9 +60,9 @@ export function TalkScreen() {
             </AppText>
             <AppText>Bring what’s on your mind. You can return to any conversation.</AppText>
             <AppText variant="bodySmall" tone="secondary">
-              Chats are saved in your account and sent to VyceAi for replies. Sol is an AI
-              companion, not a therapist. Memory across conversations is not active.
+              Sol is an AI companion, not a therapist. Memory across conversations is not active.
             </AppText>
+            <ProviderNotice query={provider} />
             <Action disabled={create.isPending} onPress={() => void start()}>
               {create.isPending
                 ? 'Opening conversation…'

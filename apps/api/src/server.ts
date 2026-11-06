@@ -1,6 +1,6 @@
 import { createConversationRepository } from './modules/conversations/repository.js';
 import { createConversationService } from './modules/conversations/service.js';
-import { createVyceProvider } from './ai/adapters/vyceai.js';
+import { createLLMProvider } from './ai/create-provider.js';
 import { createMoodRepository } from './modules/mood/repository.js';
 import { createMoodService } from './modules/mood/service.js';
 import { createApp } from './app.js';
@@ -32,11 +32,13 @@ const app = createApp({
   checkDatabase: database.check,
   logger,
   corsOrigins: env.CORS_ORIGINS,
+  chatProvider: env.LLM_PROVIDER,
   auth,
   mood: createMoodService({ repository: createMoodRepository(database.db), clock }),
   chat: createConversationService({
     repository: createConversationRepository(database.pool),
-    provider: createVyceProvider({
+    provider: createLLMProvider({
+      provider: env.LLM_PROVIDER,
       baseUrl: env.LLM_BASE_URL,
       apiKey: env.LLM_API_KEY,
       model: env.LLM_MODEL,

@@ -50,3 +50,20 @@ describe('configuration', () => {
     ).toEqual(['https://solace.example', 'https://preview.example']);
   });
 });
+
+it('accepts Groq only with its own HTTPS base URL', () => {
+  const groq = {
+    DATABASE_URL: url,
+    ...auth,
+    LLM_PROVIDER: 'groq',
+    LLM_BASE_URL: 'https://api.groq.com/openai/v1',
+    LLM_MODEL: 'openai/gpt-oss-120b',
+  };
+  expect(parseEnv(groq).LLM_PROVIDER).toBe('groq');
+  expect(() => parseEnv({ ...groq, LLM_BASE_URL: 'https://vyceai.com/v1' })).toThrow(
+    'LLM_BASE_URL',
+  );
+  expect(() => parseEnv({ ...groq, LLM_BASE_URL: 'https://example.com/openai/v1' })).toThrow(
+    'LLM_BASE_URL',
+  );
+});

@@ -6,4 +6,4 @@ Build phase by phase with an Android phone as the primary test device. The first
 
 The proposed visual direction lives in [design/DESIGN.md](design/DESIGN.md): a quiet sky that follows local time, Sol as a warm expressive character, and a short daily ritual without guilt or pressure. Its prototype is reviewed on a real phone in Phase 2.
 
-Technology: React Native and Expo, Express and TypeScript, Neon Postgres with Drizzle, Render hosting, and VyceAi's OpenAI-format API. Keys and sensitive data stay on the server. The user controls personalization and deletion.
+Technology: React Native and Expo, Express and TypeScript, Neon Postgres with Drizzle, Render hosting, and Groq's OpenAI-compatible API. Keys and sensitive data stay on the server. The user controls personalization and deletion.
