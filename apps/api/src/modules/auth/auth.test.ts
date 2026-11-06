@@ -1,20 +1,17 @@
+import { createTestDatabase } from '../../test/database.js';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { createApp } from '../../app.js';
-import { loadLocalEnv } from '../../config/load-env.js';
 import { createLogger } from '../../config/logger.js';
-import { createDatabase } from '../../db/client.js';
-import { testDatabaseUrl } from '../../db/connection-config.js';
 import { createAuthRepository } from './repository.js';
 import { createAuthService } from './service.js';
 import { createTokens } from './tokens.js';
 
-loadLocalEnv();
 const logger = createLogger('silent');
-const database = createDatabase(testDatabaseUrl(process.env), logger);
+const database = createTestDatabase();
 const createdIds = new Set<string>();
 const subjectPrefix = `auth-test-${randomUUID()}`;
 let current = new Date('2026-11-05T12:00:00Z');
@@ -61,7 +58,7 @@ async function signIn(identity = randomUUID()) {
   };
 }
 
-describe('authentication with the isolated Neon test branch', () => {
+describe('authentication with disposable PostgreSQL', () => {
   it('validates input before calling Google and hides verifier failures', async () => {
     const calls = verifyGoogle.mock.calls.length;
     const invalid = await request(app).post('/v1/auth/google').send({ idToken: '' }).expect(400);

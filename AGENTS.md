@@ -70,7 +70,7 @@ Splash, onboarding and the design system are built early and polished throughout
 | Quality | ESLint, Prettier, `tsc --noEmit`, GitHub Actions CI |
 | Package manager | npm workspaces (avoid pnpm/yarn quirks with Metro) |
 
-Neon notes: use the **pooled** connection string (host contains `-pooler`) for the running API, and the **direct** (unpooled) string for migrations. Use a separate **Neon branch** for tests (`DATABASE_URL_TEST`) so tests never touch dev data.
+Neon notes: use the **pooled** connection string (host contains `-pooler`) for the running API, and the **direct** (unpooled) string for migrations. Use one Neon branch for the app, as requested by the user on 6 November 2026. Automated tests start disposable local PostgreSQL through Vitest; they must never load the app database credentials or fall back to Neon. Podman/Docker is required for the tests, not a second hosted branch.
 
 ### Repository layout
 
@@ -120,7 +120,7 @@ solace/
 
 ### Testing (required, not optional)
 - **Write tests with the code, in the same commit.** Use TDD for pure logic where it pays: streak calculation, reminder reconciliation, context assembly, crisis detection, mood aggregation, token handling.
-- **API:** integration tests with Supertest against the Neon test branch (migrate before the run; isolate with transactions or truncation). Cover auth, authorization (user A cannot read user B's data), validation errors, pagination, delete cascades.
+- **API:** integration tests with Supertest against disposable PostgreSQL started by Vitest (migrate before the run; remove the container after success or failure). Cover auth, authorization (user A cannot read user B's data), validation errors, pagination, delete cascades.
 - **LLM:** always mocked in automated tests via the `LLMProvider` interface. Add a **safety regression suite**: a list of crisis phrases that must trigger the crisis path, and benign phrases that must not.
 - **Mobile:** component/hook tests for critical flows (auth state, mood check-in, chat send/retry, reminder settings). Mock native modules (`expo-notifications`, Google Sign-In).
 - **Manual QA:** maintain `docs/qa-checklist.md` for what automation cannot cover (notification fires with app closed, deep link on tap, Google sign-in on a real device, release APK smoke test).
@@ -245,7 +245,6 @@ NODE_ENV=development
 PORT=4000
 DATABASE_URL=            # Neon pooled (-pooler) URL, runtime
 DATABASE_URL_DIRECT=     # Neon direct URL, migrations only
-DATABASE_URL_TEST=       # separate Neon branch for tests
 JWT_ACCESS_SECRET=
 JWT_REFRESH_SECRET=
 GOOGLE_WEB_CLIENT_ID=
@@ -281,7 +280,7 @@ Reorder if the user says so, but never leave P0 half-done to start P1.
 ## 15. Deployment and release
 
 - The backend **must be publicly reachable over HTTPS**; an APK on a phone cannot reach `localhost`. Deploy to the host the user chooses (Render, Railway or Fly.io), set env vars there, run migrations on deploy, configure a health check. Free tiers may cold-start: warm the server before recording the demo.
-- Phone testing uses the Render-hosted HTTPS backend only, as confirmed by the user on 6 November 2026. Do not switch the app to a local API or tunnel. Local Android builds and Wi-Fi Metro remain the development workflow; automated API tests use the isolated Neon test branch.
+- Phone testing uses the Render-hosted HTTPS backend only, as confirmed by the user on 6 November 2026. Do not switch the app to a local API or tunnel. Local Android builds and Wi-Fi Metro remain the development workflow; automated API tests use disposable local PostgreSQL without Neon credentials.
 - `eas.json` profiles: `development` (dev client), `preview` (`"android": { "buildType": "apk" }`, internal distribution) for the submission APK, `production` later. Register each keystore's SHA-1 in the Google Android client.
 - iOS/TestFlight comes later: needs an Apple Developer account, an EAS iOS build and `eas submit`. The hackathon team has offered help.
 - **Release checklist:** `npm run verify` green · API deployed and `/ready` OK · fresh install of the preview APK on a clean phone · sign-in works · chat persists across restarts · reminder fires with the app closed · tapping it opens the right screen · airplane-mode error states look good · no secrets in the bundle.
@@ -334,3 +333,5 @@ npm run db:check       # verify configured DB connections without printing crede
 - Build preference confirmed 6 November 2026: use local builds for all Android work, including development and submission APKs. Install updates on the connected Android phone with `adb install -r`; preserve app data and the existing Google-registered signing certificate. See `docs/setup/android-local.md`. EAS may retrieve signing credentials, but compilation runs locally.
 
 - Backend testing preference confirmed 6 November 2026: all installed-app testing uses Render; do not start a local API/tunnel for the phone. Push and deploy backend changes before checking those flows on the device.
+
+- Database preference confirmed 6 November 2026: maintain one Neon branch for this assignment. API tests run real migrations and queries in an automatic disposable PostgreSQL container; no `DATABASE_URL_TEST` is required locally, on Render, or in GitHub Actions. See `docs/decisions/0005-single-neon-branch.md`.

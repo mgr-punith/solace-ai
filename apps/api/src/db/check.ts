@@ -5,7 +5,7 @@ import { createDatabase } from './client.js';
 
 loadLocalEnv();
 const logger = createLogger('silent');
-for (const name of ['DATABASE_URL', 'DATABASE_URL_DIRECT', 'DATABASE_URL_TEST'] as const) {
+for (const name of ['DATABASE_URL', 'DATABASE_URL_DIRECT'] as const) {
   const parsed = databaseUrlSchema.safeParse(process.env[name]);
   if (!parsed.success) {
     process.stdout.write(`${name}: missing or invalid PostgreSQL URL\n`);

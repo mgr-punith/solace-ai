@@ -1,5 +1,7 @@
 # Mood check-ins and date boundaries
 
+> Testing update: the separate Neon test branch policy below was superseded by [ADR 0005](0005-single-neon-branch.md) on 6 November 2026. Automated tests now use disposable local PostgreSQL.
+
 Status: accepted for Phase 3.
 
 Use the existing Drizzle 0.45 database client for mood/profile queries. The migration creates user-owned check-ins with a cascading foreign key, a user/time/id index, mood/note constraints and a unique (user, request ID) key. The shared contract validates every input; authentication precedes reads and writes. Creation is transactional, idempotent for identical retries and rejects changed content under an existing request ID.
