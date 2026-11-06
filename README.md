@@ -23,7 +23,7 @@ On an existing checkout, keep your saved `.env` files instead of overwriting the
 
 In `apps/api/.env`, fill `DATABASE_URL` with your single Neon branch's pooled URL and `DATABASE_URL_DIRECT` with the same branch's direct URL. No `DATABASE_URL_TEST` is required. Copy URLs from Neon's Connect dialog with SSL enabled. Never paste credentials into chat, commit them, or place them in mobile configuration.
 
-Google authentication requires `GOOGLE_WEB_CLIENT_ID` and different random values of at least 32 characters for `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`. Chat requires `LLM_PROVIDER=vyceai`, `LLM_BASE_URL=https://vyceai.com/v1`, `LLM_API_KEY`, and the model ID in `LLM_MODEL`. `CORS_ORIGINS` is a comma-separated allowlist for browser clients; native Android requests need no origin entry.
+Google authentication requires `GOOGLE_WEB_CLIENT_ID` and different random values of at least 32 characters for `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`. Chat uses `LLM_PROVIDER=groq`, `LLM_BASE_URL=https://api.groq.com/openai/v1`, `LLM_MODEL=openai/gpt-oss-120b`, and a private `LLM_API_KEY`. Enable Zero Data Retention in Groq Settings → Data Controls. `openai/gpt-oss-20b` is also supported. The explicit `vyceai` provider remains available with its own base URL/key/model; there is no automatic provider fallback. `CORS_ORIGINS` is a comma-separated allowlist for browser clients; native Android requests need no origin entry.
 
 ```sh
 npm run db:check
@@ -100,10 +100,16 @@ Render’s existing start command applies the checked-in Drizzle migration befor
 
 ## AI chat
 
-Talk opens saved conversations. Choose **New conversation**, type a message and tap **Send message**. Sol replies using VyceAi; close and reopen to continue. Retries reuse the saved turn, and deleting a conversation removes its messages. **Support** opens verified region-specific helplines even offline, with an explicit dialer action. Sol is a companion, not professional care.
+Talk opens saved conversations. Choose **New conversation**, type a message and tap **Send message**. Sol replies using the AI provider shown in chat; close and reopen to continue. Retries reuse the saved turn, and deleting a conversation removes its messages. **Support** opens verified region-specific helplines even offline, with an explicit dialer action. Sol is a companion, not professional care.
 
 Before merging the chat feature, set the four `LLM_*` values above in Render's environment. Copy the key privately from `apps/api/.env`; never put it in a PR, screenshot, mobile variable or log. The API now fails at startup if the key/model are missing. Render's normal start command applies the conversation migration. Check `/ready` and that an unauthenticated `/v1/conversations` returns 401 before phone QA.
 
 Chat endpoints: `POST/GET /v1/conversations`, `GET/DELETE /v1/conversations/:id`, and `GET/POST /v1/conversations/:id/messages`. Creation requires a `requestId`; sending requires a `requestId` and `content` (1–2,000 characters). Lists use cursor pagination. Replies are non-streaming, bounded and saved. See [chat decisions](docs/decisions/0006-persistent-chat.md).
 
 Run `npm run ai:eval` only when you want a manual evaluation against the real configured provider; it may incur provider usage. Its scenarios are synthetic, and the command prints their responses for review. Automated tests always mock the model. Memory across conversations, mood context and summaries remain deferred to Phase 7 consent controls.
+
+### Switching the deployed AI provider
+
+Deploy code that supports the new provider before changing `LLM_PROVIDER` on Render. This version accepts both Groq and VyceAi; the older Phase 4 version accepts only VyceAi. After this version is live, update all four `LLM_*` variables together in Render and redeploy. Local `.env` changes never update Render automatically. Verify `GET /v1/chat-provider` returns `{"provider":"groq"}` and `/ready` reports the database connected before testing the installed app.
+
+The app fetches the provider name from Render for its disclosure. If this cannot be loaded, saved chats and Support remain available, while send/retry waits for **Reload chat details**. Keys and model credentials are never returned to the app. The adapter uses a 45-second total deadline across both attempts and response reading, honors bounded `Retry-After`, and persists the existing fallback on failure. Groq GPT-OSS uses low reasoning effort, a 1,024-token completion ceiling and final text only; incomplete responses are rejected. No native dependency or APK rebuild is needed for this change.

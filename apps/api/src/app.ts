@@ -8,7 +8,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import type { Logger } from 'pino';
-import type { HealthResponse, ReadyResponse, ErrorResponse } from '@solace/shared';
+import type { HealthResponse, ReadyResponse, ErrorResponse, ChatProvider } from '@solace/shared';
 import type { AuthService } from './modules/auth/service.js';
 import { authRoutes } from './modules/auth/routes.js';
 import { ApiError } from './modules/auth/errors.js';
@@ -20,6 +20,7 @@ type AppDependencies = {
   auth?: AuthService;
   mood?: MoodService;
   chat?: ConversationService;
+  chatProvider?: ChatProvider;
   trustProxy?: number;
 };
 
@@ -30,6 +31,7 @@ export function createApp({
   auth,
   mood,
   chat,
+  chatProvider,
   trustProxy = 0,
 }: AppDependencies) {
   const app = express();
@@ -85,6 +87,11 @@ export function createApp({
       } satisfies ErrorResponse);
     }
   });
+  if (chatProvider)
+    app.get('/v1/chat-provider', (_req, res) => {
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ provider: chatProvider });
+    });
   if (auth) app.use('/v1', authRoutes(auth));
   if (auth && mood) app.use('/v1/mood-checkins', moodRoutes(auth, mood));
   if (auth && chat) app.use('/v1/conversations', conversationRoutes(auth, chat));

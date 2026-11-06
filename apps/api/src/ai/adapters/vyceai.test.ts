@@ -1,4 +1,4 @@
-import { expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { createVyceProvider } from './vyceai.js';
 const config = {
   baseUrl: 'https://vyceai.com/v1',
@@ -48,3 +48,130 @@ it('never sends keys over HTTP', () =>
   expect(() => createVyceProvider({ ...config, baseUrl: 'http://example.invalid' })).toThrow(
     'HTTPS',
   ));
+
+afterEach(() => vi.useRealTimers());
+
+function respondAfter(ms: number, response: () => Response): typeof fetch {
+  return (_input, options) =>
+    new Promise<Response>((resolve, reject) => {
+      const signal = options?.signal;
+      const abort = () => {
+        clearTimeout(timer);
+        reject(new DOMException('Timed out', 'AbortError'));
+      };
+      const timer = setTimeout(() => {
+        signal?.removeEventListener('abort', abort);
+        resolve(response());
+      }, ms);
+      if (signal?.aborted) abort();
+      else signal?.addEventListener('abort', abort, { once: true });
+    });
+}
+
+it('allows a valid 16-second reply instead of returning an early fallback', async () => {
+  vi.useFakeTimers();
+  const fetcher = vi.fn<typeof fetch>(
+    respondAfter(
+      16_000,
+      () =>
+        new Response(
+          JSON.stringify({ choices: [{ message: { content: 'Hello. How was studying?' } }] }),
+        ),
+    ),
+  );
+  const result = expect(createVyceProvider(config, fetcher).reply([])).resolves.toBe(
+    'Hello. How was studying?',
+  );
+  await vi.advanceTimersByTimeAsync(16_000);
+  await result;
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(vi.getTimerCount()).toBe(0);
+});
+
+it('caps a slow retry at 45 seconds for the whole operation', async () => {
+  vi.useFakeTimers();
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockImplementationOnce(respondAfter(30_000, () => new Response('', { status: 503 })))
+    .mockImplementation(respondAfter(30_000, () => new Response('{}')));
+  let settled = false;
+  const reply = createVyceProvider(config, fetcher)
+    .reply([])
+    .finally(() => {
+      settled = true;
+    });
+  const result = expect(reply).rejects.toThrow('Sol could not get a reply');
+  await vi.advanceTimersByTimeAsync(30_400);
+  expect(fetcher).toHaveBeenCalledTimes(2);
+  await vi.advanceTimersByTimeAsync(14_599);
+  expect(settled).toBe(false);
+  await vi.advanceTimersByTimeAsync(1);
+  await result;
+  expect(vi.getTimerCount()).toBe(0);
+});
+
+it('aborts a stalled response body at the same deadline and hides raw errors', async () => {
+  vi.useFakeTimers();
+  const fetcher = vi.fn<typeof fetch>().mockImplementation(
+    async (_input, options) =>
+      new Response(
+        new ReadableStream({
+          start(controller) {
+            options?.signal?.addEventListener(
+              'abort',
+              () => {
+                controller.error(new Error('private upstream detail'));
+              },
+              { once: true },
+            );
+          },
+        }),
+      ),
+  );
+  const result = expect(createVyceProvider(config, fetcher).reply([])).rejects.toThrow(
+    /^Sol could not get a reply from the AI provider\.$/,
+  );
+  await vi.advanceTimersByTimeAsync(45_000);
+  await result;
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(vi.getTimerCount()).toBe(0);
+});
+
+it('honors a bounded Retry-After and then succeeds', async () => {
+  vi.useFakeTimers();
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(new Response('', { status: 429, headers: { 'retry-after': '2' } }))
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ choices: [{ message: { content: 'Hello.' } }] })),
+    );
+  const result = expect(createVyceProvider(config, fetcher).reply([])).resolves.toBe('Hello.');
+  await vi.advanceTimersByTimeAsync(1999);
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  await vi.advanceTimersByTimeAsync(1);
+  await result;
+  expect(fetcher).toHaveBeenCalledTimes(2);
+  expect(vi.getTimerCount()).toBe(0);
+});
+it('aborts during retry backoff without starting another request', async () => {
+  vi.useFakeTimers();
+  const fetcher = vi.fn<typeof fetch>(
+    respondAfter(44_800, () => new Response('', { status: 503 })),
+  );
+  const result = expect(createVyceProvider(config, fetcher).reply([])).rejects.toThrow(
+    'Sol could not get a reply',
+  );
+  await vi.advanceTimersByTimeAsync(45_000);
+  await result;
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(vi.getTimerCount()).toBe(0);
+});
+it('does not retry a quota that needs more than the request deadline to reset', async () => {
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(new Response('', { status: 429, headers: { 'retry-after': '60' } }));
+  await expect(createVyceProvider(config, fetcher).reply([])).rejects.toThrow(
+    'Sol could not get a reply',
+  );
+  expect(fetcher).toHaveBeenCalledTimes(1);
+});

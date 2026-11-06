@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 import { TalkScreen } from '../TalkScreen';
 import { chatApi } from '../api';
+import { providerInfoApi } from '../provider-info';
 const conversation = {
   id: 'conversation',
   title: 'Conversation with Sol',
@@ -45,6 +46,7 @@ async function mount() {
 }
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.spyOn(providerInfoApi, 'get').mockResolvedValue({ provider: 'groq' });
   jest.mocked(chatApi.list).mockResolvedValue({ items: [conversation], nextCursor: null });
 });
 it('opens existing conversations and retries creation with the same ID after a lost response', async () => {
@@ -56,6 +58,7 @@ it('opens existing conversations and retries creation with the same ID after a l
   await waitFor(() =>
     expect(screen.getByRole('button', { name: 'Continue conversation' })).toBeTruthy(),
   );
+  expect(screen.getByText(/sent to Groq for replies/)).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Continue conversation' }));
   expect(router.push).toHaveBeenCalledWith({
     pathname: '/chat/[id]',

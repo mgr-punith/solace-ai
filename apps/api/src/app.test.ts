@@ -77,3 +77,10 @@ describe('foundation HTTP behavior', () => {
       expect(output).not.toContain(secret);
   });
 });
+
+it('publishes only the configured provider identity for the chat privacy notice', async () => {
+  const app = createApp({ checkDatabase: async () => {}, logger, chatProvider: 'groq' });
+  const response = await request(app).get('/v1/chat-provider').expect(200);
+  expect(response.body).toEqual({ provider: 'groq' });
+  expect(response.headers['cache-control']).toBe('no-store');
+});

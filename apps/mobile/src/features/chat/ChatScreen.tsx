@@ -16,6 +16,8 @@ import { tokens } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { AuthApiError } from '../../lib/api';
 import { newChatRequestId, useMessages, useSendMessage } from './hooks';
+import { useChatProvider } from './provider-info';
+import { ProviderNotice } from './ProviderNotice';
 
 const Message = memo(function Message({ item }: { item: ChatMessage }) {
   return (
@@ -34,6 +36,8 @@ const Message = memo(function Message({ item }: { item: ChatMessage }) {
 });
 
 export function ChatScreen({ id }: { id: string }) {
+  const provider = useChatProvider();
+  const canSend = !!provider.data && !provider.isError;
   const query = useMessages(id);
   const send = useSendMessage(id);
   const { sky, fontsLoaded } = useTheme();
@@ -61,7 +65,7 @@ export function ChatScreen({ id }: { id: string }) {
     send.error instanceof AuthApiError &&
     ['MESSAGE_STALE', 'MESSAGE_CONFLICT', 'CONVERSATION_NOT_FOUND'].includes(send.error.code);
   async function submit(input?: SendMessageInput) {
-    if (busy.current) return;
+    if (busy.current || !canSend) return;
     const value = input ?? retryInput ?? { requestId: newChatRequestId(), content: draft.trim() };
     if (!value.content || value.content.length > 2000) return;
     busy.current = true;
@@ -140,14 +144,14 @@ export function ChatScreen({ id }: { id: string }) {
               </AppText>
               {!query.isPending && !query.isError && (
                 <AppText variant="bodySmall" tone="secondary">
-                  Sol is an AI companion. Messages are saved in your account and sent to VyceAi for
-                  replies.
+                  Sol is an AI companion, not a therapist.
                 </AppText>
               )}
             </Surface>
           }
         />
         <View style={styles.composer}>
+          <ProviderNotice query={provider} />
           {query.isError && !missing && (
             <>
               <AppText accessibilityRole="alert">
@@ -185,7 +189,9 @@ export function ChatScreen({ id }: { id: string }) {
             </Action>
           )}
           {retryInput && !send.isPending && !terminalSendError && (
-            <Action onPress={() => void submit(retryInput)}>Retry message</Action>
+            <Action disabled={!canSend} onPress={() => void submit(retryInput)}>
+              Retry message
+            </Action>
           )}
           {!missing && !query.isPending && !query.isError && (
             <>
@@ -208,7 +214,7 @@ export function ChatScreen({ id }: { id: string }) {
                 ]}
               />
               <Action
-                disabled={send.isPending || !!retryInput || !draft.trim()}
+                disabled={!canSend || send.isPending || !!retryInput || !draft.trim()}
                 onPress={() => void submit()}
               >
                 Send message
