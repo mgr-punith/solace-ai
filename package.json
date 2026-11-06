@@ -24,7 +24,8 @@
     "verify": "npm run lint && npm run typecheck && npm run test",
     "db:generate": "npm run db:generate -w @solace/api",
     "db:migrate": "npm run db:migrate -w @solace/api",
-    "db:studio": "npm run db:studio -w @solace/api"
+    "db:studio": "npm run db:studio -w @solace/api",
+    "ai:eval": "npm run ai:eval -w @solace/api"
   },
   "devDependencies": {
     "eslint": "^10.14.0",

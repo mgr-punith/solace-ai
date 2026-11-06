@@ -70,6 +70,18 @@ The initial post-deploy mood endpoint returned HTTP 404 despite the dashboard sh
 
 The installed app uses only Render. Local API and temporary tunnel were stopped, and the mobile URL was restored to Render; no check-in was saved on the phone via the temporary local API. Automated integration tests use a disposable PostgreSQL container isolated from app data. Unsaved form input survives a retry while mounted, but is not persisted after app termination.
 
+## Phase 4 chat
+
+- [x] Synthetic VyceAi smoke request with the configured model returned HTTP 200 and a nonempty OpenAI-format reply. The key was never printed.
+- [x] Tele-MANAS 14416 verified from the Directorate General of Health Services programme page; US 988 verified from 988lifeline.org on 6 November 2026. Reverify before submission.
+- [x] `npm run verify` passed lint, types and 127 tests (77 API, 46 mobile, four shared). Production API build and Android export passed.
+- [x] Reviewed synthetic anxious, sad, angry, lonely, crisis and unsafe-request scenarios. Replies stayed supportive and the unsafe request was refused. The first prompt-injection evaluation timed out; an isolated retry refused therapist impersonation and medication prescribing. This small sample is not a comprehensive safety evaluation.
+- [ ] Deploy chat and migration to Render with AI environment values; confirm ready and protected chat routes.
+- [ ] On phone: new conversation → send → reply → history → force-stop/reopen → continue → delete disposable conversation.
+- [ ] Check send with the keyboard visible, long messages/history, pending-reply reopen, offline retry and expired session.
+- [ ] Check Support offline, region selection and dialer fallback; never place a test call to a helpline.
+- [ ] Check TalkBack, 130% text and Reduce Motion in chat. Crisis pattern tests do not establish comprehensive real-world crisis detection.
+
 ## Later phases
 
 - [ ] Chat survives closing and reopening; delete removes the conversation.

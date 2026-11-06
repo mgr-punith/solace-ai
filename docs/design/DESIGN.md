@@ -405,3 +405,21 @@ Home                       Progress                 You
 ```
 
 The query cache stays in memory, scoped to account ID, and clears on logout. Sensitive notes are not persisted in unencrypted cache storage. Auth restores independently of Home loading; a slow API displays recovery without holding the splash. This supersedes the earlier persisted-cache startup sketch for this slice.
+
+## Phase 4 functional chat slice
+
+Keep the accepted sky, Sol and typography. Add Talk beside Home, Progress and You. Talk opens saved conversations with a clear New conversation action. Each thread has a compact Sol text header, Chats and Support actions, a chronological virtualized message list with Load earlier messages, and a multiline composer. Use React Native FlatList already in the app rather than adding FlashList in this slice. KeyboardAvoidingView uses padding on both platforms, following SDK 58 edge-to-edge guidance.
+
+```
+Talk history                  Conversation
+| Talk with Sol           |   | Back   Sol    Support |
+| [New conversation]      |   | [Earlier messages]    |
+| Nov 6 · Conversation    |   | You: ...              |
+| [Continue] [Delete]     |   | Sol: ...              |
+| Empty: start anywhere  |   | Thinking / retry      |
+| Home Talk Progress You |   | [Message Sol...] Send |
+```
+
+First send explains that chat is saved in the account and sent to VyceAi for replies; Sol is an AI companion, not a therapist. Context includes only this conversation. Cross-conversation memories, mood context and summaries wait for Phase 7's server-side consent and deletion controls. Failed sends preserve input or the saved user turn and retry the same request ID. Conversation deletion requires confirmation; no sensitive text appears in URLs or logs.
+
+Support is available before sign-in and from every conversation. A country picker (India, United States, elsewhere) chooses configured, verified resources; it never infers location from timezone. The crisis path stays conversational and directs to trusted people or local emergency services. No calling happens automatically. Loading, empty, failed-send, deleted-thread and offline support states must remain recoverable.

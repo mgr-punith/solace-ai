@@ -35,6 +35,7 @@ function AppNavigation() {
             }}
           >
             <Stack.Screen name="index" />
+            <Stack.Screen name="support" />
             <Stack.Protected guard={onboarding.identityReady}>
               <Stack.Screen name="onboarding" />
             </Stack.Protected>
@@ -46,6 +47,7 @@ function AppNavigation() {
               <Stack.Screen name="privacy" />
               <Stack.Protected guard={auth.status === 'signedIn'}>
                 <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="chat/[id]" />
               </Stack.Protected>
               <Stack.Protected guard={__DEV__}>
                 <Stack.Screen name="design-preview" />

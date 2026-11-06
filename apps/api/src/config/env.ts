@@ -24,6 +24,15 @@ const envSchema = z
       .enum(['silent', 'fatal', 'error', 'warn', 'info', 'debug', 'trace'])
       .default('info'),
     DATABASE_URL: databaseUrlSchema,
+    LLM_PROVIDER: z.literal('vyceai'),
+    LLM_BASE_URL: z.url().refine((value) => {
+      const url = new URL(value);
+      return (
+        url.protocol === 'https:' && !url.username && !url.password && !url.search && !url.hash
+      );
+    }),
+    LLM_API_KEY: z.string().trim().min(1),
+    LLM_MODEL: z.string().trim().min(1).max(200),
     GOOGLE_WEB_CLIENT_ID: z.string().regex(/^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$/),
     JWT_ACCESS_SECRET: z.string().min(32),
     JWT_REFRESH_SECRET: z.string().min(32),

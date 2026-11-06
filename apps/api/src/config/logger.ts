@@ -13,6 +13,7 @@ export function createLogger(level: string = 'info') {
         'DATABASE_URL',
         'DATABASE_URL_DIRECT',
         'DATABASE_URL_TEST',
+        'LLM_API_KEY',
         'req.headers.authorization',
         'req.headers.cookie',
         'req.body',
