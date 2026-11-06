@@ -174,7 +174,7 @@ export function DesignPreviewScreen() {
               Design preview
             </AppText>
             <AppText variant="bodySmall" tone="secondary">
-              Explore the sky and Sol before we build onboarding.
+              Explore the sky, Sol, and a practice check-in.
             </AppText>
             {theme.fontError && (
               <AppText tone="error">

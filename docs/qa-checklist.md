@@ -33,9 +33,23 @@ Only check items after observing them. Automated checks are run with `npm run ve
 - [x] Confirmed Fast Refresh over Wi-Fi: the saved mood-layout change appeared on vivo without reinstalling; all mood labels now fit. A 19.94-second device recording is saved at `/tmp/solace-preview.mp4`.
 - [ ] Check all four Sol states, time slider, day/night, large text and Reduce Motion on the phone; record about 20 seconds for design review.
 - [ ] Measure release/preview performance on the phone before accepting the Skia performance gate.
-- [ ] User reviews the preview before splash/onboarding implementation.
+- [x] User accepted the current design provisionally and authorized splash/onboarding on 6 November 2026.
 
 USB disconnected intermittently during the phone check. Reconnect and rerun `adb reverse tcp:8082 tcp:8082` if Metro loses the device. A development-build screenshot does not establish release frame-rate performance.
+
+## Phase 2 onboarding
+
+- [x] Four introduction pages, practice mood, example conversation and optional memory preference implemented with existing design tokens.
+- [x] Browser at 360×640: first launch opens introduction; Skip intro leads to privacy with memory off; save goes to sign-in; reload stays at sign-in.
+- [x] Store/component tests cover interrupted save/retry, progress restore, one-time account claim, account isolation, deletion cleanup, font timeout and Reduce Motion startup.
+- [x] Local ARM64 development APK compiled in 12m 7s and installed with `adb install -r` on vivo V2168; data preserved.
+- [x] Observed onboarding example page, signed-in preview and Privacy and memory on phone over Wi-Fi Metro. Privacy content scrolls and Save choice is reachable. Saved the existing choice unchanged, force-stopped and reopened: the signed-in welcome returned without replaying onboarding.
+- [x] `npm run verify`: lint, typechecks, 25 API + 34 mobile + 1 shared tests passed. Android production JavaScript export passed.
+- [ ] Verify the native Sol launch image in a preview/release APK; development builds do not faithfully reproduce the release splash.
+- [ ] Phone: complete every Back/Skip path, test 130% text and TalkBack, verify day/night and Reduce Motion. Browser checks do not replace these checks.
+- [ ] Test account deletion on a disposable account; no real account was deleted for this slice.
+
+Privacy choice is device-local and account-specific for now; no memory collection is active. Phase 7 must sync consent to the backend and implement memory view/delete before personalization is used. Browser preview stays signed out and never stores authentication tokens.
 
 ## Later phases
 

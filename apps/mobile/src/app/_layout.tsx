@@ -1,49 +1,55 @@
-import { useEffect, useState } from 'react';
-import { useColorScheme } from 'react-native';
+import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import {
-  DefaultTheme,
-  Stack,
-  ThemeProvider as NavigationThemeProvider,
-  usePathname,
-} from 'expo-router';
+import { DefaultTheme, Stack, ThemeProvider as NavigationThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider } from '../features/auth/context';
 import { ThemeProvider, useTheme } from '../theme/ThemeProvider';
 import { SkyBackground } from '../theme/SkyBackground';
 import { tokens } from '../theme/tokens';
+import { OnboardingProvider, useOnboarding } from '../features/onboarding/context';
+import { StartupGate } from '../features/onboarding/StartupGate';
 
 void SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function AppNavigation() {
-  const { sky, fontsLoaded, fontError, reduceMotion } = useTheme();
-  const path = usePathname();
-  const scheme = useColorScheme();
-  useEffect(() => {
-    if (fontsLoaded || fontError) void SplashScreen.hideAsync().catch(() => {});
-  }, [fontsLoaded, fontError]);
-  if (!fontsLoaded && !fontError) return null;
+  const { sky, reduceMotion } = useTheme();
+  const onboarding = useOnboarding();
   return (
     <>
       <SkyBackground />
-      <StatusBar
-        style={(path === '/design-preview' ? sky.night : scheme === 'dark') ? 'light' : 'dark'}
-      />
-      <NavigationThemeProvider
-        value={{
-          ...DefaultTheme,
-          colors: { ...DefaultTheme.colors, background: tokens.colors.clear },
-        }}
-      >
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: reduceMotion ? 'none' : 'fade',
-            contentStyle: { backgroundColor: tokens.colors.clear },
+      <StatusBar style={sky.night ? 'light' : 'dark'} />
+      <StartupGate>
+        <NavigationThemeProvider
+          value={{
+            ...DefaultTheme,
+            colors: { ...DefaultTheme.colors, background: tokens.colors.clear },
           }}
-        />
-      </NavigationThemeProvider>
+        >
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              animation: reduceMotion ? 'none' : 'fade',
+              contentStyle: { backgroundColor: tokens.colors.clear },
+            }}
+          >
+            <Stack.Screen name="index" />
+            <Stack.Protected guard={onboarding.identityReady}>
+              <Stack.Screen name="onboarding" />
+            </Stack.Protected>
+            <Stack.Protected
+              guard={
+                onboarding.identityReady && !onboarding.needsIntroduction && !onboarding.needsChoice
+              }
+            >
+              <Stack.Screen name="privacy" />
+              <Stack.Protected guard={__DEV__}>
+                <Stack.Screen name="design-preview" />
+              </Stack.Protected>
+            </Stack.Protected>
+          </Stack>
+        </NavigationThemeProvider>
+      </StartupGate>
     </>
   );
 }
@@ -54,7 +60,9 @@ export default function RootLayout() {
     <QueryClientProvider client={client}>
       <AuthProvider>
         <ThemeProvider>
-          <AppNavigation />
+          <OnboardingProvider>
+            <AppNavigation />
+          </OnboardingProvider>
         </ThemeProvider>
       </AuthProvider>
     </QueryClientProvider>

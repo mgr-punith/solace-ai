@@ -3,8 +3,17 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import { AuthScreen } from '../AuthScreen';
 import { useAuth } from '../context';
+import { ThemeProvider } from '../../../theme/ThemeProvider';
 
 jest.mock('../context', () => ({ useAuth: jest.fn() }));
+jest.mock('../../../components/sol/Companion', () => ({ Companion: () => null }));
+jest.mock('../../../lib/useMotionPreferences', () => ({
+  useMotionPreferences: () => ({ active: true, reduceMotion: true }),
+}));
+jest.mock('expo-font', () => ({ useFonts: () => [true, null], isLoaded: () => true }));
+jest.mock('../../onboarding/context', () => ({
+  useOnboarding: () => ({ busy: false, error: null, removeAccount: async () => true }),
+}));
 jest.mock('@react-native-google-signin/google-signin', () => ({
   GoogleSigninButton: Object.assign(() => null, {
     Size: { Wide: 1 },
@@ -37,7 +46,11 @@ const state = {
 it('requires a destructive confirmation before deleting an account', async () => {
   jest.mocked(useAuth).mockReturnValue(state);
   const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-  await render(<AuthScreen />);
+  await render(
+    <ThemeProvider>
+      <AuthScreen />
+    </ThemeProvider>,
+  );
   expect(screen.getByText('Welcome, Maya.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Delete account' }));
   expect(deleteAccount).not.toHaveBeenCalled();
@@ -55,7 +68,11 @@ it('shows a startup network error with a retry action instead of signed-in conte
   jest
     .mocked(useAuth)
     .mockReturnValue({ ...state, status: 'error', error: 'Check your connection and try again.' });
-  await render(<AuthScreen />);
+  await render(
+    <ThemeProvider>
+      <AuthScreen />
+    </ThemeProvider>,
+  );
   expect(screen.queryByText('Welcome, Maya.')).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'Try opening again' }));
   expect(restore).toHaveBeenCalled();

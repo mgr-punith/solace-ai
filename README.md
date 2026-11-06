@@ -49,7 +49,9 @@ The API is hosted at `https://solace-ai-n8s4.onrender.com`. Set this as `EXPO_PU
 npm run dev:mobile
 ```
 
-Rebuild the development APK after installing Google Sign-In and SecureStore, then connect it to Metro. The sign-in screen opens Google's native account picker; a successful sign-in shows your name. Tokens are saved in SecureStore and restored on relaunch. The foundation connection screen remains at `/connection`.
+Rebuild the development APK after installing Google Sign-In and SecureStore, then connect it to Metro. First launch shows four introduction pages. “Skip intro” still opens privacy; saving continues to sign-in. You can replay the introduction and change the device-local memory preference from your account screen. Memory is not active yet; backend consent and memory controls follow in Phase 7.
+
+The sign-in screen opens Google's native account picker; a successful sign-in shows your name. Tokens are saved in SecureStore and restored on relaunch. The foundation connection screen remains at `/connection`.
 
 Auth endpoints: `POST /v1/auth/google`, `POST /v1/auth/refresh`, `POST /v1/auth/logout`, `GET /v1/me`, and `DELETE /v1/me`. Protected requests use `Authorization: Bearer <access-token>`. Refresh tokens rotate once, replay revokes their session, and logout invalidates access immediately. See [authentication setup](docs/setup/google-auth.md).
 

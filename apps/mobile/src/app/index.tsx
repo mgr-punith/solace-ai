@@ -1,1 +1,1 @@
-export { AuthScreen as default } from '../features/auth/AuthScreen';
+export { EntryScreen as default } from '../features/onboarding/EntryScreen';

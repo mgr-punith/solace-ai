@@ -31,6 +31,7 @@ export const tokens = {
     button: { fontFamily: 'Figtree_600SemiBold', fontSize: 17, lineHeight: 22 },
   },
   motion: {
+    startup: 700,
     press: 120,
     quick: 220,
     calm: 420,
@@ -41,7 +42,7 @@ export const tokens = {
     breath: 4000,
     orbit: 6000,
   },
-  sol: { hero: 220, compact: 56, mini: 28 },
+  sol: { hero: 220, onboarding: 160, compact: 56, mini: 28 },
 } as const;
 
 export const COMPANION_NAME = 'Sol';

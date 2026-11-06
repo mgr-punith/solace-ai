@@ -123,4 +123,21 @@ describe('secure session lifecycle', () => {
     expect(storage.clear).toHaveBeenCalled();
     expect(manager.getSnapshot()).toMatchObject({ status: 'signedOut', session: null });
   });
+  it('requires device preference cleanup before deletion and permits retry if it fails', async () => {
+    const { manager, api } = setup(session);
+    await manager.restore();
+    const cleanup = jest
+      .fn<() => Promise<void>>()
+      .mockRejectedValueOnce(new Error('Cannot clear preferences'))
+      .mockResolvedValue(undefined);
+    await manager.deleteAccount(cleanup);
+    expect(api.deleteAccount).not.toHaveBeenCalled();
+    expect(manager.getSnapshot()).toMatchObject({
+      status: 'signedIn',
+      error: 'Cannot clear preferences',
+    });
+    await manager.deleteAccount(cleanup);
+    expect(api.deleteAccount).toHaveBeenCalledTimes(1);
+    expect(manager.getSnapshot().status).toBe('signedOut');
+  });
 });
