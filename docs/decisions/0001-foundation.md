@@ -1,5 +1,7 @@
 # Foundation choices
 
+> Testing update: the separate Neon test branch policy below was superseded by [ADR 0005](0005-single-neon-branch.md) on 6 November 2026. Automated tests now use disposable local PostgreSQL.
+
 Status: accepted for Phase 0.
 
 The project uses npm workspaces for the Expo mobile app, Express API, and shared Zod contracts. Shared contracts publish compiled ESM for Node and expose source to Metro through the `react-native` condition. No custom Metro resolver is needed.

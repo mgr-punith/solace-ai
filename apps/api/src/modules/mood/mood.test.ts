@@ -1,22 +1,19 @@
+import { createTestDatabase } from '../../test/database.js';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, afterAll, it, expect } from 'vitest';
 import request from 'supertest';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { createApp } from '../../app.js';
-import { loadLocalEnv } from '../../config/load-env.js';
 import { createLogger } from '../../config/logger.js';
-import { createDatabase } from '../../db/client.js';
-import { testDatabaseUrl } from '../../db/connection-config.js';
 import { createAuthRepository } from '../auth/repository.js';
 import { createAuthService } from '../auth/service.js';
 import { createTokens } from '../auth/tokens.js';
 import { createMoodRepository } from './repository.js';
 import { createMoodService } from './service.js';
 
-loadLocalEnv();
 const logger = createLogger('silent');
-const database = createDatabase(testDatabaseUrl(process.env), logger);
+const database = createTestDatabase();
 const created = new Set<string>();
 let now = new Date('2026-11-06T18:31:00Z');
 const clock = () => now;

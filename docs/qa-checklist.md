@@ -53,14 +53,22 @@ Privacy choice is device-local and account-specific for now; no memory collectio
 
 ## Phase 3 Home and mood check-ins
 
-- [x] API integration tests use the isolated Neon branch and cover validation, ownership, idempotent/concurrent retries, cursor pagination, timezone midnight filtering, individual deletion and account cascades.
+- [x] API integration tests cover validation, ownership, idempotent/concurrent retries, cursor pagination, timezone midnight filtering, individual deletion and account cascades.
 - [x] Mobile tests cover explicit save, optional tags/note, preserved failed input, identical retry keys, history loading/deletion/recovery, and serialized token refresh.
 - [x] Phone connected to Render again after the user's Render-only correction. Observed signed-in Home greeting and Home / Progress / You tabs on vivo V2168.
-- [ ] After merging/deploying Phase 3 to Render: save a check-in with tags/note, see it on Home/Progress, close/reopen and confirm persistence.
-- [ ] On phone: delete a disposable check-in, verify it disappears from Home and Progress, and exercise offline retry without duplicate entries.
-- [ ] Verify keyboard access to Save, 130% text, TalkBack, empty/loading/error states and date rollover on device.
+- [x] Phase 3 is merged as `41c383f` and live on Render. On 6 November 2026, `/ready` returned HTTP 200 with the database connected and unauthenticated `/v1/mood-checkins?limit=1` returned HTTP 401 `SESSION_EXPIRED`.
+- [x] On vivo V2168 (Android 14), saved a disposable Good check-in with a Calm tag and a labeled QA note through the installed app against Render. Home confirmed the save and displayed the mood, tag, note and local time; Progress displayed the same entry.
+- [x] Force-stopped `com.puneet.solace`, reopened through Wi-Fi Metro, and observed the same entry in Progress after the signed-in session restored. This verifies persistence beyond the in-memory query cache.
+- [x] Deleted only the disposable QA entry through the confirmation dialog. Progress returned to its first-check-in empty state, and Home showed no check-in today.
+- [x] Entered an optional note with the Android keyboard; after dismissing the keyboard, Save remained reachable by scrolling. Home and Progress empty states were observed.
+- [ ] Exercise offline save/retry on the phone and confirm no duplicate entries.
+- [ ] Verify Save with the keyboard still open, 130% text, TalkBack, loading/error recovery and date rollover on device.
 
-The installed app uses only Render. Local API and temporary tunnel were stopped, and the mobile URL was restored to Render; no check-in was saved on the phone via the temporary local API. Automated integration tests remain isolated from development data. Unsaved form input survives a retry while mounted, but is not persisted after app termination.
+The user subsequently chose one Neon branch for the assignment. API tests now use disposable local PostgreSQL; the former Neon test password is no longer needed. `npm run verify` passed lint, formatting, all typechecks and all 83 tests (39 API, 40 mobile, four shared). The production API build passed, and the temporary test container was removed after the run.
+
+The initial post-deploy mood endpoint returned HTTP 404 despite the dashboard showing the correct commit live. A later check returned the expected HTTP 401 without any code change; the reason for the earlier response was not established. No Render configuration change was made during this QA pass.
+
+The installed app uses only Render. Local API and temporary tunnel were stopped, and the mobile URL was restored to Render; no check-in was saved on the phone via the temporary local API. Automated integration tests use a disposable PostgreSQL container isolated from app data. Unsaved form input survives a retry while mounted, but is not persisted after app termination.
 
 ## Later phases
 

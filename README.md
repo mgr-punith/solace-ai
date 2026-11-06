@@ -5,7 +5,8 @@ An Android-first wellness companion built with Expo, React Native, Express, and 
 ## Prerequisites
 
 - Node 24.20.0 and npm 11 (see `.node-version` / `.nvmrc`).
-- A Neon development branch and a separate test branch.
+- One Neon branch for the Render-hosted app.
+- Podman or Docker running for automated API tests (already installed on this Linux machine).
 - An Expo account and Android phone for the development build.
 
 ## Install and configure
@@ -20,7 +21,7 @@ cp apps/mobile/.env.example apps/mobile/.env
 
 On an existing checkout, keep your saved `.env` files instead of overwriting them.
 
-In `apps/api/.env`, fill `DATABASE_URL` with the development branch's pooled URL, `DATABASE_URL_DIRECT` with its direct URL, and `DATABASE_URL_TEST` with the separate test branch's direct URL. Copy URLs from Neon's Connect dialog with SSL enabled. Never paste credentials into chat, commit them, or place them in mobile configuration.
+In `apps/api/.env`, fill `DATABASE_URL` with your single Neon branch's pooled URL and `DATABASE_URL_DIRECT` with the same branch's direct URL. No `DATABASE_URL_TEST` is required. Copy URLs from Neon's Connect dialog with SSL enabled. Never paste credentials into chat, commit them, or place them in mobile configuration.
 
 Google authentication requires `GOOGLE_WEB_CLIENT_ID` and different random values of at least 32 characters for `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`. AI keys remain optional until Phase 4. `CORS_ORIGINS` is a comma-separated allowlist for browser clients; native Android requests need no origin entry.
 
@@ -65,9 +66,9 @@ npm run db:migrate   # apply generated migrations to development
 npm run db:studio    # development database viewer; schema changes use migrations
 ```
 
-Tests migrate the separate test branch before running and roll back or remove their own test data. They fail if its connection is missing or points to the development endpoint. Do not use production data for tests.
+API tests automatically start an official PostgreSQL 17 container, apply the real migrations and exercise the SQL repositories. The container uses temporary storage, a random local port and credentials, and is removed after the run, including test failures. The first run downloads `postgres:17-alpine`; later runs reuse the image. Tests use only the container settings supplied by Vitest and never read your Neon URLs. If neither Podman nor Docker is running, verification fails with setup instructions rather than skipping tests.
 
-GitHub Actions needs a `DATABASE_URL_TEST` repository secret pointing to a dedicated Neon CI branch. Its development URLs are synthetic values used only by the isolation guard; CI never connects to the development database. Fork PRs do not receive secrets and therefore cannot run the integration job without a trusted workflow arrangement. Never expose database secrets to untrusted PR code.
+GitHub Actions uses the same temporary container and needs no database secrets or Neon test branch. `DATABASE_URL_TEST` is unused and can be removed from old local/Render/GitHub configuration. Keep `npm run db:check` and real-device checks against Render to verify Neon connectivity; local PostgreSQL does not reproduce hosted TLS/network behavior. See [single Neon branch testing](docs/decisions/0005-single-neon-branch.md).
 
 ## Structure
 

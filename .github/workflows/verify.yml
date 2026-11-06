@@ -7,11 +7,6 @@ on:
 permissions:
   contents: read
 
-# One isolated Neon CI branch: serialize runs against it.
-concurrency:
-  group: solace-ci-database
-  cancel-in-progress: false
-
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -19,22 +14,14 @@ jobs:
     env:
       CI: 'true'
       NODE_ENV: test
-      # Synthetic dev identity for the branch-isolation guard; never connected.
-      DATABASE_URL: postgresql://ci:unused@ep-development.invalid/db?sslmode=verify-full
-      DATABASE_URL_DIRECT: postgresql://ci:unused@ep-development.invalid/db?sslmode=verify-full
-      DATABASE_URL_TEST: ${{ secrets.DATABASE_URL_TEST }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
           cache: npm
-      - name: Require isolated test database
-        run: |
-          if [ -z "$DATABASE_URL_TEST" ]; then
-            echo 'Configure DATABASE_URL_TEST with a dedicated Neon CI branch direct URL.'
-            exit 1
-          fi
+      # Vitest creates and removes its own local PostgreSQL container.
+      # No Neon connection or repository database secret is used.
       - run: npm ci
       - run: npm run verify
       - run: npm run build
