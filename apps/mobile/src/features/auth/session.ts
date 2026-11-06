@@ -105,6 +105,28 @@ export function createSessionManager({
       };
     },
     restore,
+    request: <T>(action: (token: string) => Promise<T>): Promise<T> => {
+      const expectedUser = state.session?.user.id;
+      const result = queue.then(async () => {
+        if (!expectedUser || state.status !== 'signedIn' || state.session?.user.id !== expectedUser)
+          throw new AuthApiError(401, 'SESSION_EXPIRED', 'Sign in to continue.');
+        try {
+          return await authenticated(action);
+        } catch (error) {
+          if (error instanceof AuthApiError && error.status === 401) {
+            await clear();
+            update({ error: 'Your session has ended. Sign in again.' });
+          }
+          throw error;
+        }
+      });
+      // Share the session queue so concurrent queries cannot replay a rotating refresh token.
+      queue = result.then(
+        () => {},
+        () => {},
+      );
+      return result;
+    },
     signIn: () =>
       run(async () => {
         const idToken = await google.signIn();

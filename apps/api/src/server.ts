@@ -1,3 +1,5 @@
+import { createMoodRepository } from './modules/mood/repository.js';
+import { createMoodService } from './modules/mood/service.js';
 import { createApp } from './app.js';
 import { parseEnv } from './config/env.js';
 import { loadLocalEnv } from './config/load-env.js';
@@ -28,6 +30,7 @@ const app = createApp({
   logger,
   corsOrigins: env.CORS_ORIGINS,
   auth,
+  mood: createMoodService({ repository: createMoodRepository(database.db), clock }),
   trustProxy: env.TRUST_PROXY,
 });
 const server = app.listen(env.PORT, env.HOST, () =>

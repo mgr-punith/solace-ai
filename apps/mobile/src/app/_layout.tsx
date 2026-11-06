@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DefaultTheme, Stack, ThemeProvider as NavigationThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
-import { AuthProvider } from '../features/auth/context';
+import { AuthProvider, useAuth } from '../features/auth/context';
 import { ThemeProvider, useTheme } from '../theme/ThemeProvider';
 import { SkyBackground } from '../theme/SkyBackground';
 import { tokens } from '../theme/tokens';
@@ -15,6 +15,7 @@ void SplashScreen.preventAutoHideAsync().catch(() => {});
 function AppNavigation() {
   const { sky, reduceMotion } = useTheme();
   const onboarding = useOnboarding();
+  const auth = useAuth();
   return (
     <>
       <SkyBackground />
@@ -43,6 +44,9 @@ function AppNavigation() {
               }
             >
               <Stack.Screen name="privacy" />
+              <Stack.Protected guard={auth.status === 'signedIn'}>
+                <Stack.Screen name="(tabs)" />
+              </Stack.Protected>
               <Stack.Protected guard={__DEV__}>
                 <Stack.Screen name="design-preview" />
               </Stack.Protected>

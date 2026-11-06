@@ -1,6 +1,6 @@
 # Android development setup
 
-The application ID is `com.puneet.solace`. Keep it stable: Google sign-in will later be tied to it.
+The application ID is `com.puneet.solace`. Keep it stable: Google sign-in is tied to it.
 
 ## Expo account and build
 
@@ -9,30 +9,18 @@ From `apps/mobile`:
 ```sh
 npx eas-cli@latest login
 npx eas-cli@latest init
-npx eas-cli@latest build --platform android --profile development
+npm run build:android:local
 ```
 
-The CLI links this app to your Expo project. Keep the generated project ID in `app.json`. EAS creates the Android signing key and provides an APK download link when the build completes. Store signing credentials through EAS, never in Git.
+The CLI links this app to your Expo project. Keep the generated project ID in `app.json`. The local build wrapper reuses the existing Google-registered Android signing key and compiles on this Linux machine. Follow [local Android setup](android-local.md). Store signing credentials through EAS, never in Git.
 
-Install the APK from that link on the phone, or use `adb install /path/to/solace-development.apk` after enabling USB debugging and accepting the computer authorization prompt.
+Install with `adb install -r dist/local/solace-development.apk` after enabling USB debugging and accepting the computer authorization prompt.
 
 ## Connect the phone
 
 The hosted API is `https://solace-ai-n8s4.onrender.com`. Set `EXPO_PUBLIC_API_URL` to that URL in `apps/mobile/.env`. Confirm `/ready` reports the database connected.
 
-For local backend development, run from the repository root:
-
-```sh
-npm run dev:api
-```
-
-In another terminal, expose port 4000 through your HTTPS development tunnel. For example, after installing Cloudflare's official `cloudflared` utility:
-
-```sh
-cloudflared tunnel --url http://localhost:4000
-```
-
-Set the printed HTTPS address in `apps/mobile/.env` as `EXPO_PUBLIC_API_URL` only when testing the local backend. A temporary tunnel address changes when restarted.
+Use the Render-hosted backend for all phone testing: `EXPO_PUBLIC_API_URL=https://solace-ai-n8s4.onrender.com`. Backend changes must be pushed, merged to `main`, and deployed by Render before checking them in the local app. Do not use a local API or tunnel for device testing.
 
 ```sh
 npm run dev:mobile

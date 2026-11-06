@@ -281,7 +281,7 @@ Reorder if the user says so, but never leave P0 half-done to start P1.
 ## 15. Deployment and release
 
 - The backend **must be publicly reachable over HTTPS**; an APK on a phone cannot reach `localhost`. Deploy to the host the user chooses (Render, Railway or Fly.io), set env vars there, run migrations on deploy, configure a health check. Free tiers may cold-start: warm the server before recording the demo.
-- Local testing on a phone: use the computer's LAN IP, or a tunnel (ngrok or Cloudflare Tunnel), for `EXPO_PUBLIC_API_URL`.
+- Phone testing uses the Render-hosted HTTPS backend only, as confirmed by the user on 6 November 2026. Do not switch the app to a local API or tunnel. Local Android builds and Wi-Fi Metro remain the development workflow; automated API tests use the isolated Neon test branch.
 - `eas.json` profiles: `development` (dev client), `preview` (`"android": { "buildType": "apk" }`, internal distribution) for the submission APK, `production` later. Register each keystore's SHA-1 in the Google Android client.
 - iOS/TestFlight comes later: needs an Apple Developer account, an EAS iOS build and `eas submit`. The hackathon team has offered help.
 - **Release checklist:** `npm run verify` green · API deployed and `/ready` OK · fresh install of the preview APK on a clean phone · sign-in works · chat persists across restarts · reminder fires with the app closed · tapping it opens the right screen · airplane-mode error states look good · no secrets in the bundle.
@@ -332,3 +332,5 @@ npm run db:check       # verify configured DB connections without printing crede
 - Validate only the configuration required by the current phase; Google and AI credentials become mandatory when those features are implemented.
 
 - Build preference confirmed 6 November 2026: use local builds for all Android work, including development and submission APKs. Install updates on the connected Android phone with `adb install -r`; preserve app data and the existing Google-registered signing certificate. See `docs/setup/android-local.md`. EAS may retrieve signing credentials, but compilation runs locally.
+
+- Backend testing preference confirmed 6 November 2026: all installed-app testing uses Render; do not start a local API/tunnel for the phone. Push and deploy backend changes before checking those flows on the device.

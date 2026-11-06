@@ -141,3 +141,30 @@ describe('secure session lifecycle', () => {
     expect(manager.getSnapshot().status).toBe('signedOut');
   });
 });
+
+it('serializes feature requests with refresh so two queries never replay a refresh token', async () => {
+  const { manager, api } = setup(session);
+  await manager.restore();
+  const first = jest
+    .fn<(token: string) => Promise<string>>()
+    .mockRejectedValueOnce(new AuthApiError(401, 'SESSION_EXPIRED', 'Expired'))
+    .mockResolvedValue('first');
+  const second = jest.fn<(token: string) => Promise<string>>().mockResolvedValue('second');
+  expect(await Promise.all([manager.request(first), manager.request(second)])).toEqual([
+    'first',
+    'second',
+  ]);
+  expect(api.refresh).toHaveBeenCalledTimes(1);
+  expect(first).toHaveBeenLastCalledWith('new-access');
+  expect(second).toHaveBeenCalledWith('new-access');
+});
+it('rejects a queued feature request after logout rather than using a stale token', async () => {
+  const { manager } = setup(session);
+  await manager.restore();
+  const action = jest.fn<(token: string) => Promise<void>>();
+  const logout = manager.logout();
+  const query = manager.request(action);
+  await logout;
+  await expect(query).rejects.toMatchObject({ status: 401 });
+  expect(action).not.toHaveBeenCalled();
+});

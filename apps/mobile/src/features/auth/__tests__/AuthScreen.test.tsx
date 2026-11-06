@@ -24,6 +24,7 @@ const signOut = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
 const deleteAccount = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
 const restore = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
 const state = {
+  request: async <T,>(action: (token: string) => Promise<T>) => action('test'),
   status: 'signedIn' as const,
   busy: false,
   error: null,

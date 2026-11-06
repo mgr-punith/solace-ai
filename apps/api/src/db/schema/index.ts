@@ -1,4 +1,15 @@
-import { index, pgTable, text, timestamp, uuid, type AnyPgColumn } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import {
+  check,
+  index,
+  integer,
+  uniqueIndex,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  type AnyPgColumn,
+} from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -46,5 +57,36 @@ export const refreshTokens = pgTable(
   (table) => [
     index('refresh_tokens_session_idx').on(table.sessionId),
     index('refresh_tokens_user_idx').on(table.userId),
+  ],
+);
+
+export const profiles = pgTable('profiles', {
+  userId: uuid('user_id')
+    .primaryKey()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  timezone: text('timezone').notNull().default('UTC'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+export const moodCheckins = pgTable(
+  'mood_checkins',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    requestId: text('request_id').notNull(),
+    mood: integer('mood').notNull(),
+    tags: text('tags').array().notNull(),
+    note: text('note').notNull(),
+    timezone: text('timezone').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('mood_user_request_idx').on(table.userId, table.requestId),
+    index('mood_user_created_idx').on(table.userId, table.createdAt, table.id),
+    check('mood_score_check', sql`${table.mood} between 1 and 5`),
+    check('mood_note_length_check', sql`char_length(${table.note}) <= 500`),
   ],
 );

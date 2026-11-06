@@ -38,7 +38,7 @@ export function AuthScreen() {
     );
   }
   return (
-    <Screen centered>
+    <Screen centered inTabs={auth.status === 'signedIn'}>
       <Companion size={tokens.sol.onboarding} state="greeting" />
       <Surface accessibilityLiveRegion="polite">
         <AppText variant="display" accessibilityRole="header">
