@@ -120,8 +120,10 @@ export function createSessionManager({
         if (state.session) await api.logout(state.session.refreshToken);
         await clear();
       }),
-    deleteAccount: () =>
+    deleteAccount: (beforeDelete?: () => Promise<void>) =>
       run(async () => {
+        // Clear device-owned preferences before deleting their owning account.
+        await beforeDelete?.();
         await authenticated(api.deleteAccount);
         await clear();
       }),

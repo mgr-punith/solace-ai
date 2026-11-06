@@ -1,6 +1,6 @@
 # DESIGN.md — Solace AI
 
-Source of truth for every visual and interaction decision. Status: **proposed v1, the user approves it at the Phase 2 gate (§15)**. If you need to deviate, propose the change and update this file first.
+Source of truth for every visual and interaction decision. Status: **v1 approved provisionally on 6 November 2026; the user asked to continue with splash and onboarding.** If you need to deviate, propose the change and update this file first.
 
 Phase 1 uses the existing foundation tokens for a temporary sign-in and signed-in account screen. It uses Google's native branded button, a plain privacy/care notice, loading and recoverable error states, sign-out, and confirmed account deletion. Full onboarding, profile questions, fonts, sky, and mascot remain Phase 2 work. The Phase 2 prototype gate applies to the full visual implementation; it does not block the earlier authentication slice.
 
@@ -79,7 +79,7 @@ Wrap 20:30 back to 00:00 smoothly. User setting: Auto / Always day / Always nigh
 |---|---|---|---|---|
 | `#7C8FB8` | `#8FB3C4` | `#9CC9BF` | `#E3D58F` | `#FFC76B` |
 
-**Contrast rules.** Body text ≥ 4.5:1. Text on the bare sky only if it is ≥ 24sp and ≥ 3:1 at *every* time of day; everything smaller sits on a glass surface. The dev build ships a **time-travel slider** (`__DEV__` only) so you can check 06:00, 19:00, 19:30, 20:00 and the rest. Day/night text colors crossfade with the sky around 19:30 and 05:30; no popping.
+**Contrast rules.** Body text ≥ 4.5:1. Text on the bare sky only if it is ≥ 24sp and ≥ 3:1 at *every* time of day; everything smaller sits on a glass surface. The dev build ships a **time-travel slider** (`__DEV__` only) so you can check 06:00, 19:00, 19:30, 20:00 and the rest. The sky interpolates continuously. Text and its backing surface change together between day and night; do not crossfade foreground text through a low-contrast midpoint. Body text uses a stable, sufficiently opaque surface.
 
 ## 3. Typography
 
@@ -309,3 +309,75 @@ Contrast per §2; touch targets ≥ 44 pt; every interactive element has an acce
 ## 15. Phase 2 prototype gate
 
 Before building any other screen, build and show: `theme/tokens.ts`, `SkyBackground`, Sol with `idle`, `greeting`, `thinking` and `breathing`, and a skeleton Home. Record about 20 seconds on a real phone. The user approves or adjusts the direction. Only then continue. If Skia is janky, switch to the SVG fallback and record the decision in `docs/decisions/`.
+
+
+## 16. Phase 2a preview implementation
+
+The user confirmed the existing sky + Sol direction on 6 November 2026. Build the §15 preview first; splash, onboarding, saved check-ins, and real Home follow after the phone review. The preview is available only in development, from the signed-in account screen and `/design-preview`. Mood choices in this preview change Sol without saving health data.
+
+The preview uses SDK-compatible Skia 2 and Reanimated 4, bundled Fraunces/Figtree fonts, one root sky, and shared text, button and surface components. The Home sketch has a Sol hero followed by a single reading surface, an interactive mood row, a short breathing preview, and a text-led affirmation. Do not show inactive navigation tabs or fabricate streaks. Preview controls are separated below the sketch and hidden outside development: time slider, Auto/Day/Night, four Sol states, Reduce Motion, and Haptics.
+
+```text
++----------------------------+
+| [Back]         [Fri, 6 Nov] |
+|                            |
+|        ( glowing Sol )     |
+|                            |
+| Good evening, Puneet.      |
+| Take a breath. You're here.|
+|                            |
+| How are you arriving?      |
+| o    o    o    o    o      |
+| Heavy Low Okay Good Glowing|
+|                            |
+| [Take a slow breath]       |
+| You can take this moment   |
+| one breath at a time.      |
++----------------------------+
+| Preview controls           |
+| Sky time  ---o---------    |
+| Auto / Day / Night         |
+| Rest / Greet / Think /     |
+| Breathe                    |
+| Reduce Motion     [toggle] |
+| Haptics           [toggle] |
++----------------------------+
+```
+
+Readability correction: use 94% Dawn Mist or Night Ink for the main reading surface so all body, secondary and feedback text meets 4.5:1 across the sky. Day error text is deepened to `#914359`; the previous `#B4536A` did not reliably meet body-text contrast. Large greetings use the same safe surface. The sky remains visible around the character and page edges. Day/night foregrounds and their surfaces switch together; only the sky and mascot colors interpolate. Tests sample every local minute and surface position.
+
+Use EAS **local Android builds** with the existing signing profile on this Linux machine (the user confirmed local builds). No phone was attached at implementation start. Real-device performance and the roughly 20-second recording remain the gate; browser rendering and automated tests cannot establish 60 fps on Android.
+
+
+## 17. Phase 2b splash, onboarding and privacy
+
+The user accepted the current direction as “okayish” and asked to move on. Continue the existing tokens and character, with later visual refinement allowed. The release performance check remains pending; it does not block this authorized slice.
+
+Native launch shows the static Sol mark on Dawn Mist / Night Ink. A short in-app greeting bridges into onboarding; returning visits spend no more than 700 ms on it. Reduce Motion skips this greeting delay. Loading and recovery text appear if local storage or session restoration is slow; never wait indefinitely on a decorative splash.
+
+Four pages introduce Sol, a practice mood choice (never saved), a clearly labeled example conversation, and privacy. Back preserves progress; **Skip intro** goes directly to privacy. The final page always explains that Sol is an AI companion and not a substitute for professional care. Personalization is off by default. Saving is explicit, with a recoverable error if secure storage fails. A signed-out visitor proceeds to Google's branded sign-in; an existing signed-in user continues to their account screen.
+
+Local scope for this slice: onboarding progress is installation-wide, and the personalization preference is saved separately for each account in SecureStore. A pending pre-sign-in choice may be claimed once by the next signed-in account; it must never silently transfer to another account. Account deletion clears its local preference, and privacy settings allow changing the choice. No memory collection or LLM call is enabled by this preference yet. On Android reinstall or a new device, users choose again. iOS Keychain may persist through reinstall; do not assume it clears there. Phase 7 must migrate preferences to the backend and implement memory view/delete before using personalization.
+
+```text
+Splash                 Meet Sol / Notice / Talk
++------------------+   +-------------------------+
+|                  |   | Back    1 of 4   Skip   |
+|    (Sol mark)    |   |         (Sol)           |
+| Take a breath.   |   | A little space for you. |
+| You're here.     |   | Short plain explanation|
+|                  |   | Example / practice     |
+| [Continue]       |   | [Continue]              |
++------------------+   +-------------------------+
+Privacy                Account / sign-in
++------------------+   +-------------------------+
+| Back     4 of 4  |   | (Sol) Welcome, name.     |
+| Your choice.    |   | Your space is ready.    |
+| AI + data notice|   | [Privacy and memory]    |
+| Remember [off]  |   | [Review introduction]   |
+| Local preference|   | [Sign out] [Delete]     |
+| [Save & continue]|  | Or Google's sign-in    |
++------------------+   +-------------------------+
+```
+
+Profile questions and reminder permission are deferred to their functional slices: Home/profile and reminders. Avoid collecting goals or notification times before they are used. These screens do not claim that chat or saved check-ins exist yet; the demo conversation is explicitly an example.

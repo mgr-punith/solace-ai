@@ -59,7 +59,7 @@ Splash, onboarding and the design system are built early and polished throughout
 |---|---|
 | Language | TypeScript, `strict: true`, everywhere. No `any` without a comment explaining why |
 | Mobile | Expo (current stable SDK) + React Native, **Expo Router** (file-based routing) |
-| Mobile builds | **Development builds via EAS**, not Expo Go. Google Sign-In and reliable notifications need native code that Expo Go does not include |
+| Mobile builds | **Development builds via EAS locally on Linux**, not Expo Go. Google Sign-In and reliable notifications need native code that Expo Go does not include |
 | Mobile state/data | TanStack Query (server state), Zustand (small client state) |
 | Mobile UI libs | `react-native-reanimated` (animation), `expo-haptics`, `expo-linear-gradient`, `expo-font`, `expo-secure-store`, `expo-notifications`; Skia + Reanimated for Sol, with SVG + Reanimated fallback (validate in Phase 2 per DESIGN.md) |
 | Backend | Node.js LTS, Express (current major), TypeScript, Zod validation, Pino logging |
@@ -214,7 +214,7 @@ The user has never done this. **Walk them through one step at a time. Wait for c
 npm i -g eas-cli          # or use npx eas-cli
 eas login
 eas build:configure
-eas build --profile development --platform android
+npm run build:android:local -w @solace/mobile
 ```
 Install the resulting APK on the phone, then run `npx expo start --dev-client`. Explain to the user what a dev build is and why it replaces Expo Go.
 
@@ -330,3 +330,5 @@ npm run db:check       # verify configured DB connections without printing crede
 - AI provider: `vyceai`, display name `VyceAi`, OpenAI-format base URL `https://vyceai.com/v1`. Verify authentication, model ID, and API behavior in Phase 4.
 - Progress phase by phase without deadline assumptions. Phase 0 was explicitly approved.
 - Validate only the configuration required by the current phase; Google and AI credentials become mandatory when those features are implemented.
+
+- Build preference confirmed 6 November 2026: use local builds for all Android work, including development and submission APKs. Install updates on the connected Android phone with `adb install -r`; preserve app data and the existing Google-registered signing certificate. See `docs/setup/android-local.md`. EAS may retrieve signing credentials, but compilation runs locally.

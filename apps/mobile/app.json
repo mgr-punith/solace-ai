@@ -18,8 +18,12 @@
       [
         "expo-splash-screen",
         {
+          "image": "./assets/sol-mark.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
           "backgroundColor": "#EEF3F2",
           "dark": {
+            "image": "./assets/sol-mark.png",
             "backgroundColor": "#0F1A24"
           }
         }

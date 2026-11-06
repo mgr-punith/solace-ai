@@ -31,7 +31,7 @@ Run lint and typecheck before declaring any task done.
 
 ## Building with EAS
 
-Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.
+Use **local Android builds** on this Linux machine, as confirmed by the user. Run `npm run build:android:local -w @solace/mobile` for the development APK; the wrapper uses EAS `--local` and the existing Google-registered signing credential. Install on the connected phone with `adb install -r` and keep Metro running for development. Build submission APKs locally with the preview profile; those include JavaScript and work without Metro. See `../../docs/setup/android-local.md`. Run other EAS commands as `npx eas-cli@latest <command>` in this npm project.
 Docs: https://docs.expo.dev/eas/index.md
 
 ## Rules
