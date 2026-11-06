@@ -29,6 +29,7 @@ jest.mock('expo-router', () => ({
 }));
 let saved: string | null;
 const auth = {
+  request: async <T,>(action: (token: string) => Promise<T>) => action('test'),
   status: 'signedOut' as const,
   session: null,
   busy: false,
@@ -97,13 +98,16 @@ it('never exposes a previous account preference during an identity change', asyn
   jest.mocked(useAuth).mockReturnValue({ ...auth, status: 'signedIn', session });
   const view = await render(<App entry />);
   await act(async () => {});
-  expect(Redirect).not.toHaveBeenCalled();
+  expect(jest.mocked(Redirect).mock.calls.at(-1)?.[0]).toMatchObject({ href: '/home' });
+  jest.mocked(Redirect).mockClear();
   jest.mocked(useAuth).mockReturnValue({
     ...auth,
     status: 'signedIn',
     session: { ...session, user: { ...session.user, id: 'b' } },
   });
   await view.rerender(<App entry />);
-  await waitFor(() => expect(Redirect).toHaveBeenCalled());
+  await waitFor(() =>
+    expect(jest.mocked(Redirect).mock.calls.at(-1)?.[0]).toMatchObject({ href: '/onboarding' }),
+  );
   expect(JSON.parse(saved!).choices.b).toBeUndefined();
 });

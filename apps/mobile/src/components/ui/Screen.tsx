@@ -1,20 +1,46 @@
-import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import type { ReactNode, ReactElement } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+  type RefreshControlProps,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { tokens } from '../../theme/tokens';
 
 export function Screen({
   children,
   centered = false,
+  inTabs = false,
+  keyboard = false,
+  refreshControl,
 }: {
   children: ReactNode;
   centered?: boolean;
+  inTabs?: boolean;
+  keyboard?: boolean;
+  refreshControl?: ReactElement<RefreshControlProps>;
 }) {
   return (
-    <SafeAreaView style={styles.screen}>
-      <ScrollView contentContainerStyle={[styles.scroll, centered && styles.centered]}>
-        <View style={styles.content}>{children}</View>
-      </ScrollView>
+    <SafeAreaView
+      edges={inTabs ? ['top', 'left', 'right'] : ['top', 'bottom', 'left', 'right']}
+      style={styles.screen}
+    >
+      <KeyboardAvoidingView
+        enabled={keyboard}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.screen}
+      >
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          refreshControl={refreshControl}
+          contentContainerStyle={[styles.scroll, centered && styles.centered]}
+        >
+          <View style={styles.content}>{children}</View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

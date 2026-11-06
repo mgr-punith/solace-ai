@@ -51,6 +51,17 @@ USB disconnected intermittently during the phone check. Reconnect and rerun `adb
 
 Privacy choice is device-local and account-specific for now; no memory collection is active. Phase 7 must sync consent to the backend and implement memory view/delete before personalization is used. Browser preview stays signed out and never stores authentication tokens.
 
+## Phase 3 Home and mood check-ins
+
+- [x] API integration tests use the isolated Neon branch and cover validation, ownership, idempotent/concurrent retries, cursor pagination, timezone midnight filtering, individual deletion and account cascades.
+- [x] Mobile tests cover explicit save, optional tags/note, preserved failed input, identical retry keys, history loading/deletion/recovery, and serialized token refresh.
+- [x] Phone connected to Render again after the user's Render-only correction. Observed signed-in Home greeting and Home / Progress / You tabs on vivo V2168.
+- [ ] After merging/deploying Phase 3 to Render: save a check-in with tags/note, see it on Home/Progress, close/reopen and confirm persistence.
+- [ ] On phone: delete a disposable check-in, verify it disappears from Home and Progress, and exercise offline retry without duplicate entries.
+- [ ] Verify keyboard access to Save, 130% text, TalkBack, empty/loading/error states and date rollover on device.
+
+The installed app uses only Render. Local API and temporary tunnel were stopped, and the mobile URL was restored to Render; no check-in was saved on the phone via the temporary local API. Automated integration tests remain isolated from development data. Unsaved form input survives a retry while mounted, but is not persisted after app termination.
+
 ## Later phases
 
 - [ ] Chat survives closing and reopening; delete removes the conversation.

@@ -15,6 +15,13 @@
       "when": 1793899394188,
       "tag": "0001_dry_drax",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793962584294,
+      "tag": "0002_illegal_wildside",
+      "breakpoints": true
     }
   ]
 }

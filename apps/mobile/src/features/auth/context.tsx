@@ -46,5 +46,6 @@ export function useAuth() {
     signIn: manager.signIn,
     logout: manager.logout,
     deleteAccount: manager.deleteAccount,
+    request: manager.request,
   };
 }

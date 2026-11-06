@@ -381,3 +381,27 @@ Privacy                Account / sign-in
 ```
 
 Profile questions and reminder permission are deferred to their functional slices: Home/profile and reminders. Avoid collecting goals or notification times before they are used. These screens do not claim that chat or saved check-ins exist yet; the demo conversation is explicitly an example.
+
+
+## 18. Phase 3 Home and saved mood
+
+Keep the accepted sky, Fraunces/Figtree and Sol. Ship only functional tabs: Home, Progress (saved check-in history), You (account/privacy). Wellness and Talk join when their features work. Phase 3 uses an explicit Save check-in button after choosing a mood; this supersedes the earlier instant-save sketch to avoid persisting accidental exploratory taps. Optional emotion tags and a short note are revealed in the same scrollable form. Failed saves preserve input and offer retry; success appears only after the API confirms it. A request key prevents retries from duplicating an entry.
+
+Home shows a name/time greeting, Sol, today's latest saved mood or a warm empty state, the check-in form and a link to history. No invented AI suggestions, streaks or activity completion. Progress lists actual entries with pagination and delete; charts and streaks remain Phase 6. Dates use the phone's IANA timezone, saved to the profile with each check-in. Reading today groups timestamps in the current timezone, including daylight-saving changes.
+
+```text
+Home                       Progress                 You
++----------------------+   +---------------------+  +--------------------+
+| Date      (Sol)      |   | Your check-ins      |  | Welcome, name      |
+| Good evening, Maya.  |   | Latest first        |  | Privacy and memory |
+| How are you arriving?|   | Date / mood / tags  |  | Review intro       |
+| Heavy ... Glowing    |   | Note     [Delete]   |  | Sign out           |
+| [Add a little more]  |   | ... [Load more]     |  | Delete account     |
+| tags / optional note|   | or: no entries yet  |  |                    |
+| [Save check-in]      |   | [Check in]          |  |                    |
+| Today: saved mood    |   |                     |  |                    |
+| [View check-ins]     |   |                     |  |                    |
++ Home / Progress / You+   +Home / Progress / You+  +Home / Progress / You+
+```
+
+The query cache stays in memory, scoped to account ID, and clears on logout. Sensitive notes are not persisted in unencrypted cache storage. Auth restores independently of Home loading; a slow API displays recovery without holding the splash. This supersedes the earlier persisted-cache startup sketch for this slice.

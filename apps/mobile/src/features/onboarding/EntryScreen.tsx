@@ -46,5 +46,12 @@ export function EntryScreen() {
     (onboarding.needsIntroduction || (auth.status === 'signedIn' && onboarding.needsChoice))
   )
     return <Redirect href="/onboarding" />;
+  if (
+    auth.status === 'signedIn' &&
+    !auth.error &&
+    !onboarding.needsIntroduction &&
+    !onboarding.needsChoice
+  )
+    return <Redirect href="/home" />;
   return <AuthScreen />;
 }

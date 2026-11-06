@@ -1,3 +1,5 @@
+import type { MoodService } from './modules/mood/service.js';
+import { moodRoutes } from './modules/mood/routes.js';
 import { randomUUID } from 'node:crypto';
 import express, { type ErrorRequestHandler } from 'express';
 import cors from 'cors';
@@ -14,6 +16,7 @@ type AppDependencies = {
   logger: Logger;
   corsOrigins?: string[];
   auth?: AuthService;
+  mood?: MoodService;
   trustProxy?: number;
 };
 
@@ -22,6 +25,7 @@ export function createApp({
   logger,
   corsOrigins = [],
   auth,
+  mood,
   trustProxy = 0,
 }: AppDependencies) {
   const app = express();
@@ -78,6 +82,7 @@ export function createApp({
     }
   });
   if (auth) app.use('/v1', authRoutes(auth));
+  if (auth && mood) app.use('/v1/mood-checkins', moodRoutes(auth, mood));
   app.use((_req, res) => {
     res.status(404).json({
       error: { code: 'NOT_FOUND', message: 'This endpoint does not exist.' },
