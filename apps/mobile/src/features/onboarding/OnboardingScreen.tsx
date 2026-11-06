@@ -32,7 +32,7 @@ const pages = [
   },
   {
     title: 'You can talk it through.',
-    body: 'When chat is available, bring what’s on your mind. Sol will listen and help you explore a small next step.',
+    body: 'Bring what’s on your mind. Sol can help you reflect and explore a small next step.',
   },
   {
     title: 'Your space. Your choice.',

@@ -32,6 +32,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="talk"
+        options={{
+          title: 'Talk',
+          tabBarIcon: ({ color }) => (
+            <View style={[styles.icon, { borderColor: color, borderRadius: tokens.radius.pill }]} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="progress"
         options={{
           title: 'Progress',

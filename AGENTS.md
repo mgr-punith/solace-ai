@@ -328,7 +328,7 @@ npm run db:check       # verify configured DB connections without printing crede
 - Host on Render; database on Neon; keep the companion name Sol.
 - AI provider: `vyceai`, display name `VyceAi`, OpenAI-format base URL `https://vyceai.com/v1`. Verify authentication, model ID, and API behavior in Phase 4.
 - Progress phase by phase without deadline assumptions. Phase 0 was explicitly approved.
-- Validate only the configuration required by the current phase; Google and AI credentials become mandatory when those features are implemented.
+- Validate only configuration required by the current phase. Google and AI credentials are now mandatory for the Phase 4 API.
 
 - Build preference confirmed 6 November 2026: use local builds for all Android work, including development and submission APKs. Install updates on the connected Android phone with `adb install -r`; preserve app data and the existing Google-registered signing certificate. See `docs/setup/android-local.md`. EAS may retrieve signing credentials, but compilation runs locally.
 

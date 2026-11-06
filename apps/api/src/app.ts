@@ -1,3 +1,5 @@
+import { conversationRoutes } from './modules/conversations/routes.js';
+import type { ConversationService } from './modules/conversations/service.js';
 import type { MoodService } from './modules/mood/service.js';
 import { moodRoutes } from './modules/mood/routes.js';
 import { randomUUID } from 'node:crypto';
@@ -17,6 +19,7 @@ type AppDependencies = {
   corsOrigins?: string[];
   auth?: AuthService;
   mood?: MoodService;
+  chat?: ConversationService;
   trustProxy?: number;
 };
 
@@ -26,6 +29,7 @@ export function createApp({
   corsOrigins = [],
   auth,
   mood,
+  chat,
   trustProxy = 0,
 }: AppDependencies) {
   const app = express();
@@ -83,6 +87,7 @@ export function createApp({
   });
   if (auth) app.use('/v1', authRoutes(auth));
   if (auth && mood) app.use('/v1/mood-checkins', moodRoutes(auth, mood));
+  if (auth && chat) app.use('/v1/conversations', conversationRoutes(auth, chat));
   app.use((_req, res) => {
     res.status(404).json({
       error: { code: 'NOT_FOUND', message: 'This endpoint does not exist.' },

@@ -23,7 +23,7 @@ On an existing checkout, keep your saved `.env` files instead of overwriting the
 
 In `apps/api/.env`, fill `DATABASE_URL` with your single Neon branch's pooled URL and `DATABASE_URL_DIRECT` with the same branch's direct URL. No `DATABASE_URL_TEST` is required. Copy URLs from Neon's Connect dialog with SSL enabled. Never paste credentials into chat, commit them, or place them in mobile configuration.
 
-Google authentication requires `GOOGLE_WEB_CLIENT_ID` and different random values of at least 32 characters for `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`. AI keys remain optional until Phase 4. `CORS_ORIGINS` is a comma-separated allowlist for browser clients; native Android requests need no origin entry.
+Google authentication requires `GOOGLE_WEB_CLIENT_ID` and different random values of at least 32 characters for `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`. Chat requires `LLM_PROVIDER=vyceai`, `LLM_BASE_URL=https://vyceai.com/v1`, `LLM_API_KEY`, and the model ID in `LLM_MODEL`. `CORS_ORIGINS` is a comma-separated allowlist for browser clients; native Android requests need no origin entry.
 
 ```sh
 npm run db:check
@@ -97,3 +97,13 @@ The API exposes `POST /v1/mood-checkins`, `GET /v1/mood-checkins`, `GET /v1/mood
 Failed saves keep their input while the form stays mounted and retry the same request ID. Unsaved drafts are not persisted across app termination. Query data stays in memory, is scoped to the signed-in account, and clears on logout. Notes and tokens are not written to logs or unencrypted disk caches.
 
 Render’s existing start command applies the checked-in Drizzle migration before serving. The app cannot verify new mood flows against an older Render deployment; finish deployment before the phone QA pass.
+
+## AI chat
+
+Talk opens saved conversations. Choose **New conversation**, type a message and tap **Send message**. Sol replies using VyceAi; close and reopen to continue. Retries reuse the saved turn, and deleting a conversation removes its messages. **Support** opens verified region-specific helplines even offline, with an explicit dialer action. Sol is a companion, not professional care.
+
+Before merging the chat feature, set the four `LLM_*` values above in Render's environment. Copy the key privately from `apps/api/.env`; never put it in a PR, screenshot, mobile variable or log. The API now fails at startup if the key/model are missing. Render's normal start command applies the conversation migration. Check `/ready` and that an unauthenticated `/v1/conversations` returns 401 before phone QA.
+
+Chat endpoints: `POST/GET /v1/conversations`, `GET/DELETE /v1/conversations/:id`, and `GET/POST /v1/conversations/:id/messages`. Creation requires a `requestId`; sending requires a `requestId` and `content` (1–2,000 characters). Lists use cursor pagination. Replies are non-streaming, bounded and saved. See [chat decisions](docs/decisions/0006-persistent-chat.md).
+
+Run `npm run ai:eval` only when you want a manual evaluation against the real configured provider; it may incur provider usage. Its scenarios are synthetic, and the command prints their responses for review. Automated tests always mock the model. Memory across conversations, mood context and summaries remain deferred to Phase 7 consent controls.

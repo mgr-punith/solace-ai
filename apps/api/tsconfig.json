@@ -1,5 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "module": "NodeNext", "moduleResolution": "NodeNext", "types": ["node"] },
-  "include": ["src/**/*.ts", "drizzle.config.ts", "vitest.config.ts"]
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "drizzle.config.ts", "vitest.config.ts", "scripts/**/*.ts"]
 }

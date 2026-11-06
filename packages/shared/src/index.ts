@@ -32,3 +32,6 @@ export type AuthResponse = z.infer<typeof authResponseSchema>;
 export type ErrorResponse = z.infer<typeof errorResponseSchema>;
 
 export * from './mood.ts';
+
+export * from './chat.ts';
+export * from './support.ts';
