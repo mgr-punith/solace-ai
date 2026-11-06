@@ -77,18 +77,22 @@ The installed app uses only Render. Local API and temporary tunnel were stopped,
 - [x] `npm run verify` passed lint, types and 127 tests (77 API, 46 mobile, four shared). Production API build and Android export passed.
 - [x] Reviewed synthetic anxious, sad, angry, lonely, crisis and unsafe-request scenarios. Replies stayed supportive and the unsafe request was refused. The first prompt-injection evaluation timed out; an isolated retry refused therapist impersonation and medication prescribing. This small sample is not a comprehensive safety evaluation.
 - [x] Phase 4 merged as `fab96ab` and deployed to Render. On 6 November 2026, `/ready` returned 200/database connected and `/v1/conversations?limit=1` returned 401 without credentials.
-- [ ] On phone: new conversation → send → reply → history → force-stop/reopen → continue → delete disposable conversation.
-- [x] Phone before Groq migration: new conversation, keyboard-visible Send, saved greeting and fallback, history and force-stop/reopen with restored retry state observed. Initial send/retry did not yield a real AI reply; successful reply/continue/delete remain pending. The single disposable QA chat is retained for post-deploy retry.
+- [x] On vivo V2168 (Android 14), completed the Phase 4 flow against Render: created a conversation, saved the initial message, retried it after Groq deployment, received a real reply, viewed history, force-stopped/reopened, continued the same conversation and deleted it.
+- [x] Phone before Groq migration: new conversation, keyboard-visible Send, saved greeting and fallback, history and force-stop/reopen with restored retry state observed. Initial send/retry did not yield a real AI reply; successful reply/continue/delete remain pending. That disposable chat was subsequently retried successfully through Groq and deleted after the checks below.
 - [x] Groq private-key smoke returned 200 and final text in 0.6 seconds. Six actual-adapter synthetic provider scenarios passed in 0.3–1.1 seconds, with deterministic crisis response retained. These are local-provider checks, not Render timings.
 - [x] Groq integration verification passed lint, typechecks and 143 tests (92 API, 47 mobile, four shared). Production API build and Android export passed; the bundle contains the Render URL and excludes the private Groq key.
-- [ ] Deploy Groq-compatible backend, change Render LLM values together and confirm `/v1/chat-provider` reports Groq; finish phone reply/persistence/delete verification.
-- [ ] Check send with the keyboard visible, long messages/history, pending-reply reopen, offline retry and expired session.
+- [x] PR #7 merged as `47d3ae3`; after the user changed all four Render LLM values and redeployed, `/v1/chat-provider` returned 200 with `groq` and `/ready` returned 200/database connected. Talk and the chat composer displayed Groq.
+- [x] Retried the original synthetic greeting on the phone. Groq returned a real reply that replaced the fallback; only one user/assistant turn remained and the retry action cleared.
+- [x] Force-stopped and cold-started `com.puneet.solace` through Wi-Fi Metro, reopened history and observed the exact saved greeting and Groq reply. Sent a second synthetic message with the keyboard visible; Sol correctly referenced the earlier study break, verifying continuation with current-conversation context.
+- [x] Deleted only the disposable QA conversation through its confirmation dialog. History returned to its empty state and remained empty after pull-to-refresh. No real conversation or account was deleted.
+- [x] Send was visible and usable with the Android keyboard open; the keyboard dismissed while the response was prepared.
+- [ ] Check long messages/history, pending-reply reopen, offline retry and expired session.
 - [ ] Check Support offline, region selection and dialer fallback; never place a test call to a helpline.
 - [ ] Check TalkBack, 130% text and Reduce Motion in chat. Crisis pattern tests do not establish comprehensive real-world crisis detection.
 
 ## Later phases
 
-- [ ] Chat survives closing and reopening; delete removes the conversation.
+- [x] Chat survives closing and reopening; delete removes the conversation (Phase 4 physical-device checks above).
 - [ ] Notification permission accepted and declined paths work.
 - [ ] Reminder fires while the app is backgrounded or closed; tap opens the intended route, including after login.
 - [ ] Test notification delays caused by Android battery optimization; force-stopping the app may prevent delivery until reopened.

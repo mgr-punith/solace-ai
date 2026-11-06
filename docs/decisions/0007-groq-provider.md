@@ -1,7 +1,7 @@
 # 0007: Groq for responsive prototype chat
 
 Date: 2026-11-06
-Status: accepted; deployed phone verification pending
+Status: accepted; deployed phone chat flow verified on 6 November 2026
 
 ## Evidence and choice
 
@@ -30,3 +30,7 @@ Deploy this backward-compatible backend first using the existing Render variable
 - https://console.groq.com/docs/api-reference
 - https://console.groq.com/docs/rate-limits
 - https://console.groq.com/docs/your-data
+
+## Deployed verification
+
+After PR #7 merged and the user updated Render, the API reported Groq and database readiness. On vivo V2168, the saved QA turn retried successfully without duplication; its reply survived force-stop/reopen, a follow-up used the same conversation context, and confirmed deletion persisted after refreshing history. Full accessibility, offline and long-history release QA remains listed in the manual checklist.
