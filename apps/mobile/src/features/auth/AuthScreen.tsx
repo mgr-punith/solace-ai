@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
+import { router } from 'expo-router';
 import { tokens } from '../../theme/tokens';
 import { useAuth } from './context';
 
@@ -68,6 +69,15 @@ export function AuthScreen() {
         </View>
         {auth.status === 'signedIn' ? (
           <>
+            {__DEV__ && (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push('/design-preview')}
+                style={styles.button}
+              >
+                <Text style={styles.buttonText}>Meet Sol · Preview</Text>
+              </Pressable>
+            )}
             <Pressable
               accessibilityRole="button"
               disabled={auth.busy}

@@ -79,7 +79,7 @@ Wrap 20:30 back to 00:00 smoothly. User setting: Auto / Always day / Always nigh
 |---|---|---|---|---|
 | `#7C8FB8` | `#8FB3C4` | `#9CC9BF` | `#E3D58F` | `#FFC76B` |
 
-**Contrast rules.** Body text ≥ 4.5:1. Text on the bare sky only if it is ≥ 24sp and ≥ 3:1 at *every* time of day; everything smaller sits on a glass surface. The dev build ships a **time-travel slider** (`__DEV__` only) so you can check 06:00, 19:00, 19:30, 20:00 and the rest. Day/night text colors crossfade with the sky around 19:30 and 05:30; no popping.
+**Contrast rules.** Body text ≥ 4.5:1. Text on the bare sky only if it is ≥ 24sp and ≥ 3:1 at *every* time of day; everything smaller sits on a glass surface. The dev build ships a **time-travel slider** (`__DEV__` only) so you can check 06:00, 19:00, 19:30, 20:00 and the rest. The sky interpolates continuously. Text and its backing surface change together between day and night; do not crossfade foreground text through a low-contrast midpoint. Body text uses a stable, sufficiently opaque surface.
 
 ## 3. Typography
 
@@ -309,3 +309,41 @@ Contrast per §2; touch targets ≥ 44 pt; every interactive element has an acce
 ## 15. Phase 2 prototype gate
 
 Before building any other screen, build and show: `theme/tokens.ts`, `SkyBackground`, Sol with `idle`, `greeting`, `thinking` and `breathing`, and a skeleton Home. Record about 20 seconds on a real phone. The user approves or adjusts the direction. Only then continue. If Skia is janky, switch to the SVG fallback and record the decision in `docs/decisions/`.
+
+
+## 16. Phase 2a preview implementation
+
+The user confirmed the existing sky + Sol direction on 6 November 2026. Build the §15 preview first; splash, onboarding, saved check-ins, and real Home follow after the phone review. The preview is available only in development, from the signed-in account screen and `/design-preview`. Mood choices in this preview change Sol without saving health data.
+
+The preview uses SDK-compatible Skia 2 and Reanimated 4, bundled Fraunces/Figtree fonts, one root sky, and shared text, button and surface components. The Home sketch has a Sol hero followed by a single reading surface, an interactive mood row, a short breathing preview, and a text-led affirmation. Do not show inactive navigation tabs or fabricate streaks. Preview controls are separated below the sketch and hidden outside development: time slider, Auto/Day/Night, four Sol states, Reduce Motion, and Haptics.
+
+```text
++----------------------------+
+| [Back]         [Fri, 6 Nov] |
+|                            |
+|        ( glowing Sol )     |
+|                            |
+| Good evening, Puneet.      |
+| Take a breath. You're here.|
+|                            |
+| How are you arriving?      |
+| o    o    o    o    o      |
+| Heavy Low Okay Good Glowing|
+|                            |
+| [Take a slow breath]       |
+| You can take this moment   |
+| one breath at a time.      |
++----------------------------+
+| Preview controls           |
+| Sky time  ---o---------    |
+| Auto / Day / Night         |
+| Rest / Greet / Think /     |
+| Breathe                    |
+| Reduce Motion     [toggle] |
+| Haptics           [toggle] |
++----------------------------+
+```
+
+Readability correction: use 94% Dawn Mist or Night Ink for the main reading surface so all body, secondary and feedback text meets 4.5:1 across the sky. Day error text is deepened to `#914359`; the previous `#B4536A` did not reliably meet body-text contrast. Large greetings use the same safe surface. The sky remains visible around the character and page edges. Day/night foregrounds and their surfaces switch together; only the sky and mascot colors interpolate. Tests sample every local minute and surface position.
+
+Use EAS **local Android builds** with the existing signing profile on this Linux machine (the user confirmed local builds). No phone was attached at implementation start. Real-device performance and the roughly 20-second recording remain the gate; browser rendering and automated tests cannot establish 60 fps on Android.

@@ -41,7 +41,7 @@ Expected responses: `{"status":"ok"}` and `{"status":"ok","database":"connected"
 
 ## Run on Android
 
-See [Android setup](docs/setup/android.md). The app uses a development build, your own installable test version of Solace. EAS builds it in the cloud; Metro serves JavaScript changes from the computer.
+See [Android setup](docs/setup/android.md). The app uses a development build, your own installable test version of Solace. EAS compiles it locally on this Linux machine; Metro serves JavaScript changes from the computer. Follow [local Android setup](docs/setup/android-local.md) and run `npm run build:android:local -w @solace/mobile`.
 
 The API is hosted at `https://solace-ai-n8s4.onrender.com`. Set this as `EXPO_PUBLIC_API_URL` and set `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` to the same public Web OAuth client ID as the API. EAS profiles include these public values so ignored local environment files are not required for a cloud build. No private keys or database URLs belong in `EXPO_PUBLIC_*` variables.
 
@@ -78,3 +78,9 @@ GitHub Actions needs a `DATABASE_URL_TEST` repository secret pointing to a dedic
 - `docs/qa-checklist.md`: device checks that automation cannot replace.
 
 Render hosts the foundation API. Set `TRUST_PROXY=1` there and add the auth environment values before deploying the auth slice. The start command applies migrations before starting the API. See [foundation decisions](docs/decisions/0001-foundation.md).
+
+## Phase 2 design preview
+
+In the updated development app, tap **Meet Sol · Preview** from the signed-in screen. Tap Sol, choose a mood, try a slow breath, then scroll to the sky and motion controls. The preview does not save check-ins. Splash and onboarding follow the phone design review.
+
+For browser review only, run `npm run setup:web -w @solace/mobile` before opening `/design-preview` through Metro. This serves the matching CanvasKit file locally. Repeat setup after upgrading Skia; the generated WASM file is ignored. Android does not use this file.
