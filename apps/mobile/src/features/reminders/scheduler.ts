@@ -1,5 +1,6 @@
 import { isQuietTime, type ReminderSettings } from '@solace/shared';
 import { reminderBody } from './content';
+import { reminderDestinations } from './navigation';
 export type Permission = 'granted' | 'denied' | 'undetermined' | 'unsupported';
 export type PlannedReminder = {
   id: string;
@@ -25,7 +26,7 @@ export function reminderPlan(settings: ReminderSettings): PlannedReminder[] {
       hour: hour!,
       minute: minute!,
       body: reminderBody(r.type, weekday, r.customText),
-      route: r.type === 'mood' ? '/home' : `/reminder?type=${r.type}`,
+      route: reminderDestinations[r.type],
     }));
   });
 }

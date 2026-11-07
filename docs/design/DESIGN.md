@@ -518,3 +518,36 @@ Latest check-in
 ```
 
 Native Back compatibility: Expo 58 / React Native 0.88 on the tested Android 14 phone did not deliver BackHandler events with predictive Back enabled. Disable the Expo predictive-back opt-in; preserve tab history and focused detail fallbacks. Verify Android 16+ separately. Open page content uses the contrast-tested `surfaceAt(sky, 1)` base instead of the raw sky gradient color.
+
+## Connected daily experience — 8 November 2026
+
+The user chose to improve the connections between existing features before adding anything else. The product is a short daily conversation with a useful pause: check in → choose what to share → talk → optionally breathe → return to the same conversation. Keep the existing five destinations and quiet sea-glass design. No new feature modules, decorative systems, assessments or achievement mechanics.
+
+Home has one daily state. Before a check-in, the mood form is the primary action. After a save, including a return visit, it becomes a compact record of the latest mood, time, tags and note. Sol reflects that saved mood. “Talk about this” opens an editable draft containing the selected check-in; “Check in again” remains a quiet secondary choice. Do not repeat the saved entry in another section. A breathing shortcut, a short daily line and a Progress link support this flow without competing with it. Recompute the day in the phone's timezone and reset the form on a new day/account. Errors never masquerade as an empty day.
+
+The check-in handoff is explicit sharing, not background AI personalization. Only the user-visible draft is sent, after the user taps Send. Drafts stay in the account-scoped memory cache, never in navigation parameters, logs or persistent plaintext storage; leaving a conversation preserves its draft during the current app session. Clear that cache on account changes and conversation deletion. Failed creation/sends retain their retry keys. The existing Render API accepts these ordinary messages; no server-side mood access or memory is implied.
+
+Talk prioritizes continuing a conversation and starting a new one, then earlier history. Use readable dates for untitled threads rather than repeating “Conversation with Sol” everywhere. The conversation header identifies Sol as AI and keeps support accessible. The composer is one row with a multiline field and a 48 dp sea-glass send control. Keep a short, always-visible provider disclosure beside an expandable privacy explanation, and block sends when provider details cannot load. Full disclosures stay in onboarding and Privacy. Do not pull the reader away from older messages when a reply arrives; offer “Latest messages” instead.
+
+Breathing opens with the one-minute coherent rhythm and a primary Start action. Put other rhythms, durations, starting mood and haptics behind “Customize”. A notification may open the screen but never start the timer. A breathing break entered from a chat keeps that thread in the navigation stack. After a completed save, an explicit reflection action may prepare an editable follow-up there; an existing draft always wins and is never replaced. No activity is claimed complete before the user saves it. Crisis replies show support rather than an activity invitation.
+
+Remove the inactive memory toggle. Privacy describes current-conversation context, explicit check-in sharing, the configured AI-provider disclosure and real deletion controls. Existing device-local legacy preferences are preserved without activating or reinterpreting them; new onboarding defaults to no memory. Actual future memory must have fresh server-backed consent and inspect/delete controls before it is offered.
+
+Known reminder payloads map directly to the feature: mood → Home, breathing → Breathe, affirmation → Affirmations, self-care → Wellness. Custom reminders keep a small message page because the custom text is the content. Old allowlisted payloads remain compatible; unknown routes/parameters are rejected. Keep pending taps through sign-in until the final destination commits.
+
+```text
+Home                         Conversation                   Breathe
+solace · date      bell      Back  Sol · AI       Support   Back   Breathe
+Greeting, name    (Sol)      Conversation / first prompt    (Sol)
+[Today · Low · time       ]  Sol reply                      One minute · slow breathing
+[tags / optional note    ]  [Take a breathing break]       [Start breathing]
+[Talk about this         ]  [Latest messages, if needed]   Customize >
+Review before sending       [Editable message ...] [↑]     ... practice / save ...
+Check in again              Saved here · sent to provider  [Reflect with Sol]
+Breathe for a minute >      Chat privacy                   Opens a draft in your chat
+Today's words / Progress
+```
+
+Phone refinement: tighter message padding, a quiet breathing tool in the chat header instead of repeating an invitation after every reply, and two editable starter prompts for an empty conversation. The breathing tool is hidden during a crisis response. Neither starter prompts nor breathing reflections send automatically. The user explicitly requested a modern chat interface; give the reading area priority, use a compact arrow send control and preserve meaningful status feedback.
+
+Verification focuses on saved-day/revisit/new-day states, explicit draft sharing and account isolation, create/send retries, conversation resumption, preserved drafts across breathing, completion/save/return, legacy reminder destinations, native Back and enlarged text. Preserve the connected phone's account, signing certificate and preferences. No new rating is claimed from a visual pass.

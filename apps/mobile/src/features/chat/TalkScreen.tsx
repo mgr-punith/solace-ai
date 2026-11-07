@@ -1,20 +1,17 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Alert, FlatList, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Action, AppText } from '../../components/ui/primitives';
+import { Action, AppText, Surface } from '../../components/ui/primitives';
 import { PageHeader, NavigationRow, IconButton, layoutStyles } from '../../components/ui/layout';
 import { Companion } from '../../components/sol/Companion';
 import { tokens } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useChatProvider } from './provider-info';
 import { ProviderNotice } from './ProviderNotice';
-import {
-  newChatRequestId,
-  useConversations,
-  useCreateConversation,
-  useDeleteConversation,
-} from './hooks';
+import { useConversations, useDeleteConversation } from './hooks';
+import { useStartConversation } from './useStartConversation';
+import { conversationTitle, conversationTime } from './titles';
 
 export function TalkScreen() {
   const provider = useChatProvider();
@@ -22,24 +19,11 @@ export function TalkScreen() {
   const { fontScale } = useWindowDimensions();
   const [response, setResponse] = useState<string | null>(null);
   const query = useConversations();
-  const create = useCreateConversation();
+  const create = useStartConversation();
   const deletion = useDeleteConversation();
-  const requestId = useRef<string | null>(null);
-  const starting = useRef(false);
-  async function start() {
-    if (starting.current) return;
-    starting.current = true;
-    requestId.current ??= newChatRequestId();
-    try {
-      const conversation = await create.mutateAsync(requestId.current);
-      requestId.current = null;
-      router.push({ pathname: '/chat/[id]', params: { id: conversation.id } });
-    } catch {
-      /* Mutation renders a recoverable error and retains the creation key. */
-    } finally {
-      starting.current = false;
-    }
-  }
+  const conversations = query.data?.pages.flatMap((page) => page.items) ?? [];
+  const newest = conversations[0];
+  const open = (id: string) => router.push({ pathname: '/chat/[id]', params: { id } });
   function remove(id: string) {
     const action = () => deletion.mutate(id);
     if (Platform.OS === 'web') {
@@ -54,7 +38,7 @@ export function TalkScreen() {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.screen}>
       <FlatList
-        data={query.data?.pages.flatMap((page) => page.items) ?? []}
+        data={conversations.slice(1)}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.content}
         refreshing={query.isRefetching}
@@ -62,19 +46,44 @@ export function TalkScreen() {
         ListHeaderComponent={
           <View style={styles.header}>
             <PageHeader title="Talk with Sol" />
-            <View style={[layoutStyles.row, fontScale > 1.2 && styles.stacked]}>
-              <Companion size={tokens.sol.home} onResponse={setResponse} />
+            <View style={[layoutStyles.row, fontScale > 1.5 && styles.stacked]}>
+              <Companion size={tokens.sol.compact} onResponse={setResponse} />
               <View style={layoutStyles.grow}>
-                <AppText variant="heading">A place to talk.</AppText>
                 <AppText variant="bodySmall" accessibilityLiveRegion="polite">
-                  {response ?? 'Bring whatever is on your mind.'}
-                </AppText>
-                <AppText variant="caption" tone="secondary">
-                  Tap Sol, or hold for a quiet breath
+                  {response ?? 'What’s on your mind?'}
                 </AppText>
               </View>
             </View>
-            <Action icon="plus" disabled={create.isPending} onPress={() => void start()}>
+            {newest && (
+              <Surface>
+                <View style={layoutStyles.row}>
+                  <View style={layoutStyles.grow}>
+                    <AppText variant="caption" tone="secondary">
+                      Your newest conversation
+                    </AppText>
+                    <AppText variant="heading">{conversationTitle(newest)}</AppText>
+                    <AppText variant="caption" tone="secondary">
+                      {conversationTime(newest)}
+                    </AppText>
+                  </View>
+                  <IconButton
+                    icon="delete"
+                    label="Delete conversation"
+                    disabled={deletion.isPending}
+                    onPress={() => remove(newest.id)}
+                  />
+                </View>
+                <Action icon="talk" onPress={() => open(newest.id)}>
+                  Continue conversation
+                </Action>
+              </Surface>
+            )}
+            <Action
+              icon="plus"
+              secondary={!!newest}
+              disabled={create.isPending}
+              onPress={() => void create.start()}
+            >
               {create.isPending
                 ? 'Opening conversation…'
                 : create.isError
@@ -99,7 +108,7 @@ export function TalkScreen() {
                 </Action>
               </>
             )}
-            <AppText variant="heading">Your conversations</AppText>
+            {conversations.length > 1 && <AppText variant="heading">Earlier conversations</AppText>}
           </View>
         }
         renderItem={({ item }) => (
@@ -107,10 +116,10 @@ export function TalkScreen() {
             <View style={layoutStyles.grow}>
               <NavigationRow
                 icon="talk"
-                title={item.title}
-                label="Continue conversation"
-                subtitle={new Date(item.createdAt).toLocaleString()}
-                onPress={() => router.push({ pathname: '/chat/[id]', params: { id: item.id } })}
+                title={conversationTitle(item)}
+                label={`Continue ${conversationTitle(item)}, ${conversationTime(item)}`}
+                subtitle={conversationTime(item)}
+                onPress={() => open(item.id)}
               />
             </View>
             <IconButton
@@ -122,15 +131,17 @@ export function TalkScreen() {
           </View>
         )}
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <AppText>
-              {query.isPending
-                ? 'Opening your conversations…'
-                : query.isError
-                  ? 'Your saved chats are still in your account.'
-                  : 'Your first conversation can start anywhere.'}
-            </AppText>
-          </View>
+          !newest ? (
+            <View style={styles.empty}>
+              <AppText>
+                {query.isPending
+                  ? 'Opening your conversations…'
+                  : query.isError
+                    ? 'Your saved chats are still in your account.'
+                    : 'Start with a few words. Sol will take it from there.'}
+              </AppText>
+            </View>
+          ) : undefined
         }
         ListFooterComponent={
           <View style={styles.footer}>
@@ -143,10 +154,7 @@ export function TalkScreen() {
                 Load earlier conversations
               </Action>
             )}
-            <AppText variant="caption" tone="secondary">
-              Sol is an AI companion, not a therapist. Memory across conversations is not active.
-            </AppText>
-            <ProviderNotice query={provider} />
+            <ProviderNotice query={provider} compact />
             <NavigationRow
               icon="support"
               title="Need support now?"

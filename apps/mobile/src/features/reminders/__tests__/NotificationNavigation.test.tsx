@@ -35,13 +35,13 @@ afterEach(() => {
 });
 it('retains a tap through sign-in, onboarding and navigation until the destination opens', async () => {
   jest.useFakeTimers();
-  notificationTarget.set('/reminder?type=breathing');
+  notificationTarget.set('/breathing');
   const view = await render(<NotificationNavigation />);
   await act(async () => {
     jest.runOnlyPendingTimers();
   });
   expect(router.replace).not.toHaveBeenCalled();
-  expect(notificationTarget.getSnapshot()).toBe('/reminder?type=breathing');
+  expect(notificationTarget.getSnapshot()).toBe('/breathing');
   mockSignedIn = true;
   mockNeedsIntro = true;
   await view.rerender(<NotificationNavigation />);
@@ -54,16 +54,17 @@ it('retains a tap through sign-in, onboarding and navigation until the destinati
   await act(async () => {
     jest.runOnlyPendingTimers();
   });
-  expect(router.replace).toHaveBeenCalledWith('/reminder?type=breathing');
+  expect(router.replace).toHaveBeenCalledWith('/breathing');
   // The entry screen must still redirect to the reminder while replace is queued.
-  expect(notificationTarget.getSnapshot()).toBe('/reminder?type=breathing');
+  expect(notificationTarget.getSnapshot()).toBe('/breathing');
   await view.rerender(<NotificationNavigation />);
   expect(router.replace).toHaveBeenCalledTimes(1);
   mockPathname = '/reminder';
   mockType = 'affirmation';
   await view.rerender(<NotificationNavigation />);
-  expect(notificationTarget.getSnapshot()).toBe('/reminder?type=breathing');
-  mockType = 'breathing';
+  expect(notificationTarget.getSnapshot()).toBe('/breathing');
+  mockPathname = '/breathing';
+  mockType = undefined;
   await view.rerender(<NotificationNavigation />);
   expect(notificationTarget.getSnapshot()).toBeNull();
 });

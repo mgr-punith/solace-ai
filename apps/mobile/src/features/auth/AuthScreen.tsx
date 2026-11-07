@@ -1,15 +1,15 @@
-import { ActivityIndicator, Alert, Platform, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, StyleSheet } from 'react-native';
 import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import { router } from 'expo-router';
 import { tokens } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { Screen } from '../../components/ui/Screen';
 import { Action, AppText, Surface } from '../../components/ui/primitives';
-import { NavigationRow, PageHeader, layoutStyles } from '../../components/ui/layout';
-import { Icon } from '../../components/ui/Icon';
+import { NavigationRow, PageHeader } from '../../components/ui/layout';
 import { Companion } from '../../components/sol/Companion';
 import { useOnboarding } from '../onboarding/context';
 import { useAuth } from './context';
+import { firstName } from '../home/greeting';
 
 export function AuthScreen() {
   const auth = useAuth();
@@ -42,7 +42,7 @@ export function AuthScreen() {
   return (
     <Screen centered={auth.status !== 'signedIn'} inTabs={auth.status === 'signedIn'}>
       {auth.status === 'signedIn' ? (
-        <PageHeader title="Your space" subtitle="Care that fits around you." />
+        <PageHeader title="You" />
       ) : (
         <Companion size={tokens.sol.hero} state="greeting" />
       )}
@@ -55,7 +55,7 @@ export function AuthScreen() {
           accessibilityRole="header"
         >
           {auth.status === 'signedIn'
-            ? `Hello, ${auth.session?.user.name.trim().split(/\s+/)[0]}.`
+            ? `Hello, ${firstName(auth.session?.user.name)}.`
             : 'A little space, just for you.'}
         </AppText>
         {auth.status === 'restoring' ? (
@@ -66,8 +66,6 @@ export function AuthScreen() {
             />
             <AppText>Opening your space…</AppText>
           </>
-        ) : auth.status === 'signedIn' ? (
-          <AppText tone="secondary">A few choices to make Solace feel like yours.</AppText>
         ) : auth.status === 'signedOut' ? (
           <AppText tone="secondary">
             Sign in to start your space. Your Google name and email create your account.
@@ -117,8 +115,8 @@ export function AuthScreen() {
             />
             <NavigationRow
               icon="privacy"
-              title="Privacy and memory"
-              subtitle="Your information. Your choice."
+              title="Privacy"
+              subtitle="What Sol can use, and how to delete it"
               disabled={busy}
               onPress={() => router.push('/privacy')}
             />
@@ -171,12 +169,6 @@ export function AuthScreen() {
             />
           </>
         )}
-        <View style={layoutStyles.row}>
-          <Icon name="privacy" size={tokens.icon.sm} />
-          <AppText variant="caption" tone="secondary">
-            Your pace. Your privacy. Always.
-          </AppText>
-        </View>
         <AppText variant="bodySmall" tone="secondary">
           Solace is an AI companion, not a therapist or a substitute for professional care.
         </AppText>

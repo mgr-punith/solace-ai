@@ -54,7 +54,7 @@ beforeEach(() => {
     saved = value;
   });
 });
-it('skip still shows privacy with memory off, and only a successful save opens sign-in', async () => {
+it('skip still shows current privacy without inactive memory controls, and requires successful acknowledgement', async () => {
   await render(<App />);
   await waitFor(() =>
     expect(
@@ -63,7 +63,8 @@ it('skip still shows privacy with memory off, and only a successful save opens s
   );
   await fireEvent.press(screen.getByRole('button', { name: 'Skip intro' }));
   expect(screen.getByText('Your space. Your choice.')).toBeTruthy();
-  expect(screen.getByLabelText('Let Sol remember what helps me').props.value).toBe(false);
+  expect(screen.queryByRole('switch')).toBeNull();
+  expect(screen.getByText(/Sol uses the current conversation/)).toBeTruthy();
   expect(router.replace).not.toHaveBeenCalled();
   jest.mocked(onboardingStorage.write).mockRejectedValueOnce(new Error('disk full'));
   await fireEvent.press(screen.getByRole('button', { name: 'Continue to sign in' }));

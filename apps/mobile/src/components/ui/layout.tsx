@@ -8,11 +8,13 @@ export function IconButton({
   label,
   onPress,
   disabled = false,
+  primary = false,
 }: {
   icon: IconName;
   label: string;
   onPress: () => void;
   disabled?: boolean;
+  primary?: boolean;
 }) {
   const { sky } = useTheme();
   return (
@@ -25,12 +27,13 @@ export function IconButton({
       style={({ pressed }) => [
         styles.iconButton,
         {
-          backgroundColor: sky.surface,
+          backgroundColor: primary ? tokens.action.background : sky.surface,
+          borderRadius: primary ? tokens.radius.button : tokens.radius.pill,
           opacity: disabled ? tokens.opacity.disabled : pressed ? tokens.opacity.pressed : 1,
         },
       ]}
     >
-      <Icon name={icon} />
+      <Icon name={icon} color={primary ? tokens.action.text : sky.palette.text} />
     </Pressable>
   );
 }

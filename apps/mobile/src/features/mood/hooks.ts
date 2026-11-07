@@ -45,7 +45,18 @@ export function useSaveMood() {
   const userId = auth.session?.user.id;
   return useMutation({
     mutationFn: (input: MoodInput) => auth.request((token) => moodApi.save(token, input)),
-    onSuccess: () => {
+    onSuccess: (entry) => {
+      // Home can immediately show the server-confirmed save without a duplicate local copy.
+      client.setQueryData(
+        [
+          'mood',
+          userId,
+          'today',
+          entry.timezone,
+          localDay(new Date(entry.createdAt), entry.timezone),
+        ],
+        { items: [entry], nextCursor: null },
+      );
       void client.invalidateQueries({ queryKey: ['mood', userId] });
       void client.invalidateQueries({ queryKey: ['progress', userId] });
     },

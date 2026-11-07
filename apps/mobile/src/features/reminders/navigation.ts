@@ -1,13 +1,21 @@
-import { reminderTypes } from '@solace/shared';
-export type ReminderTarget = '/home' | `/reminder?type=${(typeof reminderTypes)[number]}`;
-const targets = new Set<string>([
-  '/home',
-  ...reminderTypes.map((type) => `/reminder?type=${type}`),
-]);
+import { reminderTypes, type ReminderType } from '@solace/shared';
+export type ReminderTarget =
+  '/home' | '/breathing' | '/affirmations' | '/wellness' | '/reminder?type=custom';
+export const reminderDestinations: Record<ReminderType, ReminderTarget> = {
+  mood: '/home',
+  breathing: '/breathing',
+  affirmation: '/affirmations',
+  'self-care': '/wellness',
+  custom: '/reminder?type=custom',
+};
+const targets = new Map<string, ReminderTarget>(
+  Object.values(reminderDestinations).map((route) => [route, route]),
+);
+for (const type of reminderTypes) targets.set(`/reminder?type=${type}`, reminderDestinations[type]);
 export function parseReminderTarget(data: unknown): ReminderTarget | null {
   if (!data || typeof data !== 'object' || !('route' in data) || typeof data.route !== 'string')
     return null;
-  return targets.has(data.route) ? (data.route as ReminderTarget) : null;
+  return targets.get(data.route) ?? null;
 }
 let target: ReminderTarget | null = null;
 const listeners = new Set<() => void>();
