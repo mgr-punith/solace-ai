@@ -5,6 +5,8 @@ import { NotificationNavigation } from '../context';
 import { notificationTarget } from '../navigation';
 let mockSignedIn = false;
 let mockNeedsIntro = false;
+let mockPathname = '/';
+let mockType: string | undefined;
 jest.mock('../../auth/context', () => ({
   useAuth: () => ({ status: mockSignedIn ? 'signedIn' : 'signedOut' }),
 }));
@@ -20,14 +22,18 @@ jest.mock('../../../lib/notifications', () => ({ observeNotificationTaps: jest.f
 jest.mock('expo-router', () => ({
   router: { replace: jest.fn() },
   useRootNavigationState: () => ({ key: 'root' }),
+  usePathname: () => mockPathname,
+  useGlobalSearchParams: () => ({ type: mockType }),
 }));
 afterEach(() => {
   notificationTarget.set(null);
   jest.useRealTimers();
   mockSignedIn = false;
   mockNeedsIntro = false;
+  mockPathname = '/';
+  mockType = undefined;
 });
-it('retains a tap through sign-in and onboarding, then navigates and consumes it once', async () => {
+it('retains a tap through sign-in, onboarding and navigation until the destination opens', async () => {
   jest.useFakeTimers();
   notificationTarget.set('/reminder?type=breathing');
   const view = await render(<NotificationNavigation />);
@@ -49,7 +55,28 @@ it('retains a tap through sign-in and onboarding, then navigates and consumes it
     jest.runOnlyPendingTimers();
   });
   expect(router.replace).toHaveBeenCalledWith('/reminder?type=breathing');
-  expect(notificationTarget.getSnapshot()).toBeNull();
+  // The entry screen must still redirect to the reminder while replace is queued.
+  expect(notificationTarget.getSnapshot()).toBe('/reminder?type=breathing');
   await view.rerender(<NotificationNavigation />);
   expect(router.replace).toHaveBeenCalledTimes(1);
+  mockPathname = '/reminder';
+  mockType = 'affirmation';
+  await view.rerender(<NotificationNavigation />);
+  expect(notificationTarget.getSnapshot()).toBe('/reminder?type=breathing');
+  mockType = 'breathing';
+  await view.rerender(<NotificationNavigation />);
+  expect(notificationTarget.getSnapshot()).toBeNull();
+});
+
+it('consumes a Home reminder already at its destination without navigating again', async () => {
+  jest.useFakeTimers();
+  mockSignedIn = true;
+  mockPathname = '/home';
+  notificationTarget.set('/home');
+  await render(<NotificationNavigation />);
+  await act(async () => {
+    jest.runOnlyPendingTimers();
+  });
+  expect(notificationTarget.getSnapshot()).toBeNull();
+  expect(router.replace).not.toHaveBeenCalled();
 });
