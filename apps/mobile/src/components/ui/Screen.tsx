@@ -41,7 +41,7 @@ export function Screen({
 }
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  scroll: { flexGrow: 1, alignItems: 'center', padding: tokens.spacing.lg },
+  scroll: { flexGrow: 1, alignItems: 'center', padding: tokens.spacing.ml },
   centered: { justifyContent: 'center' },
-  content: { width: '100%', maxWidth: tokens.maxWidth, gap: tokens.spacing.lg },
+  content: { width: '100%', maxWidth: tokens.maxWidth, gap: tokens.spacing.ml },
 });

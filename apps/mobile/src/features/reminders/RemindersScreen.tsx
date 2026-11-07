@@ -1,6 +1,6 @@
+import { useScreenBack } from '../../lib/useScreenBack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, StyleSheet, Switch, TextInput, View } from 'react-native';
-import { router } from 'expo-router';
 import {
   isQuietTime,
   reminderSettingsSchema,
@@ -9,6 +9,7 @@ import {
 } from '@solace/shared';
 import { Action, AppText, Surface } from '../../components/ui/primitives';
 import { Screen } from '../../components/ui/Screen';
+import { PageHeader } from '../../components/ui/layout';
 import { Icon, type IconName } from '../../components/ui/Icon';
 import { tokens } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -62,6 +63,7 @@ function TimeInput({
   );
 }
 export function RemindersScreen() {
+  const goBack = useScreenBack('/you');
   const reminders = useReminders();
   const { sky } = useTheme();
   const [draft, setDraft] = useState<ReminderSettings | null>(reminders.settings);
@@ -110,12 +112,7 @@ export function RemindersScreen() {
   }
   return (
     <Screen keyboard>
-      <Action icon="back" secondary onPress={() => router.replace('/you')}>
-        Back to You
-      </Action>
-      <AppText variant="display" accessibilityRole="header">
-        Gentle reminders
-      </AppText>
+      <PageHeader title="Gentle reminders" back={goBack} />
       <AppText tone="secondary">
         Choose when a little nudge would help. Everything starts off. Times follow this phone’s
         local time.

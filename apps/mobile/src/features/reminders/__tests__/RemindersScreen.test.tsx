@@ -6,7 +6,10 @@ import { useReminders } from '../context';
 import { requestNotificationPermission } from '../../../lib/notifications';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 jest.mock('../context', () => ({ useReminders: jest.fn() }));
-jest.mock('expo-router', () => ({ router: { replace: jest.fn() } }));
+jest.mock('expo-router', () => ({
+  useFocusEffect: jest.fn(),
+  router: { replace: jest.fn() },
+}));
 jest.mock('../../../lib/notifications', () => ({ requestNotificationPermission: jest.fn() }));
 jest.mock('../../../lib/useMotionPreferences', () => ({
   useMotionPreferences: () => ({ active: true, reduceMotion: true }),

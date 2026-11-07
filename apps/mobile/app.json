@@ -11,7 +11,7 @@
     },
     "android": {
       "package": "com.puneet.solace",
-      "predictiveBackGestureEnabled": true,
+      "predictiveBackGestureEnabled": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/sol-icon-foreground.png",
         "backgroundColor": "#9CC9BF"

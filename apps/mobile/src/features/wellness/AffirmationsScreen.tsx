@@ -1,6 +1,7 @@
+import { useScreenBack } from '../../lib/useScreenBack';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { affirmationForDay, localDay, type ActivityInput } from '@solace/shared';
 import { Screen } from '../../components/ui/Screen';
 import { Action, AppText, Surface } from '../../components/ui/primitives';
@@ -11,6 +12,7 @@ import { tokens } from '../../theme/tokens';
 import { deviceTimezone } from '../mood/hooks';
 import { activityRequestId, useFavorite, useFavorites, useSaveActivity } from './hooks';
 export function AffirmationsScreen() {
+  const goBack = useScreenBack('/wellness');
   const { saved } = useLocalSearchParams<{ saved?: string }>();
   const [showSaved, setShowSaved] = useState(saved === '1');
   const { now, sky } = useTheme();
@@ -52,7 +54,7 @@ export function AffirmationsScreen() {
       <PageHeader
         title="Words to keep"
         subtitle="Take what resonates. Leave what doesn’t."
-        back={() => (router.canGoBack() ? router.back() : router.replace('/wellness'))}
+        back={goBack}
       />
       <View style={layoutStyles.wrap}>
         <Action secondary selected={!showSaved} onPress={() => setShowSaved(false)}>

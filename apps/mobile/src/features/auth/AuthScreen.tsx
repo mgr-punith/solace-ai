@@ -46,8 +46,14 @@ export function AuthScreen() {
       ) : (
         <Companion size={tokens.sol.hero} state="greeting" />
       )}
-      <Surface accessibilityLiveRegion="polite">
-        <AppText variant="display" accessibilityRole="header">
+      <Surface
+        accessibilityLiveRegion="polite"
+        style={auth.status === 'signedIn' ? styles.account : undefined}
+      >
+        <AppText
+          variant={auth.status === 'signedIn' ? 'heading' : 'display'}
+          accessibilityRole="header"
+        >
           {auth.status === 'signedIn'
             ? `Hello, ${auth.session?.user.name.trim().split(/\s+/)[0]}.`
             : 'A little space, just for you.'}
@@ -178,4 +184,12 @@ export function AuthScreen() {
     </Screen>
   );
 }
-const styles = StyleSheet.create({ googleButton: { width: '100%', height: tokens.target } });
+const styles = StyleSheet.create({
+  googleButton: { width: '100%', height: tokens.target },
+  account: {
+    backgroundColor: tokens.colors.clear,
+    borderWidth: 0,
+    padding: 0,
+    gap: tokens.spacing.sm,
+  },
+});

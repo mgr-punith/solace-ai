@@ -8,6 +8,7 @@ import { wellnessApi } from '../../wellness/api';
 jest.mock('../../wellness/api', () => ({ wellnessApi: { save: jest.fn() } }));
 jest.mock('../../../components/sol/Sol', () => ({ __esModule: true, default: () => null }));
 jest.mock('expo-router', () => ({
+  useFocusEffect: jest.fn(),
   useIsFocused: () => true,
   usePreventRemove: jest.fn(),
   router: { replace: jest.fn(), canGoBack: () => false },

@@ -480,12 +480,41 @@ Notification destinations keep their existing allowlisted reminder route for com
 
 The user delegated full-app UI/UX ownership on 7 November 2026, including icon selection. Refine the existing brand across onboarding, Home, Talk, Progress, Wellness and You. References inspected: [Headspace](https://www.headspace.com/) for clear hierarchy, succinct activity choices and expressive illustration; [Finch](https://finchcare.com/) for companion warmth and approachable daily actions. These are design references, not a claim about current app-store rankings. Calm's website denied access during research. Use original Sol artwork and copy; do not copy assets or screens.
 
-Composition: a quiet reading background with the local-time sky visible behind Sol and around page edges. The character, generous serif titles and sea-glass primary actions establish the first impression. Home starts with a compact date/profile row and a greeting beside Sol, followed immediately by the mood interaction. A featured breathing invitation, a typographic affirmation and a small progress row have different forms rather than repeating identical cards. Hide optional mood details until requested.
+Composition: a quiet reading background with the local-time sky informing the backdrop and Sol palette. The character, generous serif titles and sea-glass primary actions establish the first impression. Home starts with a compact date/profile row and a greeting beside Sol, followed immediately by the mood interaction. A featured breathing invitation, a typographic affirmation and a small progress row have different forms rather than repeating identical cards. Hide optional mood details until requested.
 
-Use **Lucide** consistently: house, flower-2, message-circle, chart-no-axes-combined, user-round for the five tabs; wind for breathing; heart for favorites; bell for reminders; shield-check for privacy; life-buoy for support; chevrons for navigation. Stroke 1.8–2 at 22–24 dp, rounded caps, semantic colors. The center Talk icon sits in a sea-glass disc. Tabs keep text labels. Icon-only controls have spoken labels and at least 48 dp targets. Lucide's maintained React Native package plus Expo-compatible SVG renderer replace placeholder shapes; this dependency earns its place through consistent app-wide navigation and actions.
+Use **Lucide** consistently: house, flower-2, message-circle, chart-no-axes-combined, user-round for the five tabs; wind for breathing; heart for favorites; bell for reminders; shield-check for privacy; life-buoy for support; chevrons for navigation. Stroke 1.8–2 at 22–24 dp, rounded caps, semantic colors. The selected tab icon sits in a sea-glass indicator; Talk follows the same selection rule as the other tabs. Tabs keep text labels. Icon-only controls have spoken labels and at least 48 dp targets. Lucide's maintained React Native package plus Expo-compatible SVG renderer replace placeholder shapes; this dependency earns its place through consistent app-wide navigation and actions.
 
 Reading surfaces use a slightly smaller 24 dp radius, no grey shadows, and restrained borders. Reserve framed surfaces for grouped actions and content; headings and navigation rows should not each become cards. Primary buttons receive a short scale response via Reanimated; no motion when Reduce Motion is enabled. Every screen remains scrollable where needed. Chat uses distinct user bubbles and open Sol replies with a compact composer; history and settings use icon-led rows. Destructive actions stay clearly labeled and confirmed.
 
 Visual QA correction: navigation scenes need an opaque base sampled from the current sky's lower color. Fully transparent retained scenes allowed the previous tab's text and controls to show through the next screen on web. The root sky remains the transition backdrop; each screen's calm opaque base prevents overlap. The greeting uses a small time-of-day line and a large name beside Sol so long greetings never break in the middle of a word. The tab bar reserves label height plus the device's bottom safe area.
 
+### Phone sizing and navigation refinement
+
+The first installed Phase 6 review found oversized text/icons and an ambiguous permanently highlighted Talk tab. Tighten the default scale: display 30/38, title 24/32, heading 18/26, body 16/24, supporting text 14/20, caption 12/17, button 16/22. Interior page headers use the title role. Icons use 16/22/28 dp; tab labels use 11/15. Keep 48 dp touch targets and native text scaling. Use 20 dp page gutters and gaps. Preserve the phone's display-density and font preferences.
+
+Only the selected tab receives the sea-glass indicator and strong label; every tab follows the same rule. Android Back traverses visited tabs, then exits only at the root with no prior route. Screen Back actions pop the previous route, with a safe parent destination for direct entry. Breathing retains its unsaved-session confirmation.
+
 Launcher icon: the original Sol face centered on Sea Glass, with a separate transparent 1024 px foreground for Android's adaptive mask. Uses the existing original mascot artwork; no external brand assets. Android adaptive safe-area composition must be checked in the installed preview.
+
+### Density and character interaction — phone review
+
+Button refinement requested during the phone review: primary actions use a 16 dp rounded rectangle in sea glass, with a steady semibold label and optional leading icon. Secondary actions use the same shape with a fine outline; optional disclosures and cancellation use quiet text controls. Keep pill shapes for tags and selections only. Press compresses to 98% over 120 ms and releases over 220 ms; Reduce Motion keeps the shape still. All variants retain 48 dp minimum targets, wrapping labels, disabled semantics and readable light/dark colors.
+
+The user found the first pass too spacious and generic. Use an open page header, a compact greeting and a single framed mood form on Home. Follow with two short activity rows, an unboxed daily line and the latest check-in; remove duplicated progress panels and introductory prose. Talk puts New conversation directly below a compact Sol introduction, with a divided list of saved threads. Wellness pairs a small Sol with a breathing action and uses open typography for the daily line. Keep readable 16 dp body text, 48 dp hit targets and native text scaling; reduce container padding and repetition instead of shrinking accessibility.
+
+Sol is the playful focal point. Tap cycles through a wave, delighted expression and wink, with a short visible response. Touch compresses the body; release gives a small spring-like rebound. Holding invites a slow breath with closed eyes until release, without logging an activity. Mood changes update color, expression and supportive copy. Reactions stop when the screen is inactive, release/cancel clears the hold, and Reduce Motion shows the same expressions and words without movement. Responses use local copy and never imply an AI-generated reply or a human companion.
+
+```text
+Home                         Talk                       Wellness
+solace · date     bell       Talk with Sol              A moment for you
+Greeting, name     (Sol)     (Sol) A place to talk      Breathe with Sol (Sol)
+tap / hold hint              [New conversation]         [Start breathing]
+[Mood choices             ] Your conversations         Today's words
+[details       Save       ] thread · date        >     Daily line in open space
+Breathe                  >  thread · date        >     Open affirmations      >
+Talk with Sol            >  provider/privacy note      Saved words            >
+Today's line                Support                    Reminders              >
+Latest check-in
+```
+
+Native Back compatibility: Expo 58 / React Native 0.88 on the tested Android 14 phone did not deliver BackHandler events with predictive Back enabled. Disable the Expo predictive-back opt-in; preserve tab history and focused detail fallbacks. Verify Android 16+ separately. Open page content uses the contrast-tested `surfaceAt(sky, 1)` base instead of the raw sky gradient color.

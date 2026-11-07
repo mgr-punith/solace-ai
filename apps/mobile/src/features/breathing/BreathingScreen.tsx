@@ -1,5 +1,6 @@
+import { useScreenBack } from '../../lib/useScreenBack';
 import { useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Platform, Switch, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, Pressable, Switch, View } from 'react-native';
 import { router, usePreventRemove } from 'expo-router';
 import {
   breathingPatterns,
@@ -49,10 +50,12 @@ function MoodRating({
   );
 }
 export function BreathingScreen() {
+  const goBack = useScreenBack('/wellness');
   const { practice, start, pause, resume, reset } = usePractice();
   const [pattern, setPattern] = useState<BreathingPattern>('coherent');
   const [duration, setDuration] = useState<(typeof practiceDurations)[number]>(60);
   const [beforeMood, setBeforeMood] = useState<number | null>(null);
+  const [showBeforeMood, setShowBeforeMood] = useState(false);
   const [afterMood, setAfterMood] = useState<number | null>(null);
   const [saved, setSaved] = useState(false);
   const [discard, setDiscard] = useState(false);
@@ -125,14 +128,10 @@ export function BreathingScreen() {
   }
   return (
     <Screen>
-      <PageHeader
-        title="Breathe"
-        subtitle="One breath at a time."
-        back={() => (router.canGoBack() ? router.back() : router.replace('/wellness'))}
-      />
+      <PageHeader title="Breathe" subtitle="One breath at a time." back={goBack} />
       {!practice ? (
         <>
-          <Surface>
+          <View style={layoutStyles.gap}>
             <View style={layoutStyles.row}>
               <Icon name="wind" />
               <AppText variant="heading">Find your rhythm</AppText>
@@ -141,17 +140,36 @@ export function BreathingScreen() {
               Stay comfortable. You can pause or stop whenever you need.
             </AppText>
             {(['coherent', 'box', '478'] as BreathingPattern[]).map((key) => (
-              <View key={key} style={{ gap: tokens.spacing.xs }}>
-                <Action secondary selected={pattern === key} onPress={() => setPattern(key)}>
-                  {breathingPatterns[key].name}
-                </Action>
-                <AppText variant="caption" tone="secondary" style={{ textAlign: 'center' }}>
-                  {breathingPatterns[key].description}
-                </AppText>
-              </View>
+              <Pressable
+                key={key}
+                accessibilityRole="button"
+                accessibilityLabel={breathingPatterns[key].name}
+                accessibilityState={{ selected: pattern === key }}
+                onPress={() => setPattern(key)}
+                style={({ pressed }) => [
+                  {
+                    minHeight: tokens.target,
+                    padding: tokens.spacing.smd,
+                    borderRadius: tokens.radius.tag,
+                    borderWidth: tokens.border,
+                    borderColor: pattern === key ? sky.palette.text : sky.surface,
+                    backgroundColor: sky.surface,
+                    opacity: pressed ? tokens.opacity.pressed : 1,
+                  },
+                  layoutStyles.row,
+                ]}
+              >
+                <View style={layoutStyles.grow}>
+                  <AppText>{breathingPatterns[key].name}</AppText>
+                  <AppText variant="caption" tone="secondary">
+                    {breathingPatterns[key].description}
+                  </AppText>
+                </View>
+                {pattern === key && <Icon name="check" />}
+              </Pressable>
             ))}
-          </Surface>
-          <Surface>
+          </View>
+          <View style={layoutStyles.gap}>
             <AppText variant="heading">How much time feels right?</AppText>
             <View style={layoutStyles.wrap}>
               {practiceDurations.map((seconds) => (
@@ -163,12 +181,17 @@ export function BreathingScreen() {
                 >{`${seconds / 60} min`}</Action>
               ))}
             </View>
-            <MoodRating
-              label="Before your session"
-              value={beforeMood}
-              onChange={setBeforeMood}
-              disabled={false}
-            />
+            <Action variant="quiet" onPress={() => setShowBeforeMood(!showBeforeMood)}>
+              {showBeforeMood ? 'Hide starting mood' : 'Add a starting mood · optional'}
+            </Action>
+            {showBeforeMood && (
+              <MoodRating
+                label="Before your session"
+                value={beforeMood}
+                onChange={setBeforeMood}
+                disabled={false}
+              />
+            )}
             <View style={layoutStyles.row}>
               <AppText style={layoutStyles.grow}>Gentle haptics</AppText>
               <Switch
@@ -181,7 +204,7 @@ export function BreathingScreen() {
             <Action icon="play" onPress={() => start(duration)}>
               Start breathing
             </Action>
-          </Surface>
+          </View>
         </>
       ) : (
         <Surface>

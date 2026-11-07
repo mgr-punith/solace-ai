@@ -1,6 +1,6 @@
 import Svg, { Circle, Path } from 'react-native-svg';
 import { moods, tokens } from '../../theme/tokens';
-export function MoodFace({ mood, size = tokens.spacing.xxl }: { mood: number; size?: number }) {
+export function MoodFace({ mood, size = tokens.moodFace }: { mood: number; size?: number }) {
   const mouths = [
     'M 13 27 Q 20 18 27 27',
     'M 14 26 Q 20 22 26 26',

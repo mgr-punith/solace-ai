@@ -99,7 +99,7 @@ export function MoodForm({
           </Pressable>
         ))}
       </View>
-      <Action secondary disabled={locked} onPress={() => setExpanded(!expanded)}>
+      <Action variant="quiet" disabled={locked} onPress={() => setExpanded(!expanded)}>
         {expanded ? 'Hide extra details' : 'Add a little more'}
       </Action>
       {expanded && (

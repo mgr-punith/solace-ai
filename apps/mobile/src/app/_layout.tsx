@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from '../features/auth/context';
 import { ThemeProvider, useTheme } from '../theme/ThemeProvider';
 import { SkyBackground } from '../theme/SkyBackground';
 import { tokens } from '../theme/tokens';
+import { surfaceAt } from '../theme/sky';
 import { OnboardingProvider, useOnboarding } from '../features/onboarding/context';
 import { StartupGate } from '../features/onboarding/StartupGate';
 import { ReminderProvider, NotificationNavigation } from '../features/reminders/context';
@@ -32,7 +33,7 @@ function AppNavigation() {
             screenOptions={{
               headerShown: false,
               animation: reduceMotion ? 'none' : 'fade',
-              contentStyle: { backgroundColor: sky.bottom },
+              contentStyle: { backgroundColor: surfaceAt(sky, 1) },
             }}
           >
             <Stack.Screen name="index" />
