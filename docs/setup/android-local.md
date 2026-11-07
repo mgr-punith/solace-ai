@@ -100,3 +100,7 @@ npm run start -w @solace/mobile -- --lan --port 8082
 Open Solace's development launcher, choose **Enter URL manually**, and enter the laptop's IPv4 address with port 8082. During the 6 November check it was `http://192.168.1.4:8082`; use the address Metro prints if it changes. The user confirmed the installed app opens over Wi-Fi. Keep Metro running and save source files to use Fast Refresh. Native dependency changes still require a local APK rebuild.
 
 Android JavaScript exports write to `dist/export` so they cannot erase local APKs in `dist/local`.
+
+## Standalone preview for this ARM64 phone
+
+Run `npm run build:android:preview -w @solace/mobile` from the repository root. The wrapper selects `preview-local`, bundles JavaScript, compiles locally with two workers and saves `apps/mobile/dist/local/solace-preview.apk`. It uses the existing signing credentials. Install with `adb install -r`; Metro is not needed for this APK. The general `preview` profile remains available for all-architecture release work. Deploy backend migrations on Render before testing new API flows on the phone.

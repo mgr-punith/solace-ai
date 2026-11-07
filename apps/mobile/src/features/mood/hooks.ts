@@ -47,6 +47,7 @@ export function useSaveMood() {
     mutationFn: (input: MoodInput) => auth.request((token) => moodApi.save(token, input)),
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: ['mood', userId] });
+      void client.invalidateQueries({ queryKey: ['progress', userId] });
     },
     retry: false,
   });
@@ -59,6 +60,7 @@ export function useDeleteMood() {
     mutationFn: (id: string) => auth.request((token) => moodApi.remove(token, id)),
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: ['mood', userId] });
+      void client.invalidateQueries({ queryKey: ['progress', userId] });
     },
     retry: false,
   });

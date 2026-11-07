@@ -32,7 +32,7 @@ function AppNavigation() {
             screenOptions={{
               headerShown: false,
               animation: reduceMotion ? 'none' : 'fade',
-              contentStyle: { backgroundColor: tokens.colors.clear },
+              contentStyle: { backgroundColor: sky.bottom },
             }}
           >
             <Stack.Screen name="index" />
@@ -51,6 +51,8 @@ function AppNavigation() {
                 <Stack.Screen name="chat/[id]" />
                 <Stack.Screen name="reminders" />
                 <Stack.Screen name="reminder" />
+                <Stack.Screen name="breathing" />
+                <Stack.Screen name="affirmations" />
               </Stack.Protected>
               <Stack.Protected guard={__DEV__}>
                 <Stack.Screen name="design-preview" />

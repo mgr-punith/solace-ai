@@ -152,4 +152,22 @@ Devices: Realme RMX2050 (Android 11, local development APK with USB Metro 8082),
 - [x] Standalone preview APK installed as an update; cold launch, sign-in, notifications and HTTPS Render readiness checked.
 - [ ] Clean-install preview APK smoke test, native splash and release bundle review. The current vivo installation preserved existing data.
 
-Phase 6 breathing, daily affirmations and streaks, and Phase 7 memory/personalization are future work. The design preview and reminder destination do not establish those features as complete.
+The checks above cover Phases 1–5. Phase 6 implementation and its remaining device checks are tracked below; Phase 7 memory/personalization is still future work.
+
+## Phase 6 wellness and visual refresh (7–8 November 2026)
+
+- [x] New disposable-PostgreSQL integration cases cover activity auth/validation, concurrent idempotent retries and conflicts, private favorites, timezone progress, mood deletion, DST transitions and account cascades.
+- [x] Mobile tests cover explicit affirmation reads/favorites, failed-save retries, breathing background pause/resume, no incomplete logging and completed-session retry. Existing auth/mood/chat/reminder suites pass with the new shared UI.
+- [x] Browser visual review with synthetic data at 390×844: Home, Wellness, breathing, affirmations, Progress, Talk, chat and You. Confirmed completion→Save→Progress using mocked responses, never the real account. Fixed narrow greeting, clipped tab labels, transparent scenes showing the previous screen, SVG accessibility warning and browser-only AppState blur subscription.
+- [x] Browser at 360×640: affirmations wrap and scroll; night Home keeps five labeled tabs and mood faces. Additional browser text enlargement showed no horizontal page overflow. This is not a substitute for Android dynamic-text QA.
+- [x] Reduce Motion browser path uses a static Sol and phase text. One-minute completion observed; automated tests verify background pause and no background-time credit.
+- [x] Final `npm run verify`: lint, formatting, all workspace typechecks and 180 tests passed (100 API, 71 mobile, nine shared), including a regression for retrying an affirmation save across midnight. API tests used disposable PostgreSQL. Production API build and Android export passed; Expo Doctor passed all 20 compatibility checks during the new native build.
+- [ ] Signed local preview APK compilation and certificate/bundle checks; build in progress at this documentation update.
+- [ ] Merge/deploy Phase 6 to Render; `/ready` is OK, unauthenticated `/v1/progress` returns 401, migration 0005 applied through normal deployment.
+- [ ] Install the new locally compiled APK with `adb install -r`, preserving signing and account data. No phone was connected during implementation.
+- [ ] On Android: Google session survives update; Home/Wellness/Talk/Progress/You icons and labels fit; launcher adaptive icon, day/night, 130% system text, TalkBack, keyboard and small-screen layout pass.
+- [ ] On Android: all three breathing patterns match Sol/phase changes, pause on background/notification drawer/lock, explicit resume, haptics toggle, Reduce Motion, and leaving an unsaved session confirmation pass.
+- [ ] On Android against Render: complete/save a synthetic session, retry after interrupted connection without duplicate credit, verify progress on restart; favorite/unfavorite and explicit affirmation read persist. Clean only synthetic data with agreed account controls.
+- [ ] Measure animation smoothness and startup on the preview APK; browser screenshots and Jest cannot establish device frame rate.
+
+Phase 5's earlier signed-out state after changing Android font/notification permissions remains an unresolved release follow-up. No new auth logic was added in Phase 6.

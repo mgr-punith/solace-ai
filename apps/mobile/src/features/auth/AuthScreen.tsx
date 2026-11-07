@@ -1,10 +1,12 @@
-import { ActivityIndicator, Alert, Platform, StyleSheet } from 'react-native';
+import { ActivityIndicator, Alert, Platform, StyleSheet, View } from 'react-native';
 import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import { router } from 'expo-router';
 import { tokens } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { Screen } from '../../components/ui/Screen';
 import { Action, AppText, Surface } from '../../components/ui/primitives';
+import { NavigationRow, PageHeader, layoutStyles } from '../../components/ui/layout';
+import { Icon } from '../../components/ui/Icon';
 import { Companion } from '../../components/sol/Companion';
 import { useOnboarding } from '../onboarding/context';
 import { useAuth } from './context';
@@ -38,12 +40,16 @@ export function AuthScreen() {
     );
   }
   return (
-    <Screen centered inTabs={auth.status === 'signedIn'}>
-      <Companion size={tokens.sol.onboarding} state="greeting" />
+    <Screen centered={auth.status !== 'signedIn'} inTabs={auth.status === 'signedIn'}>
+      {auth.status === 'signedIn' ? (
+        <PageHeader title="Your space" subtitle="Care that fits around you." />
+      ) : (
+        <Companion size={tokens.sol.hero} state="greeting" />
+      )}
       <Surface accessibilityLiveRegion="polite">
         <AppText variant="display" accessibilityRole="header">
           {auth.status === 'signedIn'
-            ? `Welcome, ${auth.session?.user.name}.`
+            ? `Hello, ${auth.session?.user.name.trim().split(/\s+/)[0]}.`
             : 'A little space, just for you.'}
         </AppText>
         {auth.status === 'restoring' ? (
@@ -55,7 +61,7 @@ export function AuthScreen() {
             <AppText>Opening your space…</AppText>
           </>
         ) : auth.status === 'signedIn' ? (
-          <AppText tone="secondary">You’re signed in. Take a moment with Sol.</AppText>
+          <AppText tone="secondary">A few choices to make Solace feel like yours.</AppText>
         ) : auth.status === 'signedOut' ? (
           <AppText tone="secondary">
             Sign in to start your space. Your Google name and email create your account.
@@ -96,34 +102,75 @@ export function AuthScreen() {
           ))}
         {auth.status === 'signedIn' && (
           <>
-            {__DEV__ && (
-              <Action disabled={busy} onPress={() => router.push('/design-preview')}>
-                Meet Sol · Preview
-              </Action>
-            )}
-            <Action secondary disabled={busy} onPress={() => router.push('/privacy')}>
-              Privacy and memory
-            </Action>
-            <Action secondary disabled={busy} onPress={() => router.push('/reminders')}>
-              Reminders
-            </Action>
+            <NavigationRow
+              icon="bell"
+              title="Reminders"
+              subtitle="A gentle nudge, on your terms"
+              disabled={busy}
+              onPress={() => router.push('/reminders')}
+            />
+            <NavigationRow
+              icon="privacy"
+              title="Privacy and memory"
+              subtitle="Your information. Your choice."
+              disabled={busy}
+              onPress={() => router.push('/privacy')}
+            />
+            <NavigationRow
+              icon="heart"
+              title="Saved affirmations"
+              subtitle="Words you want to return to"
+              disabled={busy}
+              onPress={() => router.push('/affirmations?saved=1')}
+            />
+            <NavigationRow
+              icon="support"
+              title="Need support now?"
+              subtitle="Find someone you can reach out to"
+              disabled={busy}
+              onPress={() => router.push('/support')}
+            />
           </>
         )}
         {(auth.status === 'signedOut' || auth.status === 'signedIn') && (
-          <Action secondary disabled={busy} onPress={() => router.push('/onboarding?review=1')}>
-            Review introduction
-          </Action>
+          <NavigationRow
+            icon="book"
+            title="Review introduction"
+            disabled={busy}
+            onPress={() => router.push('/onboarding?review=1')}
+          />
         )}
         {auth.status === 'signedIn' && (
           <>
-            <Action secondary disabled={busy} onPress={() => void auth.logout()}>
-              Sign out
-            </Action>
-            <Action secondary disabled={busy} onPress={confirmDelete}>
-              Delete account
-            </Action>
+            {__DEV__ && (
+              <NavigationRow
+                icon="settings"
+                title="Meet Sol · Preview"
+                disabled={busy}
+                onPress={() => router.push('/design-preview')}
+              />
+            )}
+            <NavigationRow
+              icon="logout"
+              title="Sign out"
+              disabled={busy}
+              onPress={() => void auth.logout()}
+            />
+            <NavigationRow
+              icon="delete"
+              title="Delete account"
+              destructive
+              disabled={busy}
+              onPress={confirmDelete}
+            />
           </>
         )}
+        <View style={layoutStyles.row}>
+          <Icon name="privacy" size={tokens.icon.sm} />
+          <AppText variant="caption" tone="secondary">
+            Your pace. Your privacy. Always.
+          </AppText>
+        </View>
         <AppText variant="bodySmall" tone="secondary">
           Solace is an AI companion, not a therapist or a substitute for professional care.
         </AppText>

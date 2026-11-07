@@ -1,3 +1,5 @@
+import { Icon } from '../../components/ui/Icon';
+import { MoodFace } from '../../components/ui/MoodFace';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import {
   ActivityIndicator,
@@ -101,6 +103,20 @@ export function OnboardingScreen() {
               <View style={styles.placeholder} />
             )}
             <Surface style={styles.progress}>
+              <View style={{ flexDirection: 'row', gap: tokens.spacing.xs }} accessible={false}>
+                {pages.map((_, index) => (
+                  <View
+                    key={index}
+                    style={{
+                      width: index === step ? tokens.spacing.lg : tokens.spacing.sm,
+                      height: tokens.spacing.xs,
+                      borderRadius: tokens.radius.pill,
+                      backgroundColor:
+                        index === step ? theme.sky.palette.text : theme.sky.palette.secondary,
+                    }}
+                  />
+                ))}
+              </View>
               <AppText variant="caption" accessibilityLabel={`Introduction, step ${step + 1} of 4`}>
                 {step + 1} of 4
               </AppText>
@@ -120,7 +136,12 @@ export function OnboardingScreen() {
               size={compact ? tokens.sol.onboarding : tokens.sol.hero}
             />
           )}
-          <Surface>
+          <Surface style={{ paddingVertical: tokens.spacing.xl }}>
+            <Icon
+              name={
+                step === 0 ? 'sparkles' : step === 1 ? 'heart' : step === 2 ? 'talk' : 'privacy'
+              }
+            />
             <AppText accessibilityRole="header" variant="display">
               {page.title}
             </AppText>
@@ -152,11 +173,7 @@ export function OnboardingScreen() {
                         },
                       ]}
                     >
-                      <View style={[styles.dot, { backgroundColor: item.color }]}>
-                        <AppText variant="caption" style={{ color: tokens.colors.face }}>
-                          {index + 1}
-                        </AppText>
-                      </View>
+                      <MoodFace mood={index} />
                       <AppText variant="caption">{item.label}</AppText>
                     </Pressable>
                   ))}
@@ -198,6 +215,7 @@ export function OnboardingScreen() {
               />
             )}
             <Action
+              icon={step < 3 ? 'arrow' : 'check'}
               disabled={onboarding.busy}
               onPress={() => void (step < 3 ? move(step + 1) : complete())}
             >

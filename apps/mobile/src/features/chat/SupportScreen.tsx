@@ -2,6 +2,7 @@ import { useState } from 'react';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { supportResources } from '@solace/shared';
+import { Icon } from '../../components/ui/Icon';
 import { Screen } from '../../components/ui/Screen';
 import { Action, AppText, Surface } from '../../components/ui/primitives';
 
@@ -18,6 +19,7 @@ export function SupportScreen() {
         Support right now
       </AppText>
       <Surface>
+        <Icon name="support" />
         <AppText>
           You deserve support from a person. If you are in immediate danger, contact your local
           emergency services or go to the nearest emergency department.
@@ -53,6 +55,7 @@ export function SupportScreen() {
       </Action>
       {resource && (
         <Surface>
+          <Icon name="support" />
           <AppText variant="heading">{resource.name}</AppText>
           <AppText selectable>{resource.phone}</AppText>
           <Action

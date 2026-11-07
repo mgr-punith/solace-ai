@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { Action, AppText, Surface } from '../../components/ui/primitives';
+import { Icon } from '../../components/ui/Icon';
 import { Screen } from '../../components/ui/Screen';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useOnboarding } from './context';
@@ -13,10 +14,11 @@ export function PrivacyScreen() {
   const { sky } = useTheme();
   return (
     <Screen>
-      <Action secondary disabled={onboarding.busy} onPress={() => router.replace('/')}>
+      <Action icon="back" secondary disabled={onboarding.busy} onPress={() => router.replace('/')}>
         Back
       </Action>
       <Surface>
+        <Icon name="privacy" />
         <AppText variant="title" accessibilityRole="header">
           Privacy and memory
         </AppText>

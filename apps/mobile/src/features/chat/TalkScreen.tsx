@@ -1,8 +1,10 @@
 import { useRef } from 'react';
-import { Alert, FlatList, Platform, StyleSheet } from 'react-native';
+import { Alert, FlatList, Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Action, AppText, Surface } from '../../components/ui/primitives';
+import { PageHeader, NavigationRow, IconButton, layoutStyles } from '../../components/ui/layout';
+import { Companion } from '../../components/sol/Companion';
 import { tokens } from '../../theme/tokens';
 import { useChatProvider } from './provider-info';
 import { ProviderNotice } from './ProviderNotice';
@@ -54,44 +56,48 @@ export function TalkScreen() {
         refreshing={query.isRefetching}
         onRefresh={() => void query.refetch()}
         ListHeaderComponent={
-          <Surface>
-            <AppText variant="display" accessibilityRole="header">
-              Talk with Sol
-            </AppText>
-            <AppText>Bring what’s on your mind. You can return to any conversation.</AppText>
-            <AppText variant="bodySmall" tone="secondary">
-              Sol is an AI companion, not a therapist. Memory across conversations is not active.
-            </AppText>
-            <ProviderNotice query={provider} />
-            <Action disabled={create.isPending} onPress={() => void start()}>
-              {create.isPending
-                ? 'Opening conversation…'
-                : create.isError
-                  ? 'Retry new conversation'
-                  : 'New conversation'}
-            </Action>
-            <Action secondary onPress={() => router.push('/support')}>
-              Need support now?
-            </Action>
-            {(query.isError || create.isError || deletion.isError) && (
-              <>
-                <AppText accessibilityRole="alert">
-                  {create.error?.message ??
-                    deletion.error?.message ??
-                    'Your conversations couldn’t be loaded. Try again.'}
-                </AppText>
-                <Action
-                  secondary
-                  onPress={() => {
-                    deletion.reset();
-                    void query.refetch();
-                  }}
-                >
-                  Try loading again
-                </Action>
-              </>
-            )}
-          </Surface>
+          <View style={{ gap: tokens.spacing.lg, marginBottom: tokens.spacing.lg }}>
+            <PageHeader
+              title="Talk with Sol"
+              subtitle="You don’t have to find the perfect words."
+            />
+            <Companion size={tokens.sol.onboarding} />
+            <Surface>
+              <AppText>Bring what’s on your mind. You can return to any conversation.</AppText>
+              <AppText variant="bodySmall" tone="secondary">
+                Sol is an AI companion, not a therapist. Memory across conversations is not active.
+              </AppText>
+              <ProviderNotice query={provider} />
+              <Action icon="plus" disabled={create.isPending} onPress={() => void start()}>
+                {create.isPending
+                  ? 'Opening conversation…'
+                  : create.isError
+                    ? 'Retry new conversation'
+                    : 'New conversation'}
+              </Action>
+              <Action secondary onPress={() => router.push('/support')}>
+                Need support now?
+              </Action>
+              {(query.isError || create.isError || deletion.isError) && (
+                <>
+                  <AppText accessibilityRole="alert">
+                    {create.error?.message ??
+                      deletion.error?.message ??
+                      'Your conversations couldn’t be loaded. Try again.'}
+                  </AppText>
+                  <Action
+                    secondary
+                    onPress={() => {
+                      deletion.reset();
+                      void query.refetch();
+                    }}
+                  >
+                    Try loading again
+                  </Action>
+                </>
+              )}
+            </Surface>
+          </View>
         }
         renderItem={({ item }) => (
           <Surface style={styles.entry}>
@@ -99,14 +105,21 @@ export function TalkScreen() {
             <AppText variant="bodySmall" tone="secondary">
               {new Date(item.createdAt).toLocaleString()}
             </AppText>
-            <Action
-              onPress={() => router.push({ pathname: '/chat/[id]', params: { id: item.id } })}
-            >
-              Continue conversation
-            </Action>
-            <Action secondary disabled={deletion.isPending} onPress={() => remove(item.id)}>
-              Delete conversation
-            </Action>
+            <View style={layoutStyles.row}>
+              <View style={layoutStyles.grow}>
+                <NavigationRow
+                  icon="talk"
+                  title="Continue conversation"
+                  onPress={() => router.push({ pathname: '/chat/[id]', params: { id: item.id } })}
+                />
+              </View>
+              <IconButton
+                icon="delete"
+                label="Delete conversation"
+                disabled={deletion.isPending}
+                onPress={() => remove(item.id)}
+              />
+            </View>
           </Surface>
         )}
         ListEmptyComponent={

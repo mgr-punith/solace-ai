@@ -36,6 +36,13 @@
       "when": 1794036984350,
       "tag": "0004_flat_shiva",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794074542401,
+      "tag": "0005_curved_master_chief",
+      "breakpoints": true
     }
   ]
 }

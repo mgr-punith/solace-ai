@@ -1,4 +1,6 @@
 import { Pressable, StyleSheet, Text, View, type TextProps, type ViewProps } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Icon, type IconName } from './Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import { tokens } from '../../theme/tokens';
 
@@ -41,6 +43,7 @@ export function Action({
   secondary = false,
   disabled = false,
   label,
+  icon,
 }: {
   children: string;
   onPress: () => void;
@@ -48,34 +51,52 @@ export function Action({
   secondary?: boolean;
   disabled?: boolean;
   label?: string;
+  icon?: IconName;
 }) {
-  const { sky } = useTheme();
+  const { sky, reduceMotion } = useTheme();
+  const scale = useSharedValue(1);
+  const animated = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label ?? children}
-      accessibilityState={{ selected, disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.action,
-        {
-          backgroundColor: secondary && !selected ? sky.surface : tokens.action.background,
-          borderColor: selected ? sky.palette.text : tokens.colors.clear,
-          opacity: disabled ? tokens.opacity.disabled : pressed ? tokens.opacity.pressed : 1,
-        },
-      ]}
-    >
-      <AppText
-        variant="button"
-        style={{
-          color: secondary && !selected ? sky.palette.text : tokens.action.text,
-          textAlign: 'center',
+    <Animated.View style={animated}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={label ?? children}
+        accessibilityState={{ selected, disabled }}
+        disabled={disabled}
+        onPress={onPress}
+        onPressIn={() => {
+          scale.value = withTiming(reduceMotion ? 1 : 0.98, { duration: tokens.motion.press });
         }}
+        onPressOut={() => {
+          scale.value = withTiming(1, { duration: tokens.motion.quick });
+        }}
+        style={({ pressed }) => [
+          styles.action,
+          {
+            backgroundColor: secondary && !selected ? sky.surface : tokens.action.background,
+            borderColor: selected ? sky.palette.text : tokens.colors.clear,
+            opacity: disabled ? tokens.opacity.disabled : pressed ? tokens.opacity.pressed : 1,
+          },
+        ]}
       >
-        {children}
-      </AppText>
-    </Pressable>
+        {icon && (
+          <Icon
+            name={icon}
+            size={tokens.icon.sm}
+            color={secondary && !selected ? sky.palette.text : tokens.action.text}
+          />
+        )}
+        <AppText
+          variant="button"
+          style={{
+            color: secondary && !selected ? sky.palette.text : tokens.action.text,
+            textAlign: 'center',
+          }}
+        >
+          {children}
+        </AppText>
+      </Pressable>
+    </Animated.View>
   );
 }
 const styles = StyleSheet.create({
@@ -86,6 +107,8 @@ const styles = StyleSheet.create({
     gap: tokens.spacing.md,
   },
   action: {
+    flexDirection: 'row',
+    gap: tokens.spacing.sm,
     minHeight: tokens.target,
     justifyContent: 'center',
     alignItems: 'center',

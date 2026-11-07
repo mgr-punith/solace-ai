@@ -150,3 +150,49 @@ export const messages = pgTable(
     check('message_content_check', sql`char_length(${t.content}) <= 8000`),
   ],
 );
+
+export const activityLogs = pgTable(
+  'activity_logs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    requestId: text('request_id').notNull(),
+    type: text('type').notNull(),
+    pattern: text('pattern'),
+    durationSeconds: integer('duration_seconds').notNull().default(0),
+    affirmationId: text('affirmation_id'),
+    beforeMood: integer('before_mood'),
+    afterMood: integer('after_mood'),
+    timezone: text('timezone').notNull(),
+    completedAt: timestamp('completed_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('activity_user_request_idx').on(t.userId, t.requestId),
+    index('activity_user_completed_idx').on(t.userId, t.completedAt),
+    check(
+      'activity_kind_check',
+      sql`(${t.type} = 'breathing' and ${t.pattern} in ('box','478','coherent') and ${t.durationSeconds} in (60,180,300) and ${t.affirmationId} is null) or (${t.type} = 'affirmation' and ${t.affirmationId} is not null and ${t.pattern} is null and ${t.durationSeconds} = 0 and ${t.beforeMood} is null and ${t.afterMood} is null)`,
+    ),
+    check(
+      'activity_moods_check',
+      sql`(${t.beforeMood} is null or ${t.beforeMood} between 1 and 5) and (${t.afterMood} is null or ${t.afterMood} between 1 and 5)`,
+    ),
+  ],
+);
+export const affirmationFavorites = pgTable(
+  'affirmation_favorites',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    affirmationId: text('affirmation_id').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('favorite_user_affirmation_idx').on(t.userId, t.affirmationId)],
+);

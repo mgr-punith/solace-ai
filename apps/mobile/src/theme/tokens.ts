@@ -5,8 +5,10 @@ export const tokens = {
   action: { background: '#9CC9BF', text: '#12303A' },
   spacing: { xs: 4, sm: 8, smd: 12, md: 16, ml: 20, lg: 24, xl: 32, xxl: 40, hero: 56 },
   typography: { title: 26, titleLine: 32, body: 17, bodyLine: 26 },
-  radius: { pill: 999, surface: 28, input: 22, sheet: 32, tag: 12 },
+  radius: { pill: 999, surface: 24, input: 22, sheet: 32, tag: 12 },
   target: 48,
+  icon: { sm: 18, md: 24, lg: 32, stroke: 1.8 },
+  chart: { height: 140, width: 320 },
   colors: {
     seaGlass: '#9CC9BF',
     lantern: '#FFD58A',
@@ -19,7 +21,7 @@ export const tokens = {
   border: 1,
   selectedBorder: 2,
   maxWidth: 480,
-  moodChoiceWidth: 72,
+  moodChoiceWidth: 48,
   opacity: { pressed: 0.76, disabled: 0.45, blush: 0.35, glow: 0.26 },
   type: {
     display: { fontFamily: 'Fraunces_500Medium', fontSize: 34, lineHeight: 42 },
