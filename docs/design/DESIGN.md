@@ -239,6 +239,27 @@ Week mood line (custom, soft area under the curve, dots tinted by mood), month "
 ### You
 Profile, **Reminders** (per type: on/off, time, days, quiet hours), **What Sol remembers** (view/delete, personalization toggle), Appearance (Auto/Day/Night), Haptics, **Need support now?**, Data (export, delete account), About and "not a substitute for professional care".
 
+### Phase 5 reminder slice
+
+Keep the existing sky, Sol and tokens. You → Reminders opens a scrollable settings screen. Every type starts off. One chosen time per type and selected weekdays keep this first slice small; quiet hours skip matching reminders rather than moving them to another day. Times follow the phone's local timezone. Save updates the encrypted device cache and account; a visible pending-sync state offers retry. Saving preferences does not itself request permission: a separate explanation and **Allow notifications** action does.
+
+Mood notifications open Home. Until Phase 6 introduces full activities, other types open a small reminder page containing their affirmation, gentle breathing invitation, self-care prompt or custom text, with actions to check in or talk with Sol. Do not claim that a breathing timer or activity logging exists. Notification contents are visible on the lock screen; tell the user beside the custom-text input. No engagement tracking or escalating reminders in this slice.
+
+```text
+Reminders                    Reminder
++-----------------------+    +-----------------------+
+| Back        Reminders |    | Back              Sol |
+| Choose a gentle nudge |    | A moment for you      |
+| Allow notifications   |    | [reminder's message]  |
+| Mood / Affirmation /  |    | Check in              |
+| Breath / Care / Custom|    | Talk with Sol         |
+| On/off · Time · Days  |    | Edit reminders        |
+| Quiet hours · from/to |    +-----------------------+
+| Save reminders        |
+| Saved / pending sync  |
++-----------------------+
+```
+
 ## 9. Daily ritual and retention (ethical by design)
 
 Goal: people open the app daily because it is fresh, kind and quick, not because of guilt.

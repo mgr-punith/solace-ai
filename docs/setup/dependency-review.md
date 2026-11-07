@@ -14,3 +14,5 @@ Advisories:
 - deepmerge prototype-poisoning advisory, dependency range `>=4.2.0 <=4.3.1`, used by test tooling.
 
 Re-run `npm audit` when updating the lockfile; the count of affected transitive packages can change without a new underlying advisory.
+
+7 November 2026: installed `expo-notifications` with `npx expo install` for SDK 58 and checked the matching official notification API and native manifest. This is Expo's maintained notification module; no separate scheduler dependency was added. The subsequent audit reports 37 affected packages (one low, 36 moderate, zero high/critical), with no advisory against `expo-notifications` itself. Keep compatible upstream upgrades separate from this feature; do not apply the suggested forced SDK changes.

@@ -90,7 +90,21 @@ The installed app uses only Render. Local API and temporary tunnel were stopped,
 - [ ] Check Support offline, region selection and dialer fallback; never place a test call to a helpline.
 - [ ] Check TalkBack, 130% text and Reduce Motion in chat. Crisis pattern tests do not establish comprehensive real-world crisis detection.
 
-## Later phases
+## Phase 5 reminders (7 November 2026)
+
+- [ ] Deploy the reminder API and migration `0004_flat_shiva.sql` on Render before phone testing; no new environment variables.
+- [ ] Build Android locally with the existing signing certificate and install with `adb install -r`; confirm Google session survives.
+- [ ] You → Reminders: all types initially off; no automatic permission prompt. Allow notifications and decline paths both leave preferences usable. Returning from phone settings refreshes scheduling.
+- [ ] Enable Mood check-in, select today's weekday and a time several minutes ahead outside quiet hours, then Save reminders. Confirm account save and schedule status.
+- [ ] Background the app and wait for a notification. Tap → Home. Repeat after swiping the app away (do not use force-stop), tap from the lock screen → Home.
+- [ ] Test an affirmation or breathing reminder: tap → matching prompt page. Test cold start and an expired session → sign in → intended destination. Never print or extract session tokens during QA.
+- [ ] Reopen twice and save twice: no duplicate notifications. Disable the reminder and confirm no future trigger. Verify quiet-hour warnings, weekdays and time edits.
+- [ ] Save an edit offline: local save and pending sync are clear. Reopen and reconnect → sync succeeds; stale server settings do not overwrite the edit.
+- [ ] Sign out: scheduled and delivered reminders disappear. Sign back in: server preferences return. Account deletion is covered automatically; do not delete a real account for QA without permission.
+- [ ] Check reboot, timezone travel and DST behavior, battery-optimization delay, channel disabled in Android settings, 130% text, TalkBack and keyboard-open Save.
+- [ ] Restore reminder settings after disposable QA so no test nudges remain enabled.
+
+## Release follow-ups
 
 - [x] Chat survives closing and reopening; delete removes the conversation (Phase 4 physical-device checks above).
 - [ ] Notification permission accepted and declined paths work.

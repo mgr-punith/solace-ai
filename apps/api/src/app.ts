@@ -1,4 +1,6 @@
 import { conversationRoutes } from './modules/conversations/routes.js';
+import { reminderRoutes } from './modules/reminders/routes.js';
+import type { ReminderService } from './modules/reminders/service.js';
 import type { ConversationService } from './modules/conversations/service.js';
 import type { MoodService } from './modules/mood/service.js';
 import { moodRoutes } from './modules/mood/routes.js';
@@ -20,6 +22,7 @@ type AppDependencies = {
   auth?: AuthService;
   mood?: MoodService;
   chat?: ConversationService;
+  reminders?: ReminderService;
   chatProvider?: ChatProvider;
   trustProxy?: number;
 };
@@ -31,6 +34,7 @@ export function createApp({
   auth,
   mood,
   chat,
+  reminders,
   chatProvider,
   trustProxy = 0,
 }: AppDependencies) {
@@ -56,7 +60,9 @@ export function createApp({
     next();
   });
   app.use(helmet());
-  app.use(cors({ origin: corsOrigins, methods: ['GET', 'POST', 'PATCH', 'DELETE'], maxAge: 600 }));
+  app.use(
+    cors({ origin: corsOrigins, methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], maxAge: 600 }),
+  );
   app.use(
     rateLimit({
       windowMs: 60_000,
@@ -95,6 +101,7 @@ export function createApp({
   if (auth) app.use('/v1', authRoutes(auth));
   if (auth && mood) app.use('/v1/mood-checkins', moodRoutes(auth, mood));
   if (auth && chat) app.use('/v1/conversations', conversationRoutes(auth, chat));
+  if (auth && reminders) app.use('/v1/reminders', reminderRoutes(auth, reminders));
   app.use((_req, res) => {
     res.status(404).json({
       error: { code: 'NOT_FOUND', message: 'This endpoint does not exist.' },

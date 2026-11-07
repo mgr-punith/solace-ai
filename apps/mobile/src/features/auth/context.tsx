@@ -11,6 +11,7 @@ import { createAuthApi } from './api';
 import { googleSignIn } from './google';
 import { createSessionManager, type SessionManager } from './session';
 import { sessionStorage } from './storage';
+import { clearDeviceReminders } from '../reminders/runtime';
 
 const AuthContext = createContext<SessionManager | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -20,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       api: createAuthApi(process.env.EXPO_PUBLIC_API_URL),
       storage: sessionStorage,
       google: googleSignIn,
+      beforeClear: clearDeviceReminders,
     }),
   );
   useEffect(() => {

@@ -14,11 +14,13 @@ export function createSessionManager({
   storage,
   google,
   now = Date.now,
+  beforeClear,
 }: {
   api: AuthApi;
   storage: SessionStorage;
   google: GoogleSignIn;
   now?: () => number;
+  beforeClear?: (intentional: boolean) => Promise<void>;
 }) {
   let state: AuthState = { status: 'restoring', session: null, busy: false, error: null };
   const listeners = new Set<() => void>();
@@ -27,7 +29,8 @@ export function createSessionManager({
     state = { ...state, ...changes };
     for (const listener of listeners) listener();
   };
-  async function clear() {
+  async function clear(intentional = false) {
+    await beforeClear?.(intentional);
     await storage.clear();
     await google.signOut().catch(() => {});
     update({ status: 'signedOut', session: null, error: null });
@@ -38,8 +41,7 @@ export function createSessionManager({
     } catch {
       // A rotated token must not leave an old refresh token on disk.
       await api.logout(session.refreshToken).catch(() => {});
-      await storage.clear();
-      update({ session: null, status: 'signedOut' });
+      await clear();
       throw new Error('Your session could not be saved securely. Try signing in again.');
     }
     update({ session });
@@ -140,14 +142,14 @@ export function createSessionManager({
     logout: () =>
       run(async () => {
         if (state.session) await api.logout(state.session.refreshToken);
-        await clear();
+        await clear(true);
       }),
     deleteAccount: (beforeDelete?: () => Promise<void>) =>
       run(async () => {
         // Clear device-owned preferences before deleting their owning account.
         await beforeDelete?.();
         await authenticated(api.deleteAccount);
-        await clear();
+        await clear(true);
       }),
   };
 }
