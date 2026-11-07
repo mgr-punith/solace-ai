@@ -1,3 +1,5 @@
+import { ProgressSummary } from '../progress/ProgressSummary';
+import { PageHeader } from '../../components/ui/layout';
 import { memo, useCallback } from 'react';
 import { ActivityIndicator, Alert, FlatList, Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -83,33 +85,40 @@ export function HistoryScreen() {
         refreshing={query.isRefetching}
         onRefresh={() => void query.refetch()}
         ListHeaderComponent={
-          <Surface style={styles.header}>
-            <AppText variant="display" accessibilityRole="header">
-              Your check-ins
-            </AppText>
-            <AppText tone="secondary">
-              Moments you’ve made space for. Every feeling belongs here.
-            </AppText>
-            {(query.isError || deletion.isError) && (
-              <>
-                <AppText tone="error" accessibilityRole="alert">
-                  {deletion.error?.message ?? 'Your check-ins couldn’t be loaded. Try again.'}
-                </AppText>
-                <Action
-                  secondary
-                  onPress={() => {
-                    deletion.reset();
-                    void query.refetch();
-                  }}
-                >
-                  Try loading again
-                </Action>
-              </>
-            )}
-            {deletion.isPending && (
-              <ActivityIndicator color={sky.palette.text} accessibilityLabel="Deleting check-in" />
-            )}
-          </Surface>
+          <View style={{ gap: tokens.spacing.lg }}>
+            <PageHeader title="Your moments" subtitle="A little perspective, without judgment." />
+            <ProgressSummary />
+            <Surface style={styles.header}>
+              <AppText variant="heading" accessibilityRole="header">
+                Your check-ins
+              </AppText>
+              <AppText tone="secondary">
+                Moments you’ve made space for. Every feeling belongs here.
+              </AppText>
+              {(query.isError || deletion.isError) && (
+                <>
+                  <AppText tone="error" accessibilityRole="alert">
+                    {deletion.error?.message ?? 'Your check-ins couldn’t be loaded. Try again.'}
+                  </AppText>
+                  <Action
+                    secondary
+                    onPress={() => {
+                      deletion.reset();
+                      void query.refetch();
+                    }}
+                  >
+                    Try loading again
+                  </Action>
+                </>
+              )}
+              {deletion.isPending && (
+                <ActivityIndicator
+                  color={sky.palette.text}
+                  accessibilityLabel="Deleting check-in"
+                />
+              )}
+            </Surface>
+          </View>
         }
         ListEmptyComponent={
           query.isPending ? (

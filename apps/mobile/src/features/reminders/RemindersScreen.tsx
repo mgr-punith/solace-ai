@@ -9,12 +9,20 @@ import {
 } from '@solace/shared';
 import { Action, AppText, Surface } from '../../components/ui/primitives';
 import { Screen } from '../../components/ui/Screen';
+import { Icon, type IconName } from '../../components/ui/Icon';
 import { tokens } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { requestNotificationPermission } from '../../lib/notifications';
 import { reminderLabels } from './content';
 import { useReminders } from './context';
 
+const reminderIcons: Record<Reminder['type'], IconName> = {
+  mood: 'heart',
+  affirmation: 'sparkles',
+  breathing: 'wind',
+  'self-care': 'wellness',
+  custom: 'bell',
+};
 const days = [
   { day: 2, label: 'Mon' },
   { day: 3, label: 'Tue' },
@@ -102,7 +110,7 @@ export function RemindersScreen() {
   }
   return (
     <Screen keyboard>
-      <Action secondary onPress={() => router.replace('/you')}>
+      <Action icon="back" secondary onPress={() => router.replace('/you')}>
         Back to You
       </Action>
       <AppText variant="display" accessibilityRole="header">
@@ -170,6 +178,7 @@ export function RemindersScreen() {
           {draft.reminders.map((r) => (
             <Surface key={r.type}>
               <View style={styles.row}>
+                <Icon name={reminderIcons[r.type]} />
                 <AppText variant="heading" style={styles.grow}>
                   {reminderLabels[r.type]}
                 </AppText>

@@ -52,7 +52,7 @@ it('requires a destructive confirmation before deleting an account', async () =>
       <AuthScreen />
     </ThemeProvider>,
   );
-  expect(screen.getByText('Welcome, Maya.')).toBeTruthy();
+  expect(screen.getByText('Hello, Maya.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Delete account' }));
   expect(deleteAccount).not.toHaveBeenCalled();
   expect(alert).toHaveBeenCalledWith(
@@ -74,7 +74,7 @@ it('shows a startup network error with a retry action instead of signed-in conte
       <AuthScreen />
     </ThemeProvider>,
   );
-  expect(screen.queryByText('Welcome, Maya.')).toBeNull();
+  expect(screen.queryByText('Hello, Maya.')).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'Try opening again' }));
   expect(restore).toHaveBeenCalled();
 });

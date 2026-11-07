@@ -1,3 +1,5 @@
+import { createWellnessRepository } from './modules/wellness/repository.js';
+import { createWellnessService } from './modules/wellness/service.js';
 import { createConversationRepository } from './modules/conversations/repository.js';
 import { createReminderRepository } from './modules/reminders/repository.js';
 import { createReminderService } from './modules/reminders/service.js';
@@ -36,6 +38,7 @@ const app = createApp({
   corsOrigins: env.CORS_ORIGINS,
   chatProvider: env.LLM_PROVIDER,
   auth,
+  wellness: createWellnessService({ repository: createWellnessRepository(database.db), clock }),
   reminders: createReminderService({ repository: createReminderRepository(database.db), clock }),
   mood: createMoodService({ repository: createMoodRepository(database.db), clock }),
   chat: createConversationService({

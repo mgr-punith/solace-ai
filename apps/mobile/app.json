@@ -11,7 +11,11 @@
     },
     "android": {
       "package": "com.puneet.solace",
-      "predictiveBackGestureEnabled": true
+      "predictiveBackGestureEnabled": true,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/sol-icon-foreground.png",
+        "backgroundColor": "#9CC9BF"
+      }
     },
     "plugins": [
       "expo-router",
@@ -44,6 +48,7 @@
         "projectId": "496ee977-fafc-40cd-b844-9315f4ee7b6d"
       }
     },
-    "owner": "puneet017"
+    "owner": "puneet017",
+    "icon": "./assets/sol-icon.png"
   }
 }

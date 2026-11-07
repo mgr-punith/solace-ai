@@ -30,6 +30,16 @@ export function ReminderScreen() {
               ? reminderBody(kind, new Date().getDay() + 1, custom)
               : 'This reminder is no longer available. You can choose a new one in Reminders.'}
         </AppText>
+        {kind === 'breathing' && (
+          <Action icon="wind" onPress={() => router.push('/breathing')}>
+            Take a breathing break
+          </Action>
+        )}
+        {kind === 'affirmation' && (
+          <Action icon="book" onPress={() => router.push('/affirmations')}>
+            Open affirmations
+          </Action>
+        )}
         <Action onPress={() => router.replace('/home')}>Check in</Action>
         <Action secondary onPress={() => router.replace('/talk')}>
           Talk with Sol

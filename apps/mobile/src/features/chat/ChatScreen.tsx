@@ -12,6 +12,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import type { ChatMessage, SendMessageInput } from '@solace/shared';
 import { Action, AppText, Surface } from '../../components/ui/primitives';
+import { IconButton, layoutStyles } from '../../components/ui/layout';
+import { Icon } from '../../components/ui/Icon';
 import { tokens } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { AuthApiError } from '../../lib/api';
@@ -20,12 +22,27 @@ import { useChatProvider } from './provider-info';
 import { ProviderNotice } from './ProviderNotice';
 
 const Message = memo(function Message({ item }: { item: ChatMessage }) {
+  const { sky } = useTheme();
+  const isUser = item.role === 'user';
   return (
-    <Surface style={styles.message}>
-      <AppText variant="caption" tone="secondary">
+    <Surface
+      style={[
+        styles.message,
+        {
+          alignSelf: isUser ? 'flex-end' : 'flex-start',
+          maxWidth: '92%',
+          backgroundColor: isUser ? tokens.action.background : sky.surface,
+          borderBottomRightRadius: isUser ? tokens.spacing.xs : tokens.radius.surface,
+          borderBottomLeftRadius: isUser ? tokens.radius.surface : tokens.spacing.xs,
+        },
+      ]}
+    >
+      <AppText variant="caption" tone="secondary" style={isUser && { color: tokens.action.text }}>
         {item.role === 'user' ? 'You' : 'Sol'}
       </AppText>
-      <AppText selectable>{item.content || 'Sol is preparing a reply…'}</AppText>
+      <AppText selectable style={isUser && { color: tokens.action.text }}>
+        {item.content || 'Sol is preparing a reply…'}
+      </AppText>
       {item.kind === 'crisis' && (
         <Action secondary onPress={() => router.push('/support')}>
           Need support now?
@@ -90,21 +107,32 @@ export function ChatScreen({ id }: { id: string }) {
   return (
     <SafeAreaView style={styles.screen}>
       <KeyboardAvoidingView behavior="padding" style={styles.screen}>
-        <View style={[styles.header, fontScale > 1.2 && styles.largeHeader]}>
-          <View style={styles.headerAction}>
-            <Action
-              secondary
-              onPress={() => (router.canGoBack() ? router.back() : router.replace('/talk'))}
-            >
-              Chats
-            </Action>
+        <View
+          style={[
+            { backgroundColor: sky.surface },
+            styles.header,
+            fontScale > 1.2 && styles.largeHeader,
+          ]}
+        >
+          <IconButton
+            icon="back"
+            label="Chats"
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/talk'))}
+          />
+          <View style={[layoutStyles.row, layoutStyles.grow]}>
+            <Icon name="talk" />
+            <View>
+              <AppText variant="heading">Sol</AppText>
+              <AppText variant="caption" tone="secondary">
+                A little room to talk
+              </AppText>
+            </View>
           </View>
-          <AppText variant="heading">Sol</AppText>
-          <View style={styles.headerAction}>
-            <Action secondary label="Need support now?" onPress={() => router.push('/support')}>
-              Support
-            </Action>
-          </View>
+          <IconButton
+            icon="support"
+            label="Need support now?"
+            onPress={() => router.push('/support')}
+          />
         </View>
         <FlatList
           ref={list}
@@ -150,7 +178,7 @@ export function ChatScreen({ id }: { id: string }) {
             </Surface>
           }
         />
-        <View style={styles.composer}>
+        <View style={[styles.composer, { backgroundColor: sky.surface }]}>
           <ProviderNotice query={provider} />
           {query.isError && !missing && (
             <>
@@ -214,6 +242,7 @@ export function ChatScreen({ id }: { id: string }) {
                 ]}
               />
               <Action
+                icon="send"
                 disabled={!canSend || send.isPending || !!retryInput || !draft.trim()}
                 onPress={() => void submit()}
               >

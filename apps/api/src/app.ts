@@ -1,3 +1,5 @@
+import { wellnessRoutes } from './modules/wellness/routes.js';
+import type { WellnessService } from './modules/wellness/service.js';
 import { conversationRoutes } from './modules/conversations/routes.js';
 import { reminderRoutes } from './modules/reminders/routes.js';
 import type { ReminderService } from './modules/reminders/service.js';
@@ -23,6 +25,7 @@ type AppDependencies = {
   mood?: MoodService;
   chat?: ConversationService;
   reminders?: ReminderService;
+  wellness?: WellnessService;
   chatProvider?: ChatProvider;
   trustProxy?: number;
 };
@@ -35,6 +38,7 @@ export function createApp({
   mood,
   chat,
   reminders,
+  wellness,
   chatProvider,
   trustProxy = 0,
 }: AppDependencies) {
@@ -102,6 +106,7 @@ export function createApp({
   if (auth && mood) app.use('/v1/mood-checkins', moodRoutes(auth, mood));
   if (auth && chat) app.use('/v1/conversations', conversationRoutes(auth, chat));
   if (auth && reminders) app.use('/v1/reminders', reminderRoutes(auth, reminders));
+  if (auth && wellness) app.use('/v1', wellnessRoutes(auth, wellness));
   app.use((_req, res) => {
     res.status(404).json({
       error: { code: 'NOT_FOUND', message: 'This endpoint does not exist.' },

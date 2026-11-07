@@ -9,6 +9,7 @@ const project = fileURLToPath(new URL('../', import.meta.url));
 const sdk = process.env.ANDROID_HOME ?? join(homedir(), 'Android', 'Sdk');
 const java = process.env.JAVA_HOME ?? join(homedir(), '.local', 'share', 'solace', 'jdk-21');
 const artifacts = join(project, 'dist', 'local');
+const preview = process.argv.includes('--preview');
 const working = join(homedir(), '.cache', 'solace', 'android-build');
 
 if (!existsSync(join(sdk, 'platform-tools', 'adb')) || !existsSync(join(java, 'bin', 'javac'))) {
@@ -28,11 +29,11 @@ const child = spawn(
     '--platform',
     'android',
     '--profile',
-    'development-local',
+    preview ? 'preview-local' : 'development-local',
     '--local',
     '--non-interactive',
     '--output',
-    join(artifacts, 'solace-development.apk'),
+    join(artifacts, preview ? 'solace-preview.apk' : 'solace-development.apk'),
   ],
   {
     cwd: project,

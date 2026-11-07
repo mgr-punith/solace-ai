@@ -266,7 +266,7 @@ Goal: people open the app daily because it is fresh, kind and quick, not because
 
 1. **Under 60 seconds, with closure.** Open → Sol greets → one-tap mood → Sol responds → one small suggestion → *"That's enough for today."* No infinite feeds, no bottomless content.
 2. **Something new each day:** a new affirmation, a new tiny challenge, a Sol line that references something real (if memory is consented), and a sky that is different at every hour.
-3. **Gentle progress:** "days with Sol" dots, one **rest day per week** that keeps the streak, a warm "welcome back" after a gap, a Sunday weekly note, milestone moments with Sol celebrating (rare, so it stays special).
+3. **Gentle progress:** actual consecutive local days with a saved wellness action, a warm "welcome back" after a gap, and no streak-loss warnings. No artificial rest-day credit. Weekly AI notes and milestone moments are later enhancements.
 4. **Reminders that respect people:** default at most one per day, user-chosen time and days, quiet hours. If three reminders in a row go unopened, Sol *asks* "Want me to check in at a different time?" instead of nagging.
 5. **Relationship:** Sol remembers (with consent), has time-aware moods (sleepy at night), and reacts to being tapped.
 6. **P2 delights:** seasonal sky tints, small cosmetic unlocks for Sol, ambient breathing sounds.
@@ -444,3 +444,48 @@ Talk history                  Conversation
 Chat displays the AI provider currently configured on Render, fetched from the public `/v1/chat-provider` endpoint; it never guesses a provider when details cannot load. Send/retry waits for those details, with a reload action, while history and Support remain accessible. The notice explains that messages are saved in the account and sent to the named provider for replies; Sol is an AI companion, not a therapist. Context includes only this conversation. Cross-conversation memories, mood context and summaries wait for Phase 7's server-side consent and deletion controls. Failed sends preserve input or the saved user turn and retry the same request ID. Conversation deletion requires confirmation; no sensitive text appears in URLs or logs.
 
 Support is available before sign-in and from every conversation. A country picker (India, United States, elsewhere) chooses configured, verified resources; it never infers location from timezone. The crisis path stays conversational and directs to trusted people or local emergency services. No calling happens automatically. Loading, empty, failed-send, deleted-thread and offline support states must remain recoverable.
+
+## Phase 6 breathing, affirmations and progress
+
+Keep the approved sky, Sol, Fraunces/Figtree and semantic tokens. Add the functional Wellness tab between Home and Talk. Home gains a short daily affirmation, a breathing shortcut and real days-with-Sol count. No AI-generated suggestions or summaries until Phase 7.
+
+Wellness leads with a breathing invitation and links to today's original, curated affirmation and account favorites. Breathing offers Box (4/4/4/4), 4–7–8 (4/7/8), and Coherent (5.5/5.5), for 1, 3 or 5 minutes. The user may pause or stop at any time; the app pauses on losing focus or entering the background and requires an explicit resume. Time measures active practice, using a monotonic clock. Sol expands on inhale, stays still for holds and contracts on exhale. Text gives the phase and remaining time; a thin horizontal completion indicator supplements it. Reduce Motion keeps Sol static, with the same phase instructions. Haptics are optional and run through the existing wrapper. No medical benefit promises; breathe comfortably and stop if uncomfortable.
+
+Completed practice offers optional before/after mood ratings and explicit Save session. Only completed, saved sessions count. Save failures retain the completion and retry key on this screen; leaving warns before discarding an unsaved session. Interrupted sessions are not logged. Affirmations rotate by the user's local date from 60 original lines, available offline in the app; explicit Mark as read logs a wellness action. Favorites are separate, account-owned and removable. Neither opening a page nor favoriting a line claims practice completion.
+
+Progress adds seven local calendar days of average mood (gaps remain empty), activity-day indicators and breathing minutes, above the existing paginated check-in history. Every chart day also has a readable text label and value. Consecutive-day counts include mood check-ins, saved breathing sessions and affirmations explicitly marked read. Multiple actions count once per day. A streak ending yesterday remains current until today ends; a gap receives a warm welcome back. Dates are recomputed in the phone's current IANA timezone, so travel can regroup past actions. Server completion timestamps are authoritative; delayed saves count on the day saved. Deleting a mood removes that action from progress. Account deletion cascades activities and favorites. No extra persisted plaintext cache.
+
+```text
+Wellness                 Breathing                Affirmations
+| A moment for you    |  | Back      Breathe    | | Today's words        |
+| (Sol)              |  | Box / 4–7–8 / Coherent| | Original daily line  |
+| Take a breathing   |  | 1 / 3 / 5 minutes    | | Mark as read         |
+| break              |  |     (breathing Sol)   | | Save to favorites    |
+| Today's words      |  | Breathe in / Hold /   | | Saved favorites      |
+| Saved favorites    |  | Breathe out           | | line · Remove        |
+| Home Wellness Talk |  | time · progress       | | loading/retry/empty  |
+| Progress You       |  | Pause / Resume / Stop | +----------------------+
++--------------------+  | Complete · mood · Save|
+Progress                 +-----------------------+
+| Days with Sol · welcome back if needed |
+| Last 7 days · mood and activity labels |
+| Breathing minutes · saved sessions     |
+| Your check-ins · existing history      |
++----------------------------------------+
+```
+
+Notification destinations keep their existing allowlisted reminder route for compatibility; breathing and affirmation reminder pages offer direct actions into the matching feature. No timer starts from a notification tap. Loading, unavailable-server, empty and retry states use existing stable reading surfaces; long labels wrap at enlarged text sizes.
+
+## Phase 6 visual direction — a pocket of calm
+
+The user delegated full-app UI/UX ownership on 7 November 2026, including icon selection. Refine the existing brand across onboarding, Home, Talk, Progress, Wellness and You. References inspected: [Headspace](https://www.headspace.com/) for clear hierarchy, succinct activity choices and expressive illustration; [Finch](https://finchcare.com/) for companion warmth and approachable daily actions. These are design references, not a claim about current app-store rankings. Calm's website denied access during research. Use original Sol artwork and copy; do not copy assets or screens.
+
+Composition: a quiet reading background with the local-time sky visible behind Sol and around page edges. The character, generous serif titles and sea-glass primary actions establish the first impression. Home starts with a compact date/profile row and a greeting beside Sol, followed immediately by the mood interaction. A featured breathing invitation, a typographic affirmation and a small progress row have different forms rather than repeating identical cards. Hide optional mood details until requested.
+
+Use **Lucide** consistently: house, flower-2, message-circle, chart-no-axes-combined, user-round for the five tabs; wind for breathing; heart for favorites; bell for reminders; shield-check for privacy; life-buoy for support; chevrons for navigation. Stroke 1.8–2 at 22–24 dp, rounded caps, semantic colors. The center Talk icon sits in a sea-glass disc. Tabs keep text labels. Icon-only controls have spoken labels and at least 48 dp targets. Lucide's maintained React Native package plus Expo-compatible SVG renderer replace placeholder shapes; this dependency earns its place through consistent app-wide navigation and actions.
+
+Reading surfaces use a slightly smaller 24 dp radius, no grey shadows, and restrained borders. Reserve framed surfaces for grouped actions and content; headings and navigation rows should not each become cards. Primary buttons receive a short scale response via Reanimated; no motion when Reduce Motion is enabled. Every screen remains scrollable where needed. Chat uses distinct user bubbles and open Sol replies with a compact composer; history and settings use icon-led rows. Destructive actions stay clearly labeled and confirmed.
+
+Visual QA correction: navigation scenes need an opaque base sampled from the current sky's lower color. Fully transparent retained scenes allowed the previous tab's text and controls to show through the next screen on web. The root sky remains the transition backdrop; each screen's calm opaque base prevents overlap. The greeting uses a small time-of-day line and a large name beside Sol so long greetings never break in the middle of a word. The tab bar reserves label height plus the device's bottom safe area.
+
+Launcher icon: the original Sol face centered on Sea Glass, with a separate transparent 1024 px foreground for Android's adaptive mask. Uses the existing original mascot artwork; no external brand assets. Android adaptive safe-area composition must be checked in the installed preview.

@@ -13,6 +13,7 @@ const conversation = {
   createdAt: '2026-11-06T12:00:00Z',
   updatedAt: '2026-11-06T12:00:00Z',
 };
+jest.mock('../../../components/sol/Companion', () => ({ Companion: () => null }));
 jest.mock('../api', () => ({ chatApi: { list: jest.fn(), create: jest.fn(), remove: jest.fn() } }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('../../auth/context', () => ({

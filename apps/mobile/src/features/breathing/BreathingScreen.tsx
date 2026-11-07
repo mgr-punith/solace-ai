@@ -1,0 +1,273 @@
+import { useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Platform, Switch, View } from 'react-native';
+import { router, usePreventRemove } from 'expo-router';
+import {
+  breathingPatterns,
+  practiceDurations,
+  type ActivityInput,
+  type BreathingPattern,
+} from '@solace/shared';
+import { Screen } from '../../components/ui/Screen';
+import { Action, AppText, Surface } from '../../components/ui/primitives';
+import { Icon } from '../../components/ui/Icon';
+import { PageHeader, layoutStyles } from '../../components/ui/layout';
+import { useTheme } from '../../theme/ThemeProvider';
+import { moods, tokens } from '../../theme/tokens';
+import { deviceTimezone } from '../mood/hooks';
+import { activityRequestId, useSaveActivity } from '../wellness/hooks';
+import { usePractice } from './usePractice';
+import { BreathingGuide } from './BreathingGuide';
+function MoodRating({
+  label,
+  value,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  value: number | null;
+  onChange: (mood: number | null) => void;
+  disabled: boolean;
+}) {
+  return (
+    <View style={layoutStyles.gap}>
+      <AppText variant="bodySmall">{label} · optional</AppText>
+      <View style={layoutStyles.wrap}>
+        {moods.map((mood, index) => (
+          <Action
+            key={mood.label}
+            secondary
+            selected={value === index + 1}
+            disabled={disabled}
+            label={`${label}: ${mood.label}`}
+            onPress={() => onChange(value === index + 1 ? null : index + 1)}
+          >
+            {mood.label}
+          </Action>
+        ))}
+      </View>
+    </View>
+  );
+}
+export function BreathingScreen() {
+  const { practice, start, pause, resume, reset } = usePractice();
+  const [pattern, setPattern] = useState<BreathingPattern>('coherent');
+  const [duration, setDuration] = useState<(typeof practiceDurations)[number]>(60);
+  const [beforeMood, setBeforeMood] = useState<number | null>(null);
+  const [afterMood, setAfterMood] = useState<number | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [discard, setDiscard] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const payload = useRef<ActivityInput | null>(null);
+  const saving = useRef(false);
+  const mutation = useSaveActivity();
+  const { sky, haptics, setHaptics } = useTheme();
+  usePreventRemove(!!practice && !saved && !discard, ({ repeat }) => {
+    pause();
+    const leave = () => {
+      setDiscard(true);
+      repeat();
+    };
+    const message =
+      practice?.status === 'complete'
+        ? 'This completed session has not been saved. Leave without saving it?'
+        : 'This practice will end without being saved.';
+    if (Platform.OS === 'web') {
+      if (window.confirm(message)) leave();
+      return;
+    }
+    Alert.alert('Leave this session?', message, [
+      { text: 'Stay here', style: 'cancel' },
+      { text: 'Leave session', onPress: leave },
+    ]);
+  });
+  async function save() {
+    if (practice?.status !== 'complete' || saving.current || saved) return;
+    payload.current ??= {
+      requestId: activityRequestId(),
+      type: 'breathing',
+      timezone: deviceTimezone(),
+      pattern,
+      durationSeconds: duration,
+      beforeMood,
+      afterMood,
+    };
+    saving.current = true;
+    setError(null);
+    try {
+      await mutation.mutateAsync(payload.current);
+      setSaved(true);
+    } catch {
+      setError('Your session couldn’t be saved. Keep this screen open and try again.');
+    } finally {
+      saving.current = false;
+    }
+  }
+  function stop() {
+    pause();
+    const clear = () => {
+      reset();
+      payload.current = null;
+      setAfterMood(null);
+      setError(null);
+    };
+    if (Platform.OS === 'web') {
+      if (window.confirm('End this practice without saving?')) clear();
+      return;
+    }
+    Alert.alert(
+      'End this practice?',
+      'You can begin again whenever you like. Partial sessions are not saved.',
+      [
+        { text: 'Keep session', style: 'cancel' },
+        { text: 'End session', onPress: clear },
+      ],
+    );
+  }
+  return (
+    <Screen>
+      <PageHeader
+        title="Breathe"
+        subtitle="One breath at a time."
+        back={() => (router.canGoBack() ? router.back() : router.replace('/wellness'))}
+      />
+      {!practice ? (
+        <>
+          <Surface>
+            <View style={layoutStyles.row}>
+              <Icon name="wind" />
+              <AppText variant="heading">Find your rhythm</AppText>
+            </View>
+            <AppText tone="secondary">
+              Stay comfortable. You can pause or stop whenever you need.
+            </AppText>
+            {(['coherent', 'box', '478'] as BreathingPattern[]).map((key) => (
+              <View key={key} style={{ gap: tokens.spacing.xs }}>
+                <Action secondary selected={pattern === key} onPress={() => setPattern(key)}>
+                  {breathingPatterns[key].name}
+                </Action>
+                <AppText variant="caption" tone="secondary" style={{ textAlign: 'center' }}>
+                  {breathingPatterns[key].description}
+                </AppText>
+              </View>
+            ))}
+          </Surface>
+          <Surface>
+            <AppText variant="heading">How much time feels right?</AppText>
+            <View style={layoutStyles.wrap}>
+              {practiceDurations.map((seconds) => (
+                <Action
+                  key={seconds}
+                  secondary
+                  selected={duration === seconds}
+                  onPress={() => setDuration(seconds)}
+                >{`${seconds / 60} min`}</Action>
+              ))}
+            </View>
+            <MoodRating
+              label="Before your session"
+              value={beforeMood}
+              onChange={setBeforeMood}
+              disabled={false}
+            />
+            <View style={layoutStyles.row}>
+              <AppText style={layoutStyles.grow}>Gentle haptics</AppText>
+              <Switch
+                accessibilityLabel="Breathing haptics"
+                value={haptics}
+                onValueChange={setHaptics}
+                trackColor={{ true: tokens.action.background, false: sky.palette.secondary }}
+              />
+            </View>
+            <Action icon="play" onPress={() => start(duration)}>
+              Start breathing
+            </Action>
+          </Surface>
+        </>
+      ) : (
+        <Surface>
+          <AppText variant="caption" tone="secondary">
+            {breathingPatterns[pattern].name} · {duration / 60} minute{duration === 60 ? '' : 's'}
+          </AppText>
+          <BreathingGuide pattern={pattern} practice={practice} />
+          <View
+            accessibilityRole="progressbar"
+            accessibilityLabel="Session progress"
+            accessibilityValue={{
+              min: 0,
+              max: duration,
+              now: Math.floor(practice.elapsedMs / 1000),
+            }}
+            style={{
+              height: tokens.spacing.xs,
+              borderRadius: tokens.radius.pill,
+              backgroundColor: sky.palette.background,
+              overflow: 'hidden',
+            }}
+          >
+            <View
+              style={{
+                height: '100%',
+                width: `${(100 * practice.elapsedMs) / practice.durationMs}%`,
+                backgroundColor: sky.palette.text,
+              }}
+            />
+          </View>
+          {practice.status !== 'complete' ? (
+            <>
+              <AppText variant="caption" tone="secondary" style={{ textAlign: 'center' }}>
+                {Math.ceil((practice.durationMs - practice.elapsedMs) / 1000)} seconds remaining
+              </AppText>
+              <Action
+                icon={practice.status === 'running' ? 'pause' : 'play'}
+                onPress={practice.status === 'running' ? pause : resume}
+              >
+                {practice.status === 'running' ? 'Pause session' : 'Resume session'}
+              </Action>
+              <Action secondary onPress={stop}>
+                End session
+              </Action>
+            </>
+          ) : saved ? (
+            <>
+              <Icon name="complete" />
+              <AppText accessibilityLiveRegion="polite" variant="heading">
+                Your session is saved.
+              </AppText>
+              <AppText tone="secondary">That time belongs to you. See it in your progress.</AppText>
+              <Action icon="progress" onPress={() => router.replace('/progress')}>
+                View progress
+              </Action>
+              <Action secondary onPress={() => router.replace('/wellness')}>
+                Back to Wellness
+              </Action>
+            </>
+          ) : (
+            <>
+              <MoodRating
+                label="After your session"
+                value={afterMood}
+                onChange={setAfterMood}
+                disabled={mutation.isPending || !!payload.current}
+              />
+              <AppText variant="caption" tone="secondary">
+                Save to add this session to today’s progress. A delayed save counts on the day it
+                reaches your account.
+              </AppText>
+              {error && (
+                <AppText accessibilityRole="alert" tone="error">
+                  {error}
+                </AppText>
+              )}
+              {mutation.isPending && (
+                <ActivityIndicator accessibilityLabel="Saving session" color={sky.palette.text} />
+              )}
+              <Action icon="check" disabled={mutation.isPending} onPress={() => void save()}>
+                {error ? 'Retry saving session' : 'Save session'}
+              </Action>
+            </>
+          )}
+        </Surface>
+      )}
+    </Screen>
+  );
+}

@@ -1,3 +1,4 @@
+import { MoodFace } from '../../components/ui/MoodFace';
 import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -88,15 +89,12 @@ export function MoodForm({
               styles.mood,
               {
                 minWidth: tokens.moodChoiceWidth * fontScale,
+                flex: fontScale <= 1.1 ? 1 : undefined,
                 borderColor: mood === index + 1 ? sky.palette.text : tokens.colors.clear,
               },
             ]}
           >
-            <View style={[styles.dot, { backgroundColor: item.color }]}>
-              <AppText variant="caption" style={{ color: tokens.colors.face }}>
-                {index + 1}
-              </AppText>
-            </View>
+            <MoodFace mood={index} />
             <AppText variant="caption">{item.label}</AppText>
           </Pressable>
         ))}
@@ -193,12 +191,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: tokens.spacing.sm,
+    gap: tokens.spacing.xs,
   },
   mood: {
     alignItems: 'center',
     gap: tokens.spacing.sm,
-    padding: tokens.spacing.sm,
+    paddingVertical: tokens.spacing.sm,
     borderRadius: tokens.radius.tag,
     borderWidth: tokens.selectedBorder,
     minHeight: tokens.target,
