@@ -1,16 +1,11 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  RefreshControl,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-} from 'react-native';
+import { ActivityIndicator, RefreshControl, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
-import { affirmationForDay, localDay, type MoodCheckin } from '@solace/shared';
+import { affirmationForDay, localDay } from '@solace/shared';
 import { Screen } from '../../components/ui/Screen';
 import { AppText, Action, Surface } from '../../components/ui/primitives';
 import { Icon } from '../../components/ui/Icon';
+import { MoodFace } from '../../components/ui/MoodFace';
 import { IconButton, NavigationRow, layoutStyles } from '../../components/ui/layout';
 import { Companion } from '../../components/sol/Companion';
 import { useAuth } from '../auth/context';
@@ -18,21 +13,30 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { moods, tokens } from '../../theme/tokens';
 import { deviceTimezone, useMoodToday } from '../mood/hooks';
 import { MoodForm } from '../mood/MoodForm';
+import { checkinDraft } from '../chat/drafts';
+import { useStartConversation } from '../chat/useStartConversation';
+import { firstName, homeGreeting } from './greeting';
 
 export function HomeScreen() {
-  const { fontScale } = useWindowDimensions();
   const auth = useAuth();
+  const { now } = useTheme();
+  const day = localDay(now, deviceTimezone());
+  return (
+    <DailyHome key={`${auth.session?.user.id}:${day}`} name={firstName(auth.session?.user.name)} />
+  );
+}
+
+function DailyHome({ name }: { name: string }) {
   const { now, sky } = useTheme();
   const today = useMoodToday();
+  const chat = useStartConversation();
   const [selected, setSelected] = useState(2);
-  const [saved, setSaved] = useState<MoodCheckin | null>(null);
-  const [form, setForm] = useState(0);
+  const [editing, setEditing] = useState(false);
   const [response, setResponse] = useState<string | null>(null);
-  const greeting =
-    now.getHours() < 12 ? 'Good morning' : now.getHours() < 18 ? 'Good afternoon' : 'Good evening';
-  const name = auth.session?.user.name.trim().split(/\s+/)[0] ?? 'there';
   const latest = today.data?.items[0];
+  const showingSaved = !!latest && !editing;
   const affirmation = affirmationForDay(localDay(now, deviceTimezone()));
+
   return (
     <Screen
       inTabs
@@ -54,123 +58,151 @@ export function HomeScreen() {
         </View>
         <IconButton icon="bell" label="Open reminders" onPress={() => router.push('/reminders')} />
       </View>
-      <View style={[styles.hero, fontScale > 1.2 && styles.stacked]}>
+      <View style={styles.hero}>
         <View style={styles.greeting}>
           <AppText variant="bodySmall" tone="secondary">
-            {greeting},
+            {homeGreeting(now.getHours())},
           </AppText>
           <AppText variant="title" accessibilityRole="header">
             {name}
           </AppText>
           <AppText variant="bodySmall" accessibilityLiveRegion="polite">
-            {response ?? 'Tap Sol to say hello.'}
-          </AppText>
-          <AppText variant="caption" tone="secondary">
-            Hold Sol for a quiet breath
+            {response ?? (showingSaved ? 'What would help from here?' : 'How is today feeling?')}
           </AppText>
         </View>
         <Companion
-          mood={saved ? saved.mood - 1 : selected}
+          mood={showingSaved ? latest.mood - 1 : selected}
           size={tokens.sol.home}
           onResponse={setResponse}
         />
       </View>
       <Surface>
-        {saved ? (
+        {today.isPending ? (
+          <View style={layoutStyles.row}>
+            <ActivityIndicator
+              accessibilityLabel="Loading today's check-in"
+              color={sky.palette.text}
+            />
+            <AppText tone="secondary">Opening today’s check-in…</AppText>
+          </View>
+        ) : today.isError && !today.data ? (
+          <>
+            <AppText tone="error" accessibilityRole="alert">
+              Today’s check-in couldn’t be loaded. Try again to see where you left off.
+            </AppText>
+            <Action secondary onPress={() => void today.refetch()}>
+              Try loading again
+            </Action>
+          </>
+        ) : showingSaved ? (
           <>
             <View style={layoutStyles.row}>
-              <Icon name="complete" />
-              <AppText accessibilityLiveRegion="polite" variant="heading">
-                Your check-in is saved.
-              </AppText>
+              <MoodFace mood={latest.mood - 1} />
+              <View style={layoutStyles.grow}>
+                <AppText variant="caption" tone="secondary">
+                  Today ·{' '}
+                  {new Date(latest.createdAt).toLocaleTimeString(undefined, {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  })}
+                </AppText>
+                <AppText variant="heading" accessibilityLiveRegion="polite">
+                  Feeling {moods[latest.mood - 1]?.label.toLowerCase()}
+                </AppText>
+              </View>
+              <Icon name="check" size={tokens.icon.sm} />
             </View>
-            <AppText>{moods[saved.mood - 1]?.response}</AppText>
+            {latest.tags.length > 0 && (
+              <AppText variant="bodySmall" tone="secondary">
+                {latest.tags.join(' · ')}
+              </AppText>
+            )}
+            {latest.note ? <AppText numberOfLines={3}>{latest.note}</AppText> : null}
             <Action
-              secondary
-              onPress={() => {
-                setSaved(null);
-                setForm((value) => value + 1);
-              }}
+              icon="talk"
+              disabled={chat.isPending}
+              onPress={() => void chat.start(checkinDraft(latest))}
+            >
+              {chat.isPending
+                ? 'Opening conversation…'
+                : chat.isError
+                  ? 'Retry opening chat'
+                  : 'Talk about this'}
+            </Action>
+            <AppText variant="caption" tone="secondary">
+              Review your check-in in a message before sending.
+            </AppText>
+            {chat.isError && (
+              <AppText accessibilityRole="alert" tone="error">
+                The conversation couldn’t open. Your check-in is saved; try again.
+              </AppText>
+            )}
+            <Action
+              variant="quiet"
+              disabled={chat.isPending || chat.isError}
+              onPress={() => setEditing(true)}
             >
               Check in again
             </Action>
           </>
         ) : (
-          <MoodForm key={form} onMood={setSelected} onSaved={setSaved} />
+          <>
+            <MoodForm
+              onMood={setSelected}
+              onSaved={() => setEditing(false)}
+              onCancel={latest ? () => setEditing(false) : undefined}
+            />
+          </>
+        )}
+        {today.isError && today.data && (
+          <>
+            <AppText tone="error" accessibilityRole="alert">
+              Today’s check-in couldn’t refresh.
+            </AppText>
+            <Action variant="quiet" onPress={() => void today.refetch()}>
+              Try loading again
+            </Action>
+          </>
         )}
       </Surface>
       <View>
         <NavigationRow
           icon="wind"
-          title="Take a breathing break"
-          subtitle="One minute, at your pace"
+          title="Breathe for a minute"
+          subtitle="A slow rhythm with Sol"
           onPress={() => router.push('/breathing')}
         />
-        <NavigationRow
-          icon="talk"
-          title="Talk with Sol"
-          subtitle="Pick up a conversation, or start fresh"
-          onPress={() => router.navigate('/talk')}
-        />
+        {!showingSaved && (
+          <NavigationRow
+            icon="talk"
+            title="Talk with Sol"
+            subtitle="Start anywhere. No check-in needed."
+            onPress={() => router.navigate('/talk')}
+          />
+        )}
       </View>
       <View style={[styles.quote, { borderColor: sky.palette.secondary }]}>
         <AppText variant="caption" tone="secondary">
           Today’s words
         </AppText>
-        <AppText variant="title">{affirmation.text}</AppText>
+        <AppText variant="heading">{affirmation.text}</AppText>
         <NavigationRow
           icon="heart"
           title="Open affirmations"
           onPress={() => router.push('/affirmations')}
         />
       </View>
-      <View style={layoutStyles.gap}>
-        <AppText variant="heading">Your latest check-in today</AppText>
-        {today.isPending ? (
-          <ActivityIndicator
-            accessibilityLabel="Loading today's check-in"
-            color={sky.palette.text}
-          />
-        ) : today.isError ? (
-          <>
-            <AppText tone="error" accessibilityRole="alert">
-              Today’s check-in couldn’t be loaded. Your saved entries are safe.
-            </AppText>
-            <Action secondary onPress={() => void today.refetch()}>
-              Try loading again
-            </Action>
-          </>
-        ) : latest ? (
-          <>
-            <AppText>
-              {moods[latest.mood - 1]?.label} ·{' '}
-              {new Date(latest.createdAt).toLocaleTimeString(undefined, {
-                hour: 'numeric',
-                minute: '2-digit',
-              })}
-            </AppText>
-            {latest.tags.length > 0 && (
-              <AppText variant="bodySmall" tone="secondary">
-                {latest.tags.join(', ')}
-              </AppText>
-            )}
-            {latest.note ? <AppText>{latest.note}</AppText> : null}
-          </>
-        ) : (
-          <AppText tone="secondary">No check-in yet today. Start wherever you are.</AppText>
-        )}
-        <NavigationRow
-          icon="progress"
-          title="View your check-ins and progress"
-          onPress={() => router.navigate('/progress')}
-        />
-      </View>
+      <NavigationRow
+        icon="progress"
+        title="Your check-ins and progress"
+        onPress={() => router.navigate('/progress')}
+      />
     </Screen>
   );
 }
+
 const styles = StyleSheet.create({
   hero: { flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.sm },
-  stacked: { flexDirection: 'column', alignItems: 'stretch' },
   greeting: { flex: 1, gap: tokens.spacing.xs },
-  quote: { borderTopWidth: tokens.border, paddingTop: tokens.spacing.ml, gap: tokens.spacing.sm },
+  quote: { borderTopWidth: tokens.border, paddingTop: tokens.spacing.md, gap: tokens.spacing.sm },
 });

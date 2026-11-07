@@ -324,6 +324,8 @@ npm run db:check       # verify configured DB connections without printing crede
 
 ## Confirmed kickoff decisions
 
+- Product focus confirmed 8 November 2026: connect the existing daily check-in, chat and breathing flows before adding features. Shared check-ins and post-breathing reflections must be editable drafts sent explicitly by the user. Remove the inactive memory switch; preserve legacy device preferences without treating them as consent for future memory. Actual cross-conversation memory requires fresh consent and inspect/delete controls when implemented. See `docs/design/DESIGN.md` for this refinement.
+
 - Work on this Linux machine; Android phone with USB debugging; start from scratch.
 - Host on Render; database on Neon; keep the companion name Sol.
 - AI provider updated 6 November 2026: `groq`, base URL `https://api.groq.com/openai/v1`, model `openai/gpt-oss-120b` with low reasoning effort and final text only. The user saved the key privately; six synthetic provider cases passed in 0.3–1.1 seconds. Enable Zero Data Retention in Groq Data Controls. VyceAi remains supported explicitly; no automatic cross-provider fallback. Verify Render and the phone after deployment.

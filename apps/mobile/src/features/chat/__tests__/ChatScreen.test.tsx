@@ -1,15 +1,18 @@
 jest.mock('expo-router', () => ({
   useFocusEffect: jest.fn(),
-  router: { canGoBack: () => false, replace: jest.fn() },
+  router: { canGoBack: () => false, replace: jest.fn(), push: jest.fn() },
 }));
 import { beforeEach, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { router } from 'expo-router';
+import { FlatList } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 import { ChatScreen } from '../ChatScreen';
 import { chatApi } from '../api';
 import { providerInfoApi } from '../provider-info';
 import type { ChatMessage } from '@solace/shared';
+import { chatDraftKey, seedChatDraft } from '../drafts';
 
 jest.mock('../api', () => ({ chatApi: { messages: jest.fn(), send: jest.fn() } }));
 jest.mock('../../auth/context', () => ({
@@ -20,6 +23,7 @@ jest.mock('../../auth/context', () => ({
   }),
 }));
 jest.mock('../../../components/sol/Companion', () => ({ Companion: () => null }));
+jest.mock('../../../components/sol/Sol', () => ({ __esModule: true, default: () => null }));
 jest.mock('../../../lib/useMotionPreferences', () => ({
   useMotionPreferences: () => ({ active: true, reduceMotion: true }),
 }));
@@ -42,23 +46,22 @@ const assistant: ChatMessage = {
   sequence: 2,
   content: 'I hear you.',
 };
-async function mount() {
-  await render(
-    <QueryClientProvider
-      client={
-        new QueryClient({
-          defaultOptions: {
-            queries: { retry: false, gcTime: 0 },
-            mutations: { retry: false, gcTime: 0 },
-          },
-        })
-      }
-    >
+async function mount(
+  client = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0 },
+      mutations: { retry: false, gcTime: 0 },
+    },
+  }),
+) {
+  const view = await render(
+    <QueryClientProvider client={client}>
       <ThemeProvider>
         <ChatScreen id="conversation" />
       </ThemeProvider>
     </QueryClientProvider>,
   );
+  return { view, client };
 }
 beforeEach(() => {
   jest.clearAllMocks();
@@ -104,6 +107,121 @@ it('restores the retry action for a saved failed turn and shows support on crisi
     requestId: user.requestId,
     content: user.content,
   });
+  expect(screen.queryByRole('button', { name: 'Take a breathing break' })).toBeNull();
+});
+
+it('lets the user edit a check-in handoff and sends only their reviewed text', async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { gcTime: 0 }, mutations: { gcTime: 0 } },
+  });
+  seedChatDraft(client, 'a', 'conversation', {
+    text: 'A private note',
+    origin: 'checkin',
+    pending: null,
+  });
+  jest.mocked(chatApi.send).mockResolvedValue({ userMessage: user, assistantMessage: assistant });
+  await mount(client);
+  await waitFor(() =>
+    expect(screen.getByLabelText('Message Sol').props.value).toBe('A private note'),
+  );
+  expect(chatApi.send).not.toHaveBeenCalled();
+  await fireEvent.changeText(screen.getByLabelText('Message Sol'), 'Just feeling tired.');
+  await fireEvent.press(screen.getByRole('button', { name: 'Send message' }));
+  await waitFor(() =>
+    expect(chatApi.send).toHaveBeenCalledWith(
+      'token',
+      'conversation',
+      expect.objectContaining({ content: 'Just feeling tired.' }),
+    ),
+  );
+  expect(client.getQueryData(chatDraftKey('a', 'conversation'))).toMatchObject({
+    text: '',
+    origin: null,
+    pending: null,
+  });
+});
+
+it('prepares starter prompts without sending anything', async () => {
+  await mount();
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Talk through my day' })).toBeTruthy(),
+  );
+  await fireEvent.press(screen.getByRole('button', { name: 'Talk through my day' }));
+  expect(screen.getByLabelText('Message Sol').props.value).toBe('I’d like to talk through my day.');
+  expect(chatApi.send).not.toHaveBeenCalled();
+});
+
+it('keeps an unsent draft through a breathing break and reopening the conversation', async () => {
+  jest.mocked(chatApi.messages).mockResolvedValue({ items: [assistant, user], nextCursor: null });
+  const { client, view } = await mount();
+  await waitFor(() => expect(screen.getByLabelText('Message Sol')).toBeTruthy());
+  await fireEvent.changeText(screen.getByLabelText('Message Sol'), 'Keep this thought');
+  await fireEvent.press(screen.getByRole('button', { name: 'Take a breathing break' }));
+  expect(router.push).toHaveBeenCalledWith({
+    pathname: '/breathing',
+    params: { conversation: 'conversation' },
+  });
+  expect(chatApi.send).not.toHaveBeenCalled();
+  await view.unmount();
+  await mount(client);
+  await waitFor(() =>
+    expect(screen.getByLabelText('Message Sol').props.value).toBe('Keep this thought'),
+  );
+});
+
+it('retains the original retry key after leaving an unconfirmed send', async () => {
+  jest.mocked(chatApi.send).mockRejectedValue(new Error('Offline'));
+  const { client, view } = await mount();
+  await waitFor(() => expect(screen.getByLabelText('Message Sol')).toBeTruthy());
+  await fireEvent.changeText(screen.getByLabelText('Message Sol'), 'Keep this retry');
+  await fireEvent.press(screen.getByRole('button', { name: 'Send message' }));
+  await waitFor(() => expect(screen.getByText('Offline')).toBeTruthy());
+  const original = jest.mocked(chatApi.send).mock.calls[0]?.[2];
+  await view.unmount();
+  await mount(client);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Retry message' })).toBeTruthy());
+  await fireEvent.press(screen.getByRole('button', { name: 'Retry message' }));
+  await waitFor(() => expect(chatApi.send).toHaveBeenCalledTimes(2));
+  expect(jest.mocked(chatApi.send).mock.calls[1]?.[2]).toEqual(original);
+});
+
+it('keeps the reading position when a new reply arrives and offers a jump to latest', async () => {
+  jest.mocked(chatApi.messages).mockResolvedValue({ items: [assistant, user], nextCursor: null });
+  const { client } = await mount();
+  await waitFor(() => expect(screen.getByText('I hear you.')).toBeTruthy());
+  const scroll = jest.spyOn(FlatList.prototype, 'scrollToEnd').mockImplementation(() => {});
+  await fireEvent(screen.getByTestId('chat-messages'), 'contentSizeChange', 350, 1800);
+  scroll.mockClear();
+  await fireEvent(screen.getByTestId('chat-messages'), 'scrollBeginDrag');
+  await fireEvent.scroll(screen.getByTestId('chat-messages'), {
+    nativeEvent: {
+      contentOffset: { y: 100 },
+      contentSize: { height: 1800 },
+      layoutMeasurement: { height: 600 },
+    },
+  });
+  await act(async () => {
+    client.setQueryData(['chat', 'a', 'conversation'], {
+      pages: [
+        {
+          items: [
+            { ...assistant, id: 'reply-2', sequence: 4, content: 'A new reply.' },
+            assistant,
+            user,
+          ],
+          nextCursor: null,
+        },
+      ],
+      pageParams: [undefined],
+    });
+  });
+  await waitFor(() => expect(screen.getByText('A new reply.')).toBeTruthy());
+  await fireEvent(screen.getByTestId('chat-messages'), 'contentSizeChange', 350, 2000);
+  expect(scroll).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: 'Latest messages' })).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Latest messages' }));
+  expect(scroll).toHaveBeenCalled();
+  scroll.mockRestore();
 });
 it('offers recovery instead of an empty chat when loading fails', async () => {
   jest

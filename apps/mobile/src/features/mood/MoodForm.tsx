@@ -21,9 +21,11 @@ const requestId = () =>
 export function MoodForm({
   onMood,
   onSaved,
+  onCancel,
 }: {
   onMood: (mood: number) => void;
   onSaved: (entry: MoodCheckin) => void;
+  onCancel?: (() => void) | undefined;
 }) {
   const [mood, setMood] = useState<number | null>(null);
   const [tags, setTags] = useState<MoodInput['tags']>([]);
@@ -70,7 +72,7 @@ export function MoodForm({
   return (
     <>
       <AppText variant="heading" accessibilityRole="header">
-        How are you arriving?
+        How are you feeling?
       </AppText>
       <View style={styles.moods}>
         {moods.map((item, index) => (
@@ -182,6 +184,11 @@ export function MoodForm({
             Edit this check-in
           </Action>
         </>
+      )}
+      {onCancel && (
+        <Action variant="quiet" disabled={locked} onPress={onCancel}>
+          Cancel check-in
+        </Action>
       )}
     </>
   );

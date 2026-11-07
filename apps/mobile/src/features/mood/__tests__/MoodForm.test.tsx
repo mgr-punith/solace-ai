@@ -36,7 +36,10 @@ async function mount() {
     <QueryClientProvider
       client={
         new QueryClient({
-          defaultOptions: { queries: { retry: false }, mutations: { retry: false, gcTime: 0 } },
+          defaultOptions: {
+            queries: { retry: false, gcTime: 0 },
+            mutations: { retry: false, gcTime: 0 },
+          },
         })
       }
     >

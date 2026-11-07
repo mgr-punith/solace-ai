@@ -61,5 +61,5 @@ it('rotates affirmation content by weekday and only allows supported deep links'
   settings.reminders[1]!.enabled = true;
   const plan = reminderPlan(settings);
   expect(new Set(plan.map((v) => v.body)).size).toBe(7);
-  expect(plan.every((v) => v.route === '/reminder?type=affirmation')).toBe(true);
+  expect(plan.every((v) => v.route === '/affirmations')).toBe(true);
 });

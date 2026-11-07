@@ -113,20 +113,9 @@ export function RemindersScreen() {
   return (
     <Screen keyboard>
       <PageHeader title="Gentle reminders" back={goBack} />
-      <AppText tone="secondary">
-        Choose when a little nudge would help. Everything starts off. Times follow this phone’s
-        local time.
-      </AppText>
+      <AppText tone="secondary">Choose a time that works for you. Times follow this phone.</AppText>
       <Surface>
-        <AppText variant="heading">A small invitation</AppText>
-        <AppText>
-          Solace can show reminders even when the app is closed. You choose the days and can turn
-          them off anytime.
-        </AppText>
-        <AppText variant="bodySmall" tone="secondary">
-          Reminder messages can appear on your lock screen. Android may deliver them a little late
-          to save battery.
-        </AppText>
+        <AppText variant="heading">Notifications</AppText>
         {reminders.permission === 'granted' ? (
           <AppText>Notifications are allowed on this phone.</AppText>
         ) : reminders.permission === 'unsupported' ? (
@@ -149,10 +138,16 @@ export function RemindersScreen() {
             </Action>
           </>
         ) : (
-          <Action disabled={busy} onPress={() => void allow()}>
-            Allow notifications
-          </Action>
+          <>
+            <AppText>Get your chosen reminders even when Solace is closed.</AppText>
+            <Action disabled={busy} onPress={() => void allow()}>
+              Allow notifications
+            </Action>
+          </>
         )}
+        <AppText variant="caption" tone="secondary">
+          Messages may appear on your lock screen. Android can deliver reminders a little late.
+        </AppText>
       </Surface>
       {reminders.status === 'loading' && (
         <ActivityIndicator accessibilityLabel="Loading reminders" color={sky.palette.text} />

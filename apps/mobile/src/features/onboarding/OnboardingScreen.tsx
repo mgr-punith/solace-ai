@@ -50,7 +50,6 @@ export function OnboardingScreen() {
   const [step, setStep] = useState(
     reviewing ? 0 : onboarding.document.completed ? 3 : onboarding.document.step,
   );
-  const [enabled, setEnabled] = useState(onboarding.choice ?? false);
   const [mood, setMood] = useState<number | null>(null);
   const theme = useTheme();
   const { height, fontScale } = useWindowDimensions();
@@ -84,7 +83,8 @@ export function OnboardingScreen() {
     }, [step, move]),
   );
   async function complete() {
-    if (await onboarding.complete(enabled)) router.replace('/');
+    // Preserve any legacy preference without treating it as consent for a new capability.
+    if (await onboarding.complete(onboarding.choice ?? false)) router.replace('/');
   }
   return (
     <SafeAreaView style={styles.screen}>
@@ -200,9 +200,7 @@ export function OnboardingScreen() {
                 </AppText>
               </View>
             )}
-            {step === 3 && (
-              <PrivacyChoice enabled={enabled} onChange={setEnabled} disabled={onboarding.busy} />
-            )}
+            {step === 3 && <PrivacyChoice />}
             {onboarding.error && (
               <AppText tone="error" accessibilityRole="alert">
                 {onboarding.error}
@@ -222,9 +220,9 @@ export function OnboardingScreen() {
               {step < 3
                 ? 'Continue'
                 : reviewing
-                  ? 'Save choice'
+                  ? 'Done'
                   : auth.status === 'signedIn'
-                    ? 'Save and continue'
+                    ? 'Continue to Solace'
                     : 'Continue to sign in'}
             </Action>
           </Surface>

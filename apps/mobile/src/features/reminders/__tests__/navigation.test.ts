@@ -11,8 +11,20 @@ it('accepts only known reminder destinations and retains a target until login na
     '/missing',
   ])
     expect(parseReminderTarget({ route })).toBeNull();
-  notificationTarget.set('/reminder?type=breathing');
-  expect(notificationTarget.getSnapshot()).toBe('/reminder?type=breathing');
+  notificationTarget.set('/breathing');
+  expect(notificationTarget.getSnapshot()).toBe('/breathing');
   notificationTarget.set(null);
   expect(notificationTarget.getSnapshot()).toBeNull();
+});
+it('opens real activities from both new and previously scheduled reminder payloads', () => {
+  for (const [type, destination] of [
+    ['mood', '/home'],
+    ['breathing', '/breathing'],
+    ['affirmation', '/affirmations'],
+    ['self-care', '/wellness'],
+  ]) {
+    expect(parseReminderTarget({ route: `/reminder?type=${type}` })).toBe(destination);
+    expect(parseReminderTarget({ route: destination })).toBe(destination);
+  }
+  expect(parseReminderTarget({ route: '/breathing?autostart=1' })).toBeNull();
 });
