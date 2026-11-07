@@ -9,6 +9,7 @@ import { SkyBackground } from '../theme/SkyBackground';
 import { tokens } from '../theme/tokens';
 import { OnboardingProvider, useOnboarding } from '../features/onboarding/context';
 import { StartupGate } from '../features/onboarding/StartupGate';
+import { ReminderProvider, NotificationNavigation } from '../features/reminders/context';
 
 void SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -48,12 +49,15 @@ function AppNavigation() {
               <Stack.Protected guard={auth.status === 'signedIn'}>
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="chat/[id]" />
+                <Stack.Screen name="reminders" />
+                <Stack.Screen name="reminder" />
               </Stack.Protected>
               <Stack.Protected guard={__DEV__}>
                 <Stack.Screen name="design-preview" />
               </Stack.Protected>
             </Stack.Protected>
           </Stack>
+          <NotificationNavigation />
         </NavigationThemeProvider>
       </StartupGate>
     </>
@@ -67,7 +71,9 @@ export default function RootLayout() {
       <AuthProvider>
         <ThemeProvider>
           <OnboardingProvider>
-            <AppNavigation />
+            <ReminderProvider>
+              <AppNavigation />
+            </ReminderProvider>
           </OnboardingProvider>
         </ThemeProvider>
       </AuthProvider>

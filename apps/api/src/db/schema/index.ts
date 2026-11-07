@@ -1,8 +1,10 @@
 import { sql } from 'drizzle-orm';
+import type { ReminderSettings } from '@solace/shared';
 import {
   check,
   index,
   integer,
+  jsonb,
   uniqueIndex,
   pgTable,
   text,
@@ -17,6 +19,17 @@ export const users = pgTable('users', {
   email: text('email').notNull(),
   name: text('name').notNull(),
   avatarUrl: text('avatar_url'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const reminderPreferences = pgTable('reminder_preferences', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  settings: jsonb('settings').$type<ReminderSettings>().notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

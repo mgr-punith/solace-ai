@@ -1,4 +1,6 @@
 import { ActivityIndicator } from 'react-native';
+import { useSyncExternalStore } from 'react';
+import { notificationTarget } from '../reminders/navigation';
 import { Redirect } from 'expo-router';
 import { AuthScreen } from '../auth/AuthScreen';
 import { useAuth } from '../auth/context';
@@ -11,6 +13,11 @@ export function EntryScreen() {
   const auth = useAuth();
   const onboarding = useOnboarding();
   const { sky } = useTheme();
+  const target = useSyncExternalStore(
+    notificationTarget.subscribe,
+    notificationTarget.getSnapshot,
+    notificationTarget.getSnapshot,
+  );
   if (auth.status === 'restoring' || auth.status === 'error') return <AuthScreen />;
   if (!onboarding.identityReady)
     return (
@@ -52,6 +59,6 @@ export function EntryScreen() {
     !onboarding.needsIntroduction &&
     !onboarding.needsChoice
   )
-    return <Redirect href="/home" />;
+    return <Redirect href={target ?? '/home'} />;
   return <AuthScreen />;
 }

@@ -1,4 +1,6 @@
 import { createConversationRepository } from './modules/conversations/repository.js';
+import { createReminderRepository } from './modules/reminders/repository.js';
+import { createReminderService } from './modules/reminders/service.js';
 import { createConversationService } from './modules/conversations/service.js';
 import { createLLMProvider } from './ai/create-provider.js';
 import { createMoodRepository } from './modules/mood/repository.js';
@@ -34,6 +36,7 @@ const app = createApp({
   corsOrigins: env.CORS_ORIGINS,
   chatProvider: env.LLM_PROVIDER,
   auth,
+  reminders: createReminderService({ repository: createReminderRepository(database.db), clock }),
   mood: createMoodService({ repository: createMoodRepository(database.db), clock }),
   chat: createConversationService({
     repository: createConversationRepository(database.pool),

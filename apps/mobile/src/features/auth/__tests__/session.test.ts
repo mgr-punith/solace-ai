@@ -14,7 +14,11 @@ const session: AuthResponse = {
   refreshToken: 'refresh'.repeat(8),
   accessTokenExpiresAt: '2026-11-05T12:15:00.000Z',
 };
-function setup(stored: AuthResponse | null = null, now = Date.parse('2026-11-05T12:00:00Z')) {
+function setup(
+  stored: AuthResponse | null = null,
+  now = Date.parse('2026-11-05T12:00:00Z'),
+  beforeClear?: (intentional: boolean) => Promise<void>,
+) {
   const api: AuthApi = {
     google: jest.fn<AuthApi['google']>().mockResolvedValue(session),
     refresh: jest.fn<AuthApi['refresh']>().mockResolvedValue({
@@ -40,10 +44,36 @@ function setup(stored: AuthResponse | null = null, now = Date.parse('2026-11-05T
     api,
     storage,
     google,
-    manager: createSessionManager({ api, storage, google, now: () => now }),
+    manager: createSessionManager({
+      api,
+      storage,
+      google,
+      now: () => now,
+      ...(beforeClear ? { beforeClear } : {}),
+    }),
   };
 }
 describe('secure session lifecycle', () => {
+  it('clears scheduled reminders before removing credentials on logout and session expiry', async () => {
+    const cleanup = jest.fn<(intentional: boolean) => Promise<void>>().mockResolvedValue(undefined);
+    const { manager, api, storage } = setup(session, Date.parse('2026-11-05T12:00:00Z'), cleanup);
+    await manager.restore();
+    await manager.logout();
+    expect(cleanup).toHaveBeenCalledTimes(1);
+    expect(cleanup).toHaveBeenLastCalledWith(true);
+    expect(cleanup.mock.invocationCallOrder[0]!).toBeLessThan(
+      storage.clear.mock.invocationCallOrder[0]!,
+    );
+    await manager.signIn();
+    jest.mocked(api.refresh).mockRejectedValue(new AuthApiError(401, 'SESSION_EXPIRED', 'Expired'));
+    await expect(
+      manager.request(async () => {
+        throw new AuthApiError(401, 'SESSION_EXPIRED', 'Expired');
+      }),
+    ).rejects.toMatchObject({ status: 401 });
+    expect(cleanup).toHaveBeenCalledTimes(2);
+    expect(cleanup).toHaveBeenLastCalledWith(false);
+  });
   it('does not authenticate a first launch and saves a Google session before showing signed-in content', async () => {
     const { manager, api, storage } = setup();
     await manager.restore();

@@ -104,6 +104,9 @@ export function AuthScreen() {
             <Action secondary disabled={busy} onPress={() => router.push('/privacy')}>
               Privacy and memory
             </Action>
+            <Action secondary disabled={busy} onPress={() => router.push('/reminders')}>
+              Reminders
+            </Action>
           </>
         )}
         {(auth.status === 'signedOut' || auth.status === 'signedIn') && (
