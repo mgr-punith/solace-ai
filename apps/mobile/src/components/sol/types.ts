@@ -6,4 +6,6 @@ export type SolProps = {
   reduceMotion: boolean;
   greeting: number;
   size?: number;
+  reaction?: 'wave' | 'delight' | 'wink' | undefined;
+  pressed?: boolean;
 };

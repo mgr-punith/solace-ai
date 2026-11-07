@@ -34,6 +34,8 @@ export default function SolDrawing({
   active,
   reduceMotion,
   greeting,
+  reaction,
+  pressed = false,
   size = tokens.sol.hero,
 }: SolProps) {
   const scale = useSharedValue(1);
@@ -41,7 +43,29 @@ export default function SolDrawing({
   const blink = useSharedValue(1);
   const orbit = useSharedValue(0);
   const tint = useSharedValue(mood);
+  const touch = useSharedValue(0);
+  const wave = useSharedValue(0);
   const { motion, colors } = tokens;
+
+  useEffect(() => {
+    touch.value = withTiming(active && pressed && !reduceMotion ? 1 : 0, {
+      duration: reduceMotion ? 0 : pressed ? motion.press : motion.calm,
+    });
+    return () => cancelAnimation(touch);
+  }, [pressed, active, reduceMotion, touch, motion]);
+
+  useEffect(() => {
+    cancelAnimation(wave);
+    wave.value = 0;
+    if (active && !reduceMotion && reaction === 'wave') {
+      wave.value = withSequence(
+        withTiming(-0.35, { duration: motion.quick }),
+        withRepeat(withTiming(0.25, { duration: motion.quick }), 5, true),
+        withTiming(0, { duration: motion.calm }),
+      );
+    }
+    return () => cancelAnimation(wave);
+  }, [reaction, greeting, active, reduceMotion, wave, motion]);
 
   useEffect(() => {
     tint.value = withTiming(mood, { duration: reduceMotion ? 0 : motion.slow });
@@ -90,7 +114,13 @@ export default function SolDrawing({
     return () => [scale, float, blink, orbit].forEach(cancelAnimation);
   }, [state, active, reduceMotion, greeting, scale, float, blink, orbit, motion]);
 
-  const transform = useDerivedValue(() => [{ translateY: float.value }, { scale: scale.value }]);
+  const transform = useDerivedValue(() => [
+    { translateY: float.value },
+    { scale: scale.value },
+    { scaleX: 1 + touch.value * 0.06 },
+    { scaleY: 1 - touch.value * 0.09 },
+  ]);
+  const waving = useDerivedValue(() => [{ rotate: wave.value }]);
   const eyelids = useDerivedValue(() => [{ scaleY: blink.value }]);
   const rotation = useDerivedValue(() => [{ rotate: orbit.value }]);
   const gradient = useDerivedValue(() => [
@@ -129,9 +159,24 @@ export default function SolDrawing({
             color={colors.rose}
             opacity={tokens.opacity.blush}
           />
-          {state === 'breathing' ? (
+          {reaction === 'wave' && (
+            <Group origin={vec(169, 117)} transform={waving}>
+              <Path
+                path="M 169 123 Q 204 119 199 90"
+                style="stroke"
+                strokeWidth={12}
+                strokeCap="round"
+                color={moodColors[mood] ?? colors.seaGlass}
+              />
+            </Group>
+          )}
+          {state === 'breathing' || reaction === 'delight' ? (
             <Path
-              path="M 79 108 Q 87 117 95 108 M 125 108 Q 133 117 141 108"
+              path={
+                reaction === 'delight'
+                  ? 'M 79 108 Q 87 96 95 108 M 125 108 Q 133 96 141 108'
+                  : 'M 79 108 Q 87 117 95 108 M 125 108 Q 133 117 141 108'
+              }
               style="stroke"
               strokeWidth={3}
               strokeCap="round"
@@ -146,19 +191,35 @@ export default function SolDrawing({
                 height={caring ? 12 : 16}
                 color={colors.face}
               />
-              <Oval
-                x={state === 'thinking' ? 131 : 127}
-                y={state === 'thinking' ? 94 : 99}
-                width={10}
-                height={caring ? 12 : 16}
-                color={colors.face}
-              />
+              {reaction === 'wink' ? (
+                <Path
+                  path="M 125 107 Q 133 113 141 105"
+                  style="stroke"
+                  strokeWidth={3}
+                  strokeCap="round"
+                  color={colors.face}
+                />
+              ) : (
+                <Oval
+                  x={state === 'thinking' ? 131 : 127}
+                  y={state === 'thinking' ? 94 : 99}
+                  width={10}
+                  height={caring ? 12 : 16}
+                  color={colors.face}
+                />
+              )}
             </Group>
           )}
           <Path
-            path={caring ? 'M 101 131 Q 110 133 119 131' : 'M 99 127 Q 110 138 121 127'}
+            path={
+              reaction === 'delight'
+                ? 'M 98 126 Q 110 148 122 126 Z'
+                : caring
+                  ? 'M 101 131 Q 110 133 119 131'
+                  : 'M 99 127 Q 110 138 121 127'
+            }
             color={colors.face}
-            style="stroke"
+            style={reaction === 'delight' ? 'fill' : 'stroke'}
             strokeWidth={2.8}
             strokeCap="round"
           />

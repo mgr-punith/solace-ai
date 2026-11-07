@@ -43,12 +43,11 @@ export function PageHeader({
   subtitle?: string;
   back?: () => void;
 }) {
-  const { sky } = useTheme();
   return (
-    <View style={[styles.heading, { backgroundColor: sky.surface }]}>
+    <View style={styles.heading}>
       {back && <IconButton icon="back" label="Go back" onPress={back} />}
       <View style={styles.grow}>
-        <AppText variant="display" accessibilityRole="header">
+        <AppText variant="title" accessibilityRole="header">
           {title}
         </AppText>
         {subtitle && (
@@ -63,6 +62,7 @@ export function PageHeader({
 export function NavigationRow({
   icon,
   title,
+  label,
   subtitle,
   onPress,
   disabled = false,
@@ -70,6 +70,7 @@ export function NavigationRow({
 }: {
   icon: IconName;
   title: string;
+  label?: string;
   subtitle?: string;
   onPress: () => void;
   disabled?: boolean;
@@ -79,7 +80,7 @@ export function NavigationRow({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={title}
+      accessibilityLabel={label ?? title}
       accessibilityState={{ disabled }}
       onPress={onPress}
       disabled={disabled}
@@ -121,19 +122,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: tokens.spacing.smd,
-    borderRadius: tokens.radius.tag,
-    padding: tokens.spacing.sm,
+    paddingVertical: tokens.spacing.xs,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: tokens.spacing.smd,
     minHeight: tokens.target,
-    paddingVertical: tokens.spacing.smd,
+    paddingVertical: tokens.spacing.sm,
   },
   rowIcon: {
-    width: tokens.target,
-    height: tokens.target,
+    width: tokens.icon.lg + tokens.spacing.smd,
+    height: tokens.icon.lg + tokens.spacing.smd,
     borderRadius: tokens.radius.tag,
     alignItems: 'center',
     justifyContent: 'center',

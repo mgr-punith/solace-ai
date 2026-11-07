@@ -1,27 +1,24 @@
+import { useScreenBack } from '../../lib/useScreenBack';
 import { useState } from 'react';
 import { ActivityIndicator } from 'react-native';
-import { router } from 'expo-router';
 import { Action, AppText, Surface } from '../../components/ui/primitives';
 import { Icon } from '../../components/ui/Icon';
 import { Screen } from '../../components/ui/Screen';
+import { PageHeader } from '../../components/ui/layout';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useOnboarding } from './context';
 import { PrivacyChoice } from './PrivacyChoice';
 
 export function PrivacyScreen() {
+  const goBack = useScreenBack('/you');
   const onboarding = useOnboarding();
   const [enabled, setEnabled] = useState(onboarding.choice ?? false);
   const { sky } = useTheme();
   return (
     <Screen>
-      <Action icon="back" secondary disabled={onboarding.busy} onPress={() => router.replace('/')}>
-        Back
-      </Action>
+      <PageHeader title="Privacy and memory" back={goBack} />
       <Surface>
         <Icon name="privacy" />
-        <AppText variant="title" accessibilityRole="header">
-          Privacy and memory
-        </AppText>
         <PrivacyChoice enabled={enabled} onChange={setEnabled} disabled={onboarding.busy} />
         {onboarding.error && (
           <AppText tone="error" accessibilityRole="alert">
@@ -35,7 +32,7 @@ export function PrivacyScreen() {
           disabled={onboarding.busy}
           onPress={() => {
             void onboarding.complete(enabled).then((saved) => {
-              if (saved) router.replace('/');
+              if (saved) goBack();
             });
           }}
         >

@@ -1,3 +1,4 @@
+import { useScreenBack } from '../../lib/useScreenBack';
 import { memo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -53,6 +54,7 @@ const Message = memo(function Message({ item }: { item: ChatMessage }) {
 });
 
 export function ChatScreen({ id }: { id: string }) {
+  const goBack = useScreenBack('/talk');
   const provider = useChatProvider();
   const canSend = !!provider.data && !provider.isError;
   const query = useMessages(id);
@@ -114,11 +116,7 @@ export function ChatScreen({ id }: { id: string }) {
             fontScale > 1.2 && styles.largeHeader,
           ]}
         >
-          <IconButton
-            icon="back"
-            label="Chats"
-            onPress={() => (router.canGoBack() ? router.back() : router.replace('/talk'))}
-          />
+          <IconButton icon="back" label="Chats" onPress={goBack} />
           <View style={[layoutStyles.row, layoutStyles.grow]}>
             <Icon name="talk" />
             <View>

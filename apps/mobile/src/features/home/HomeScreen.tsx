@@ -18,17 +18,16 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { moods, tokens } from '../../theme/tokens';
 import { deviceTimezone, useMoodToday } from '../mood/hooks';
 import { MoodForm } from '../mood/MoodForm';
-import { ProgressSummary } from '../progress/ProgressSummary';
-import { useProgress } from '../wellness/hooks';
+
 export function HomeScreen() {
   const { fontScale } = useWindowDimensions();
   const auth = useAuth();
   const { now, sky } = useTheme();
   const today = useMoodToday();
-  const progress = useProgress();
   const [selected, setSelected] = useState(2);
   const [saved, setSaved] = useState<MoodCheckin | null>(null);
   const [form, setForm] = useState(0);
+  const [response, setResponse] = useState<string | null>(null);
   const greeting =
     now.getHours() < 12 ? 'Good morning' : now.getHours() < 18 ? 'Good afternoon' : 'Good evening';
   const name = auth.session?.user.name.trim().split(/\s+/)[0] ?? 'there';
@@ -41,15 +40,12 @@ export function HomeScreen() {
       refreshControl={
         <RefreshControl
           refreshing={today.isRefetching}
-          onRefresh={() => {
-            void today.refetch();
-            void progress.refetch();
-          }}
+          onRefresh={() => void today.refetch()}
           tintColor={sky.palette.text}
         />
       }
     >
-      <View style={[styles.top, { backgroundColor: sky.surface }]}>
+      <View style={layoutStyles.row}>
         <View style={layoutStyles.grow}>
           <AppText variant="heading">solace</AppText>
           <AppText variant="caption" tone="secondary">
@@ -57,27 +53,26 @@ export function HomeScreen() {
           </AppText>
         </View>
         <IconButton icon="bell" label="Open reminders" onPress={() => router.push('/reminders')} />
-        <IconButton icon="user" label="Your space" onPress={() => router.navigate('/you')} />
       </View>
-      <View
-        style={[
-          styles.hero,
-          { backgroundColor: sky.surface, flexDirection: fontScale > 1.1 ? 'column' : 'row' },
-        ]}
-      >
+      <View style={[styles.hero, fontScale > 1.2 && styles.stacked]}>
         <View style={styles.greeting}>
           <AppText variant="bodySmall" tone="secondary">
             {greeting},
           </AppText>
-          <AppText variant="display" accessibilityRole="header">
-            {name}.
+          <AppText variant="title" accessibilityRole="header">
+            {name}
           </AppText>
-          <AppText tone="secondary">Take a breath. You’re here.</AppText>
+          <AppText variant="bodySmall" accessibilityLiveRegion="polite">
+            {response ?? 'Tap Sol to say hello.'}
+          </AppText>
+          <AppText variant="caption" tone="secondary">
+            Hold Sol for a quiet breath
+          </AppText>
         </View>
         <Companion
           mood={saved ? saved.mood - 1 : selected}
-          size={tokens.sol.onboarding}
-          state="greeting"
+          size={tokens.sol.home}
+          onResponse={setResponse}
         />
       </View>
       <Surface>
@@ -104,44 +99,32 @@ export function HomeScreen() {
           <MoodForm key={form} onMood={setSelected} onSaved={setSaved} />
         )}
       </Surface>
-      <Surface>
-        <View style={layoutStyles.row}>
-          <View style={layoutStyles.grow}>
-            <AppText variant="caption" tone="secondary">
-              A pause in your day
-            </AppText>
-            <AppText variant="title">Room to breathe.</AppText>
-            <AppText variant="bodySmall" tone="secondary">
-              A gentle rhythm, with Sol.
-            </AppText>
-          </View>
-          <Icon name="wind" size={tokens.icon.lg} />
-        </View>
-        <Action icon="play" onPress={() => router.push('/breathing')}>
-          Take a breathing break
-        </Action>
-      </Surface>
-      <Surface style={styles.quote}>
-        <Icon name="sparkles" />
+      <View>
+        <NavigationRow
+          icon="wind"
+          title="Take a breathing break"
+          subtitle="One minute, at your pace"
+          onPress={() => router.push('/breathing')}
+        />
+        <NavigationRow
+          icon="talk"
+          title="Talk with Sol"
+          subtitle="Pick up a conversation, or start fresh"
+          onPress={() => router.navigate('/talk')}
+        />
+      </View>
+      <View style={[styles.quote, { borderColor: sky.palette.secondary }]}>
         <AppText variant="caption" tone="secondary">
           Today’s words
         </AppText>
         <AppText variant="title">{affirmation.text}</AppText>
         <NavigationRow
           icon="heart"
-          title="Keep what resonates"
+          title="Open affirmations"
           onPress={() => router.push('/affirmations')}
         />
-      </Surface>
-      <Surface>
-        <ProgressSummary compact />
-        <NavigationRow
-          icon="progress"
-          title="See your moments"
-          onPress={() => router.navigate('/progress')}
-        />
-      </Surface>
-      <Surface>
+      </View>
+      <View style={layoutStyles.gap}>
         <AppText variant="heading">Your latest check-in today</AppText>
         {today.isPending ? (
           <ActivityIndicator
@@ -159,37 +142,35 @@ export function HomeScreen() {
           </>
         ) : latest ? (
           <>
-            <AppText variant="title">{moods[latest.mood - 1]?.label}</AppText>
-            <AppText tone="secondary" variant="bodySmall">
+            <AppText>
+              {moods[latest.mood - 1]?.label} ·{' '}
               {new Date(latest.createdAt).toLocaleTimeString(undefined, {
                 hour: 'numeric',
                 minute: '2-digit',
               })}
-              {latest.tags.length ? ` · ${latest.tags.join(', ')}` : ''}
             </AppText>
+            {latest.tags.length > 0 && (
+              <AppText variant="bodySmall" tone="secondary">
+                {latest.tags.join(', ')}
+              </AppText>
+            )}
             {latest.note ? <AppText>{latest.note}</AppText> : null}
           </>
         ) : (
           <AppText tone="secondary">No check-in yet today. Start wherever you are.</AppText>
         )}
         <NavigationRow
-          icon="book"
-          title="View your check-ins"
+          icon="progress"
+          title="View your check-ins and progress"
           onPress={() => router.navigate('/progress')}
         />
-      </Surface>
+      </View>
     </Screen>
   );
 }
 const styles = StyleSheet.create({
-  top: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: tokens.spacing.xs,
-    padding: tokens.spacing.sm,
-    borderRadius: tokens.radius.tag,
-  },
-  hero: { alignItems: 'center', borderRadius: tokens.radius.surface, padding: tokens.spacing.smd },
-  greeting: { flex: 1, gap: tokens.spacing.sm },
-  quote: { paddingVertical: tokens.spacing.lg },
+  hero: { flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.sm },
+  stacked: { flexDirection: 'column', alignItems: 'stretch' },
+  greeting: { flex: 1, gap: tokens.spacing.xs },
+  quote: { borderTopWidth: tokens.border, paddingTop: tokens.spacing.ml, gap: tokens.spacing.sm },
 });

@@ -1,3 +1,4 @@
+import { useScreenBack } from '../../lib/useScreenBack';
 import { useLocalSearchParams, router } from 'expo-router';
 import { reminderTypes } from '@solace/shared';
 import { Screen } from '../../components/ui/Screen';
@@ -7,14 +8,15 @@ import { tokens } from '../../theme/tokens';
 import { reminderBody, reminderLabels } from './content';
 import { useReminders } from './context';
 export function ReminderScreen() {
+  const goBack = useScreenBack('/home');
   const { type } = useLocalSearchParams<{ type?: string }>();
   const reminders = useReminders();
   const kind = reminderTypes.find((value) => value === type);
   const custom = reminders.settings?.reminders.find((r) => r.type === 'custom')?.customText;
   return (
     <Screen centered>
-      <Action secondary onPress={() => router.replace('/home')}>
-        Back to Home
+      <Action secondary onPress={goBack}>
+        Back
       </Action>
       <Companion size={tokens.sol.onboarding} state="greeting" />
       <Surface>

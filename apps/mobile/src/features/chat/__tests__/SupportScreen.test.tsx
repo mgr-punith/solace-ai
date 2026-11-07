@@ -1,3 +1,7 @@
+jest.mock('expo-router', () => ({
+  useFocusEffect: jest.fn(),
+  router: { canGoBack: () => false, replace: jest.fn() },
+}));
 import { expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as Linking from 'expo-linking';

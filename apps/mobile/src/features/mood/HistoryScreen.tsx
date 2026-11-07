@@ -85,15 +85,12 @@ export function HistoryScreen() {
         refreshing={query.isRefetching}
         onRefresh={() => void query.refetch()}
         ListHeaderComponent={
-          <View style={{ gap: tokens.spacing.lg }}>
+          <View style={{ gap: tokens.spacing.md }}>
             <PageHeader title="Your moments" subtitle="A little perspective, without judgment." />
             <ProgressSummary />
-            <Surface style={styles.header}>
+            <View style={styles.header}>
               <AppText variant="heading" accessibilityRole="header">
                 Your check-ins
-              </AppText>
-              <AppText tone="secondary">
-                Moments you’ve made space for. Every feeling belongs here.
               </AppText>
               {(query.isError || deletion.isError) && (
                 <>
@@ -117,7 +114,7 @@ export function HistoryScreen() {
                   accessibilityLabel="Deleting check-in"
                 />
               )}
-            </Surface>
+            </View>
           </View>
         }
         ListEmptyComponent={
@@ -154,12 +151,12 @@ export function HistoryScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: {
-    padding: tokens.spacing.lg,
+    padding: tokens.spacing.ml,
     width: '100%',
-    maxWidth: tokens.maxWidth + tokens.spacing.lg * 2,
+    maxWidth: tokens.maxWidth + tokens.spacing.ml * 2,
     alignSelf: 'center',
   },
-  header: { marginBottom: tokens.spacing.lg },
+  header: { marginBottom: tokens.spacing.md, gap: tokens.spacing.sm },
   separator: { height: tokens.spacing.md },
   footer: { paddingVertical: tokens.spacing.lg },
 });

@@ -44,6 +44,7 @@ export function Action({
   disabled = false,
   label,
   icon,
+  variant,
 }: {
   children: string;
   onPress: () => void;
@@ -52,8 +53,11 @@ export function Action({
   disabled?: boolean;
   label?: string;
   icon?: IconName;
+  variant?: 'primary' | 'secondary' | 'quiet';
 }) {
   const { sky, reduceMotion } = useTheme();
+  const kind = variant ?? (secondary ? 'secondary' : 'primary');
+  const filled = selected || kind === 'primary';
   const scale = useSharedValue(1);
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   return (
@@ -73,8 +77,12 @@ export function Action({
         style={({ pressed }) => [
           styles.action,
           {
-            backgroundColor: secondary && !selected ? sky.surface : tokens.action.background,
-            borderColor: selected ? sky.palette.text : tokens.colors.clear,
+            backgroundColor: filled ? tokens.action.background : tokens.colors.clear,
+            borderColor: selected
+              ? sky.palette.text
+              : kind === 'secondary'
+                ? sky.palette.secondary
+                : tokens.colors.clear,
             opacity: disabled ? tokens.opacity.disabled : pressed ? tokens.opacity.pressed : 1,
           },
         ]}
@@ -83,13 +91,13 @@ export function Action({
           <Icon
             name={icon}
             size={tokens.icon.sm}
-            color={secondary && !selected ? sky.palette.text : tokens.action.text}
+            color={filled ? tokens.action.text : sky.palette.text}
           />
         )}
         <AppText
           variant="button"
           style={{
-            color: secondary && !selected ? sky.palette.text : tokens.action.text,
+            color: filled ? tokens.action.text : sky.palette.text,
             textAlign: 'center',
           }}
         >
@@ -101,10 +109,10 @@ export function Action({
 }
 const styles = StyleSheet.create({
   surface: {
-    padding: tokens.spacing.ml,
+    padding: tokens.spacing.md,
     borderRadius: tokens.radius.surface,
     borderWidth: tokens.border,
-    gap: tokens.spacing.md,
+    gap: tokens.spacing.smd,
   },
   action: {
     flexDirection: 'row',
@@ -114,7 +122,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: tokens.spacing.md,
     paddingVertical: tokens.spacing.smd,
-    borderRadius: tokens.radius.pill,
-    borderWidth: tokens.selectedBorder,
+    borderRadius: tokens.radius.button,
+    borderWidth: tokens.border,
   },
 });

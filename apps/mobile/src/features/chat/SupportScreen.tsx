@@ -1,23 +1,20 @@
+import { useScreenBack } from '../../lib/useScreenBack';
 import { useState } from 'react';
 import * as Linking from 'expo-linking';
-import { router } from 'expo-router';
 import { supportResources } from '@solace/shared';
 import { Icon } from '../../components/ui/Icon';
 import { Screen } from '../../components/ui/Screen';
+import { PageHeader } from '../../components/ui/layout';
 import { Action, AppText, Surface } from '../../components/ui/primitives';
 
 export function SupportScreen() {
+  const goBack = useScreenBack('/');
   const [region, setRegion] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const resource = supportResources.find((item) => item.region === region);
   return (
     <Screen>
-      <Action secondary onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}>
-        Back
-      </Action>
-      <AppText variant="display" accessibilityRole="header">
-        Support right now
-      </AppText>
+      <PageHeader title="Support right now" back={goBack} />
       <Surface>
         <Icon name="support" />
         <AppText>

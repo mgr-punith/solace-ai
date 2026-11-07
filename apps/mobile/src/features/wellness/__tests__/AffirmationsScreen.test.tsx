@@ -9,6 +9,7 @@ jest.mock('../api', () => ({
   wellnessApi: { save: jest.fn(), favorites: jest.fn(), favorite: jest.fn() },
 }));
 jest.mock('expo-router', () => ({
+  useFocusEffect: jest.fn(),
   useLocalSearchParams: () => ({}),
   router: { replace: jest.fn(), canGoBack: () => false },
 }));
