@@ -1,7 +1,6 @@
 import type { ReactNode, ReactElement } from 'react';
 import {
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   View,
@@ -28,11 +27,7 @@ export function Screen({
       edges={inTabs ? ['top', 'left', 'right'] : ['top', 'bottom', 'left', 'right']}
       style={styles.screen}
     >
-      <KeyboardAvoidingView
-        enabled={keyboard}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.screen}
-      >
+      <KeyboardAvoidingView enabled={keyboard} behavior="padding" style={styles.screen}>
         <ScrollView
           keyboardShouldPersistTaps="handled"
           refreshControl={refreshControl}

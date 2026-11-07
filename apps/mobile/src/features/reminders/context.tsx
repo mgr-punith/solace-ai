@@ -1,6 +1,6 @@
-import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { AppState } from 'react-native';
-import { router, useRootNavigationState } from 'expo-router';
+import { router, useGlobalSearchParams, usePathname, useRootNavigationState } from 'expo-router';
 import { useAuth } from '../auth/context';
 import { useOnboarding } from '../onboarding/context';
 import { observeNotificationTaps } from '../../lib/notifications';
@@ -54,14 +54,20 @@ export function NotificationNavigation() {
   const auth = useAuth();
   const onboarding = useOnboarding();
   const navigation = useRootNavigationState();
+  const pathname = usePathname();
+  const { type } = useGlobalSearchParams<{ type?: string }>();
+  const requested = useRef<string | null>(null);
   const target = useSyncExternalStore(
     notificationTarget.subscribe,
     notificationTarget.getSnapshot,
     notificationTarget.getSnapshot,
   );
   useEffect(() => {
+    if (!target) {
+      requested.current = null;
+      return;
+    }
     if (
-      !target ||
       !navigation?.key ||
       auth.status !== 'signedIn' ||
       !onboarding.identityReady ||
@@ -69,15 +75,24 @@ export function NotificationNavigation() {
       onboarding.needsChoice
     )
       return;
+    const destination = pathname === '/reminder' ? `${pathname}?type=${type}` : pathname;
+    if (destination === target) {
+      // Keep the target available to EntryScreen until navigation actually commits.
+      notificationTarget.set(null);
+      return;
+    }
+    if (requested.current === target) return;
     // Defer until protected routes and the entry redirect have committed.
     const timer = setTimeout(() => {
+      requested.current = target;
       router.replace(target);
-      notificationTarget.set(null);
     }, 0);
     return () => clearTimeout(timer);
   }, [
     target,
     navigation?.key,
+    pathname,
+    type,
     auth.status,
     onboarding.identityReady,
     onboarding.needsIntroduction,
