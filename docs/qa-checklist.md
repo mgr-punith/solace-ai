@@ -2,6 +2,19 @@
 
 Only check items after observing them. Automated checks are run with `npm run verify`.
 
+## Daily wellness UX (9 November 2026)
+
+- [x] `npm run verify` passed after the final UI changes: lint, formatting, all workspace typechecks and 282 tests (135 API, 128 mobile, 19 shared). The production API build passed. API tests used a disposable local PostgreSQL container; the initial sandbox run could not access the runtime and the host rerun passed.
+- [x] Automated checks cover appearance save/reopen, failed read/write recovery, temporary design-preview overrides, affirmation completion/reopen, midnight retry identity, account isolation, daily status API authorization and timezone boundaries, recommendation alternatives and explicit reflection drafts. Existing safety tests passed without contacting a model.
+- [x] Inspected React Native Web renders with synthetic fixtures in an isolated Chrome context at 390 × 844 and 360 × 800. Checked Home selection/save/completion, affirmation unread/read state, You in Light/Dark, 48 px appearance targets, alternatives and daily-status failure → retry recovery. No horizontal document overflow at 360 px. These are browser component checks with mocked API/navigation, not installed-phone or real-account evidence.
+- [ ] After deployment, verify the new authenticated `/v1/wellness/today` response through Render and install the signed APK with `adb install -r`.
+- [ ] On the updated phone: You → Appearance → Light, Dark, Auto; reopen and confirm the choice. Auto should follow local time. Settings changes/login reliability remain a separate deferred investigation.
+- [ ] Home → select a mood → Save check-in. Confirm Sol/selection feedback, the saved stamp and one daily marker. Open today's suggested activity or Other ideas; no activity should start or save from navigation alone.
+- [ ] Affirmations → I’ve read this → Read today. Leave and return, then restart the app; the read state should remain. Confirm favorites stay separate. Home should show both markers and More ideas for today after check-in plus a saved read/practice.
+- [ ] Check native Reduce Motion, TalkBack, activity return and haptics on the updated APK. The user deferred these phone checks and asked not to repeat 130% text testing.
+
+Browser captures and receipt: `/tmp/solace-daily-ux-evidence/visual-evidence.json`. No phone, authentication state, settings or real wellness records were changed during this implementation.
+
 ## Phase 0
 
 - [x] Install the EAS Android development build on the real phone (cloud and local ARM64 APKs; vivo V2168, Android 14).

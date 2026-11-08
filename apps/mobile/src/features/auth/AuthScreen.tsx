@@ -10,6 +10,7 @@ import { Companion } from '../../components/sol/Companion';
 import { useOnboarding } from '../onboarding/context';
 import { useAuth } from './context';
 import { firstName } from '../home/greeting';
+import { AppearanceControl } from '../../theme/AppearanceControl';
 
 export function AuthScreen() {
   const auth = useAuth();
@@ -105,6 +106,7 @@ export function AuthScreen() {
           ))}
         {auth.status === 'signedIn' && (
           <>
+            <AppearanceControl />
             <NavigationRow
               icon="bell"
               title="Reminders"

@@ -59,6 +59,7 @@ export function useSaveMood() {
       );
       void client.invalidateQueries({ queryKey: ['mood', userId] });
       void client.invalidateQueries({ queryKey: ['progress', userId] });
+      void client.invalidateQueries({ queryKey: ['daily-wellness', userId] });
     },
     retry: false,
   });
@@ -72,6 +73,7 @@ export function useDeleteMood() {
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: ['mood', userId] });
       void client.invalidateQueries({ queryKey: ['progress', userId] });
+      void client.invalidateQueries({ queryKey: ['daily-wellness', userId] });
     },
     retry: false,
   });

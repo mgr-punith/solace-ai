@@ -1,5 +1,5 @@
 import { and, desc, eq, sql } from 'drizzle-orm';
-import type { ActivityInput, ProgressDay } from '@solace/shared';
+import { localDay, type ActivityInput, type ProgressDay, type DailyWellness } from '@solace/shared';
 import type { createDatabase } from '../../db/client.js';
 import { activityLogs, affirmationFavorites, profiles } from '../../db/schema/index.js';
 type Database = ReturnType<typeof createDatabase>['db'];
@@ -57,6 +57,36 @@ export function createWellnessRepository(db: Database) {
             row.afterMood === values.afterMood,
         };
       });
+    },
+    async daily(userId: string, timezone: string, now: Date): Promise<DailyWellness> {
+      const day = localDay(now, timezone);
+      // Date bounds preserve the user/time indexes and PostgreSQL's DST rules.
+      const result = await db.execute(sql`
+        with bounds as (
+          select (${day}::date::timestamp at time zone ${timezone}) as start,
+            ((${day}::date + 1)::timestamp at time zone ${timezone}) as finish
+        ), actions as (
+          select 'mood' as type, null::text as affirmation_id from mood_checkins, bounds
+            where user_id = ${userId} and created_at >= start and created_at < finish
+              and created_at <= ${now.toISOString()}::timestamptz
+          union all
+          select type, affirmation_id from activity_logs, bounds
+            where user_id = ${userId} and completed_at >= start and completed_at < finish
+              and completed_at <= ${now.toISOString()}::timestamptz
+        )
+        select coalesce(bool_or(type = 'mood'), false) as "checkedIn",
+          count(*) filter (where type = 'breathing')::int as "breathingSessions",
+          coalesce(array_agg(distinct affirmation_id order by affirmation_id) filter (where type = 'affirmation'), array[]::text[]) as "readAffirmationIds"
+        from actions
+      `);
+      const row = result.rows[0]!;
+      return {
+        day,
+        timezone,
+        checkedIn: Boolean(row.checkedIn),
+        breathingSessions: Number(row.breathingSessions),
+        readAffirmationIds: row.readAffirmationIds as string[],
+      };
     },
     async dailyTotals(userId: string, timezone: string, now: Date): Promise<ProgressDay[]> {
       // Aggregate in PostgreSQL: never transfer private notes or unbounded raw events to the app.

@@ -34,17 +34,18 @@ export function DesignPreviewScreen() {
   const [greeting, setGreeting] = useState(0);
   const [exhaling, setExhaling] = useState(false);
   const active = theme.active && focused;
-  const { setPreviewMinute, setAppearance, setStaticPreview } = theme;
+  const { setPreviewMinute, setPreviewAppearance, setStaticPreview } = theme;
+  const appearance = theme.previewAppearance ?? theme.appearance;
   useFocusEffect(
     useCallback(() => {
       setFocused(true);
       return () => {
         setFocused(false);
         setPreviewMinute(null);
-        setAppearance('auto');
+        setPreviewAppearance(null);
         setStaticPreview(false);
       };
-    }, [setPreviewMinute, setAppearance, setStaticPreview]),
+    }, [setPreviewMinute, setPreviewAppearance, setStaticPreview]),
   );
   useEffect(() => {
     setExhaling(false);
@@ -189,7 +190,7 @@ export function DesignPreviewScreen() {
               maximumValue={1439}
               step={1}
               value={theme.minute}
-              disabled={theme.appearance !== 'auto'}
+              disabled={appearance !== 'auto'}
               onValueChange={theme.setPreviewMinute}
               minimumTrackTintColor={theme.sky.palette.text}
               maximumTrackTintColor={tokens.action.background}
@@ -201,8 +202,8 @@ export function DesignPreviewScreen() {
                 <Action
                   key={value}
                   secondary
-                  selected={theme.appearance === value}
-                  onPress={() => theme.setAppearance(value)}
+                  selected={appearance === value}
+                  onPress={() => theme.setPreviewAppearance(value)}
                 >
                   {value === 'auto' ? 'Auto' : value === 'day' ? 'Day' : 'Night'}
                 </Action>
@@ -211,7 +212,7 @@ export function DesignPreviewScreen() {
                 secondary
                 onPress={() => {
                   theme.setPreviewMinute(null);
-                  theme.setAppearance('auto');
+                  theme.setPreviewAppearance('auto');
                 }}
               >
                 Use current time

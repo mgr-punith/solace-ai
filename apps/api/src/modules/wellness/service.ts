@@ -1,5 +1,6 @@
 import {
   activitySchema,
+  dailyWellnessSchema,
   affirmations,
   localDay,
   summarizeProgress,
@@ -38,6 +39,9 @@ export function createWellnessService({
         localDay(now, timezone),
         timezone,
       );
+    },
+    async daily(userId: string, timezone: string) {
+      return dailyWellnessSchema.parse(await repository.daily(userId, timezone, clock()));
     },
     async favorites(userId: string) {
       const rows = await repository.favorites(userId);

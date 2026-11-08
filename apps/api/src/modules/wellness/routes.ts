@@ -25,6 +25,7 @@ export function wellnessRoutes(auth: AuthService, service: WellnessService) {
   );
   router.post('/activities', controller.create);
   router.get('/progress', controller.progress);
+  router.get('/wellness/today', controller.daily);
   router.get('/affirmation-favorites', controller.favorites);
   router.put('/affirmation-favorites/:id', controller.favorite);
   router.delete('/affirmation-favorites/:id', controller.unfavorite);

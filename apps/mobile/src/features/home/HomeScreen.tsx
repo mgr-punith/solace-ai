@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, RefreshControl, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { affirmationForDay, localDay } from '@solace/shared';
@@ -16,6 +17,8 @@ import { MoodForm } from '../mood/MoodForm';
 import { checkinDraft } from '../chat/drafts';
 import { useStartConversation } from '../chat/useStartConversation';
 import { firstName, homeGreeting } from './greeting';
+import { DailyWellnessCard } from '../wellness/DailyWellnessCard';
+import { CheckinStamp } from '../mood/CheckinStamp';
 
 export function HomeScreen() {
   const auth = useAuth();
@@ -27,12 +30,14 @@ export function HomeScreen() {
 }
 
 function DailyHome({ name }: { name: string }) {
+  const client = useQueryClient();
   const { now, sky } = useTheme();
   const today = useMoodToday();
   const chat = useStartConversation();
   const [selected, setSelected] = useState(2);
   const [editing, setEditing] = useState(false);
   const [response, setResponse] = useState<string | null>(null);
+  const [justSaved, setJustSaved] = useState<string | null>(null);
   const latest = today.data?.items[0];
   const showingSaved = !!latest && !editing;
   const affirmation = affirmationForDay(localDay(now, deviceTimezone()));
@@ -44,7 +49,10 @@ function DailyHome({ name }: { name: string }) {
       refreshControl={
         <RefreshControl
           refreshing={today.isRefetching}
-          onRefresh={() => void today.refetch()}
+          onRefresh={() => {
+            void today.refetch();
+            void client.invalidateQueries({ queryKey: ['daily-wellness'] });
+          }}
           tintColor={sky.palette.text}
         />
       }
@@ -96,6 +104,7 @@ function DailyHome({ name }: { name: string }) {
           </>
         ) : showingSaved ? (
           <>
+            <CheckinStamp animate={justSaved === latest.id} onPlayed={() => setJustSaved(null)} />
             <View style={layoutStyles.row}>
               <MoodFace mood={latest.mood - 1} />
               <View style={layoutStyles.grow}>
@@ -149,7 +158,10 @@ function DailyHome({ name }: { name: string }) {
           <>
             <MoodForm
               onMood={setSelected}
-              onSaved={() => setEditing(false)}
+              onSaved={(entry) => {
+                setJustSaved(entry.id);
+                setEditing(false);
+              }}
               onCancel={latest ? () => setEditing(false) : undefined}
             />
           </>
@@ -165,22 +177,7 @@ function DailyHome({ name }: { name: string }) {
           </>
         )}
       </Surface>
-      <View>
-        <NavigationRow
-          icon="wind"
-          title="Breathe for a minute"
-          subtitle="Follow Sol as you breathe in and out"
-          onPress={() => router.push('/breathing')}
-        />
-        {!showingSaved && (
-          <NavigationRow
-            icon="talk"
-            title="Talk with Sol"
-            subtitle="Tell Sol what’s on your mind"
-            onPress={() => router.navigate('/talk')}
-          />
-        )}
-      </View>
+      <DailyWellnessCard mood={latest ?? null} moodUnavailable={today.isError || today.isPending} />
       <View style={[styles.quote, { borderColor: sky.palette.secondary }]}>
         <AppText variant="caption" tone="secondary">
           Today’s words

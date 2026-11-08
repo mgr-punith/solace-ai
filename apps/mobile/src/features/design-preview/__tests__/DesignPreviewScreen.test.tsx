@@ -65,3 +65,14 @@ it('passes the haptics preference through when the companion is tapped', async (
   await fireEvent.press(screen.getByRole('button', { name: 'Say hello to Sol' }));
   expect(gentleHaptic).toHaveBeenLastCalledWith(false);
 });
+it('keeps design-preview day/night controls separate from the saved appearance', async () => {
+  const write = jest.fn<(value: string) => Promise<void>>().mockResolvedValue(undefined);
+  const rendered = await render(
+    <ThemeProvider storage={{ read: async () => 'night', write }}>
+      <DesignPreviewScreen />
+    </ThemeProvider>,
+  );
+  await fireEvent.press(screen.getByRole('button', { name: 'Day' }));
+  await rendered.unmount();
+  expect(write).not.toHaveBeenCalled();
+});

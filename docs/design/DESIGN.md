@@ -587,3 +587,42 @@ Sol: A pause sounds welcome after that meeting.
 
 [Editable message ...]                 [↑]
 ```
+
+## Appearance and daily moments — 9 November 2026
+
+The user requested a visible Auto/Light/Dark choice, a lasting affirmation read state, playful check-ins inspired by their video, and daily wellness recommendations. These requests extend the earlier connected daily experience. Build these changes now; defer login investigation and physical-phone checks until the new update is ready. Keep the existing account, signing certificate and Render backend.
+
+Reference: inspected the extracted contact sheet at `/tmp/solace-checkin-reference-contact.png` (1824 × 1367), from `/home/puneet/Videos/Video_2026-11-08_23-44-53.mkv`. Its short questions, completion feedback and next-action suggestions inform this change. Do not copy its screening questionnaires, medical claims, XP scores, visual identity or text. No image-generation tool or Uizze paid reference service is connected. Use this explicit change list and the established native design as the implementation target; physical-device visual verification is deferred at the user's request.
+
+Retain Fraunces for greetings and daily words, Figtree for actions and explanations, sea glass for selection, and Lantern for a saved moment. The palette and spacing above remain authoritative. No extra fonts, dependencies, decorative backgrounds or persistent health-data cache.
+
+- **You → Appearance:** a compact three-way radio control beneath the greeting, labeled Auto, Light and Dark. Auto follows local time, with that behavior explained below the control. Selection changes the app immediately and persists on this device. Loading disables changes; a failed write restores the previous saved choice and offers a retry. Design-preview overrides are temporary and must not overwrite this preference. Load appearance before revealing the app at startup.
+- **Affirmations:** reading remains an explicit action, labeled “I’ve read this”. After confirmation show a checkmark and “Read today” as a status, plus “Saved in your progress”; remove the completed action. Derive this status from the authenticated user's saved activity for this affirmation on the current local day. Reopening, switching accounts and local midnight must show the right state. While status is unavailable, show an honest loading/retry state and keep the affirmation readable. Favorites remain independent. A retry keeps its original affirmation and request key, even across midnight; the server's completion day controls progress.
+- **Check-in:** preserve the five labeled moods and optional tags/note. Add a short select/save step indicator and a responsive lift on the chosen face. Sol follows the choice. Saving remains explicit; only a confirmed save earns the “Check-in saved” stamp and one brief warm pulse. A low or heavy mood earns the same progress as any other. No scores for feelings, loss of points, streak penalties or reward for submitting repeatedly.
+- **Daily moments:** a compact two-stop trail, “Check in” and “Breathe or read”, marks a saved check-in and at least one saved breathing session or affirmation for the local day. This is a suggested daily routine. One action can be enough; completing both shows “Both moments saved” and folds further suggestions behind “More ideas for today”. Derive completion from real account records. Repeated actions never fill extra stops. Keep this beside the daily suggestion, not as another competing dashboard card.
+- **Daily suggestions:** offer a short curated activity using today's latest mood and optional selected tags. Give its specific reason, duration and action. Favor a one-minute breathing pause for tense/worried moods, an affirmation for tired/low moods, and a reflection for positive/calm moods; offer the other activities through “Other ideas”. Completed breathing/reading moves behind unfinished options. With no check-in, offer a general option and label it as such. A failed request is never interpreted as a missing check-in. These are wellness suggestions, with no diagnosis, prescription, guaranteed outcome or claimed clinician approval. Do not inspect private notes, call the LLM or activate memory. Reflection creates an editable draft that the user sends explicitly; opening any activity never marks it complete.
+
+```text
+You                         Home, before save           Home, after save
+Hello, Maya.                Greeting, Maya      (Sol)   Greeting, Maya       (Sol)
+Appearance                  How are you feeling?        Check-in saved ✓
+[Auto | Light | Dark]       Choose a mood → Save        Today · Low · time
+Auto follows local time     [five labeled faces]        [Talk about this]
+Reminders                   [optional details]          Check in again
+Privacy                     [Save check-in]
+                            Your daily moments          Your daily moments
+                            ○ Check in  ○ Breathe/read  ● Check in ○ Breathe/read
+                            Today's suggestion          Try today's words · 1 min
+                            reason · duration           You chose Tired today.
+                            [Open activity]             [Read today's words]
+                            Other ideas                 Other ideas
+
+Affirmations
+Today | Saved words
+Today's affirmation in Fraunces
+[I've read this] → ✓ Read today
+                    Saved in your progress
+[Save to favorites]
+```
+
+Use existing 48 dp targets, wrapping text and selected/checked accessibility semantics. Selection and the save stamp use Reanimated transforms/opacity; nothing animates on a return visit. Reduce Motion and inactive screens show static states with the same labels. Test account/day scoping, refresh and save failures, retry identity, selection persistence, explicit handoffs and completed status. Record the later native visual/motion/login checks separately from automated verification.

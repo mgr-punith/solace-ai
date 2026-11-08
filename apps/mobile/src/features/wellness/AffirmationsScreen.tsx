@@ -1,5 +1,5 @@
 import { useScreenBack } from '../../lib/useScreenBack';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
@@ -14,32 +14,55 @@ import { Icon } from '../../components/ui/Icon';
 import { PageHeader, layoutStyles } from '../../components/ui/layout';
 import { useTheme } from '../../theme/ThemeProvider';
 import { tokens } from '../../theme/tokens';
+import { useAuth } from '../auth/context';
 import { deviceTimezone } from '../mood/hooks';
-import { activityRequestId, useFavorite, useFavorites, useSaveActivity } from './hooks';
+import { useDailyWellness, useFavorite, useFavorites, useSaveActivity } from './hooks';
 export function AffirmationsScreen() {
+  const auth = useAuth();
+  return <AccountAffirmations key={auth.session?.user.id} />;
+}
+function AccountAffirmations() {
   const { saved, conversation } = useLocalSearchParams<{ saved?: string; conversation?: string }>();
   const parsedConversation = conversationSchema.shape.id.safeParse(conversation);
   const conversationId = parsedConversation.success ? parsedConversation.data : null;
   const goBack = useScreenBack(conversationId ? `/chat/${conversationId}` : '/wellness');
   const [showSaved, setShowSaved] = useState(saved === '1');
   const { now, sky } = useTheme();
-  const day = localDay(now, deviceTimezone());
-  const [readDay, setReadDay] = useState<string | null>(null);
+  const timezone = deviceTimezone();
+  const day = localDay(now, timezone);
+  const [confirmed, setConfirmed] = useState<{ completedAt: string; id: string } | null>(null);
   const [retry, setRetry] = useState<{ day: string; input: ActivityInput } | null>(null);
   const saving = useRef(false);
   const reading = useSaveActivity();
+  const daily = useDailyWellness();
   const favorites = useFavorites();
   const favorite = useFavorite();
   const displayedDay = retry?.day ?? day;
   const today = affirmationForDay(displayedDay);
   const isFavorite = favorites.data?.items.some((item) => item.id === today.id) ?? false;
+  const readToday =
+    displayedDay === day &&
+    (daily.data?.readAffirmationIds.includes(today.id) ||
+      (confirmed &&
+        localDay(new Date(confirmed.completedAt), timezone) === day &&
+        confirmed.id === today.id));
+  const statusKnown = !!daily.data;
+  useEffect(() => {
+    // A refreshed server record can resolve a lost response without another write.
+    if (
+      retry?.day === day &&
+      daily.data?.readAffirmationIds.includes(affirmationForDay(retry.day).id)
+    )
+      setRetry(null);
+  }, [daily.data, day, retry]);
   async function markRead() {
-    if (saving.current || readDay === day) return;
+    if (saving.current || readToday || (!statusKnown && !retry)) return;
     saving.current = true;
     const pending = retry ?? {
       day,
       input: {
-        requestId: activityRequestId(),
+        // Account-scoped by the API. The same day/words reuse this key across reopen/devices.
+        requestId: `affirmation-${day}-${today.id}-${deviceTimezone().replaceAll('/', '-').replaceAll('_', '-').replaceAll('+', 'plus')}`,
         timezone: deviceTimezone(),
         type: 'affirmation' as const,
         affirmationId: today.id,
@@ -47,8 +70,8 @@ export function AffirmationsScreen() {
     };
     setRetry(pending);
     try {
-      await reading.mutateAsync(pending.input);
-      setReadDay(pending.day);
+      const saved = await reading.mutateAsync(pending.input);
+      setConfirmed({ completedAt: saved.completedAt, id: today.id });
       setRetry(null);
     } catch {
       /* Keep retry key and show recovery. */
@@ -92,18 +115,47 @@ export function AffirmationsScreen() {
           <AppText variant="bodySmall" tone="secondary">
             Try reading it to yourself.
           </AppText>
-          <Action
-            icon={readDay === day ? 'check' : 'book'}
-            disabled={reading.isPending || readDay === day}
-            onPress={() => void markRead()}
-          >
-            {readDay === day
-              ? 'Added to today’s progress'
-              : reading.isError
-                ? 'Retry marking as read'
-                : 'Mark as read'}
-          </Action>
-          {reading.isError && (
+          {readToday ? (
+            <View accessibilityLiveRegion="polite" style={layoutStyles.row}>
+              <Icon name="complete" />
+              <View style={layoutStyles.grow}>
+                <AppText variant="heading">Read today</AppText>
+                <AppText variant="caption" tone="secondary">
+                  Saved in your progress
+                </AppText>
+              </View>
+            </View>
+          ) : statusKnown || retry ? (
+            <Action icon="check" disabled={reading.isPending} onPress={() => void markRead()}>
+              {reading.isPending
+                ? 'Saving your read…'
+                : reading.isError
+                  ? 'Retry saving read'
+                  : 'I’ve read this'}
+            </Action>
+          ) : null}
+          {daily.isPending && !retry && (
+            <ActivityIndicator
+              accessibilityLabel="Checking today’s read status"
+              color={sky.palette.text}
+            />
+          )}
+          {daily.isError && !readToday && (
+            <>
+              <AppText accessibilityRole="alert" tone="error">
+                Your read status couldn’t be loaded. You can still read and save favorites.
+              </AppText>
+              <Action
+                variant="quiet"
+                onPress={() => {
+                  void daily.refetch();
+                }}
+              >
+                Reload read status
+              </Action>
+            </>
+          )}
+          {reading.isError && !readToday && (
             <AppText accessibilityRole="alert" tone="error">
               This couldn’t be added to your progress. Try again when you’re connected.
             </AppText>
@@ -118,7 +170,7 @@ export function AffirmationsScreen() {
           </Action>
         </Surface>
       )}
-      {(favorites.isPending || reading.isPending) && (
+      {favorites.isPending && (
         <ActivityIndicator accessibilityLabel="Opening your saved words" color={sky.palette.text} />
       )}
       {(favorites.isError || favorite.isError) && (

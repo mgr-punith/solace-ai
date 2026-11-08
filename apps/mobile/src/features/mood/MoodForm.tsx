@@ -1,19 +1,13 @@
-import { MoodFace } from '../../components/ui/MoodFace';
 import { useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  TextInput,
-  View,
-  useWindowDimensions,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, TextInput, View } from 'react-native';
 import { emotionTags, moodInputSchema, type MoodCheckin, type MoodInput } from '@solace/shared';
 import { Action, AppText } from '../../components/ui/primitives';
 import { useTheme } from '../../theme/ThemeProvider';
 import { moods, tokens } from '../../theme/tokens';
 import { gentleHaptic } from '../../lib/haptics';
 import { deviceTimezone, useSaveMood } from './hooks';
+import { MoodChoice } from './MoodChoice';
+import { Icon } from '../../components/ui/Icon';
 
 // A non-secret retry key, not an authentication credential.
 const requestId = () =>
@@ -36,7 +30,6 @@ export function MoodForm({
   const sending = useRef(false);
   const mutation = useSaveMood();
   const { sky, fontsLoaded, haptics } = useTheme();
-  const { fontScale } = useWindowDimensions();
   const locked = mutation.isPending || retryInput.current !== null;
   async function save() {
     if (sending.current) return;
@@ -74,31 +67,35 @@ export function MoodForm({
       <AppText variant="heading" accessibilityRole="header">
         How are you feeling?
       </AppText>
+      <View
+        style={styles.steps}
+        accessible
+        accessibilityLabel={
+          mood === null ? 'Step 1 of 2. Choose a mood.' : 'Step 2 of 2. Save when you’re ready.'
+        }
+      >
+        <Icon name={mood === null ? 'sun' : 'check'} size={tokens.icon.sm} />
+        <AppText variant="caption" tone="secondary">
+          {mood === null ? 'Choose a mood' : `${moods[mood - 1]!.label} selected`}
+        </AppText>
+        <Icon name="arrow" size={tokens.icon.sm} />
+        <AppText variant="caption" tone="secondary">
+          Save your check-in
+        </AppText>
+      </View>
       <View style={styles.moods}>
         {moods.map((item, index) => (
-          <Pressable
+          <MoodChoice
             key={item.label}
-            accessibilityRole="button"
-            accessibilityLabel={`${item.label}, ${index + 1} of 5`}
-            accessibilityState={{ selected: mood === index + 1, disabled: locked }}
+            index={index}
+            selected={mood === index + 1}
             disabled={locked}
             onPress={() => {
               setMood(index + 1);
               onMood(index);
               void gentleHaptic(haptics, 'selection');
             }}
-            style={[
-              styles.mood,
-              {
-                minWidth: tokens.moodChoiceWidth * fontScale,
-                flex: fontScale <= 1.1 ? 1 : undefined,
-                borderColor: mood === index + 1 ? sky.palette.text : tokens.colors.clear,
-              },
-            ]}
-          >
-            <MoodFace mood={index} />
-            <AppText variant="caption">{item.label}</AppText>
-          </Pressable>
+          />
         ))}
       </View>
       <Action variant="quiet" disabled={locked} onPress={() => setExpanded(!expanded)}>
@@ -200,21 +197,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: tokens.spacing.xs,
   },
-  mood: {
-    alignItems: 'center',
-    gap: tokens.spacing.sm,
-    paddingVertical: tokens.spacing.sm,
-    borderRadius: tokens.radius.tag,
-    borderWidth: tokens.selectedBorder,
-    minHeight: tokens.target,
-  },
-  dot: {
-    width: tokens.spacing.xl,
-    height: tokens.spacing.xl,
-    borderRadius: tokens.radius.pill,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  steps: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: tokens.spacing.xs },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.sm },
   input: {
     ...tokens.type.body,
