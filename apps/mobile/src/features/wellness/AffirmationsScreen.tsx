@@ -1,8 +1,13 @@
 import { useScreenBack } from '../../lib/useScreenBack';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
-import { affirmationForDay, localDay, type ActivityInput } from '@solace/shared';
+import { router, useLocalSearchParams } from 'expo-router';
+import {
+  affirmationForDay,
+  conversationSchema,
+  localDay,
+  type ActivityInput,
+} from '@solace/shared';
 import { Screen } from '../../components/ui/Screen';
 import { Action, AppText, Surface } from '../../components/ui/primitives';
 import { Icon } from '../../components/ui/Icon';
@@ -12,8 +17,10 @@ import { tokens } from '../../theme/tokens';
 import { deviceTimezone } from '../mood/hooks';
 import { activityRequestId, useFavorite, useFavorites, useSaveActivity } from './hooks';
 export function AffirmationsScreen() {
-  const goBack = useScreenBack('/wellness');
-  const { saved } = useLocalSearchParams<{ saved?: string }>();
+  const { saved, conversation } = useLocalSearchParams<{ saved?: string; conversation?: string }>();
+  const parsedConversation = conversationSchema.shape.id.safeParse(conversation);
+  const conversationId = parsedConversation.success ? parsedConversation.data : null;
+  const goBack = useScreenBack(conversationId ? `/chat/${conversationId}` : '/wellness');
   const [showSaved, setShowSaved] = useState(saved === '1');
   const { now, sky } = useTheme();
   const day = localDay(now, deviceTimezone());
@@ -53,9 +60,20 @@ export function AffirmationsScreen() {
     <Screen>
       <PageHeader
         title="Words to keep"
-        subtitle="Take what resonates. Leave what doesn’t."
+        subtitle="Read today’s affirmation and save it if you like."
         back={goBack}
       />
+      {conversationId && (
+        <Action
+          variant="quiet"
+          icon="talk"
+          onPress={() =>
+            router.navigate({ pathname: '/chat/[id]', params: { id: conversationId } })
+          }
+        >
+          Back to conversation
+        </Action>
+      )}
       <View style={layoutStyles.wrap}>
         <Action secondary selected={!showSaved} onPress={() => setShowSaved(false)}>
           Today
@@ -72,7 +90,7 @@ export function AffirmationsScreen() {
           </AppText>
           <AppText variant="display">{today.text}</AppText>
           <AppText variant="bodySmall" tone="secondary">
-            Read it slowly. You don’t have to feel differently right away.
+            Try reading it to yourself.
           </AppText>
           <Action
             icon={readDay === day ? 'check' : 'book'}
@@ -124,9 +142,9 @@ export function AffirmationsScreen() {
           {favorites.data.items.length === 0 ? (
             <Surface>
               <Icon name="heart" />
-              <AppText variant="title">Keep a few words close.</AppText>
+              <AppText variant="title">No saved affirmations yet.</AppText>
               <AppText tone="secondary">
-                Save an affirmation when it speaks to you. It will be here when you return.
+                Tap Save to favorites on an affirmation to find it here later.
               </AppText>
               <Action onPress={() => setShowSaved(false)}>Read today’s words</Action>
             </Surface>

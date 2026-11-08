@@ -138,7 +138,7 @@ export function TalkScreen() {
                   ? 'Opening your conversations…'
                   : query.isError
                     ? 'Your saved chats are still in your account.'
-                    : 'Start with a few words. Sol will take it from there.'}
+                    : 'Tell Sol about your day, or ask a question.'}
               </AppText>
             </View>
           ) : undefined

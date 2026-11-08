@@ -1,8 +1,7 @@
 import { z } from 'zod';
-import type { ChatPageQuery, SendMessageInput, ChatMessage } from '@solace/shared';
+import type { ChatPageQuery, SendMessageInput } from '@solace/shared';
 import type { LLMProvider } from '../../ai/provider.js';
-import { assembleContext } from '../../ai/context/assemble.js';
-import { crisisReply, isCrisis, unavailableReply } from '../../ai/safety/crisis.js';
+import { generateSolReply } from '../../ai/respond.js';
 import { ApiError } from '../auth/errors.js';
 import type { ConversationRepository } from './repository.js';
 const missing = () =>
@@ -94,31 +93,21 @@ export function createConversationService({
         );
       if (claim.kind === 'existing')
         return { userMessage: claim.userMessage, assistantMessage: claim.assistantMessage };
-      let content: string;
-      let kind: ChatMessage['kind'] = 'normal';
-      if (isCrisis(input.content)) {
-        content = crisisReply;
-        kind = 'crisis';
-        onSafety();
-      } else
-        try {
-          const messages = await repository.context(userId, id);
-          content = await provider.reply(
-            assembleContext(messages.map((m) => ({ role: m.role, content: m.content }))),
-          );
-          if (!content.trim() || content.length > 8000) throw new Error('Invalid reply');
-        } catch {
-          content = unavailableReply;
-          kind = 'fallback';
-        }
+      const reply = await generateSolReply({
+        provider,
+        message: input.content,
+        context: () => repository.context(userId, id),
+      });
+      if (reply.kind === 'crisis') onSafety();
       const result = await repository.finish(
         userId,
         id,
         input.requestId,
         claim.leaseId,
-        content,
-        kind,
+        reply.content,
+        reply.kind,
         clock(),
+        reply.activity,
       );
       if (!result) throw missing();
       return result;

@@ -1,4 +1,6 @@
+import type { LLMReply } from './reply.js';
+
 export type LLMMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 export interface LLMProvider {
-  reply(messages: readonly LLMMessage[]): Promise<string>;
+  reply(messages: readonly LLMMessage[]): Promise<LLMReply>;
 }

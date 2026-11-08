@@ -53,11 +53,11 @@ export const tokens = {
 
 export const COMPANION_NAME = 'Sol';
 export const moods = [
-  { label: 'Heavy', color: '#7C8FB8', response: 'You can take this moment at your own pace.' },
-  { label: 'Low', color: '#8FB3C4', response: 'There’s room here for how you feel.' },
-  { label: 'Okay', color: '#9CC9BF', response: 'A little pause, just for you.' },
-  { label: 'Good', color: '#E3D58F', response: 'Take a moment to notice what feels good.' },
-  { label: 'Glowing', color: '#FFC76B', response: 'You can enjoy this feeling for a moment.' },
+  { label: 'Heavy', color: '#7C8FB8', response: 'Sounds like a rough day. Want to talk?' },
+  { label: 'Low', color: '#8FB3C4', response: 'Anything on your mind?' },
+  { label: 'Okay', color: '#9CC9BF', response: 'How has your day been?' },
+  { label: 'Good', color: '#E3D58F', response: 'Glad to hear it. What’s been good?' },
+  { label: 'Glowing', color: '#FFC76B', response: 'That’s good to hear!' },
 ] as const;
 
 export const skyFrames = [

@@ -324,6 +324,8 @@ npm run db:check       # verify configured DB connections without printing crede
 
 ## Confirmed kickoff decisions
 
+- Copy and design preference confirmed 8 November 2026: use the installed Uizze `ui-taste` and `stop-slop` skills when relevant. Uizze replaces the earlier `frontend-design` skill; keep one active design skill. Write natural, specific app copy; remove generic wellness slogans and repeated filler. Preserve the established Sol/sea-glass/Fraunces/Figtree design and clear AI, privacy and urgent-support disclosures. `grill-me` (with `grilling`) is installed for plans that need an explicit interview; do not reopen settled decisions during routine implementation.
+
 - Product focus confirmed 8 November 2026: connect the existing daily check-in, chat and breathing flows before adding features. Shared check-ins and post-breathing reflections must be editable drafts sent explicitly by the user. Remove the inactive memory switch; preserve legacy device preferences without treating them as consent for future memory. Actual cross-conversation memory requires fresh consent and inspect/delete controls when implemented. See `docs/design/DESIGN.md` for this refinement.
 
 - Work on this Linux machine; Android phone with USB debugging; start from scratch.

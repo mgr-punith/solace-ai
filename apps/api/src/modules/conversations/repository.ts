@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
-import type { ChatMessage, Conversation, SendMessageInput } from '@solace/shared';
+import type { ChatActivity, ChatMessage, Conversation, SendMessageInput } from '@solace/shared';
 
 type ConversationRow = {
   id: string;
@@ -21,6 +21,7 @@ type MessageRow = {
   content: string;
   status: ChatMessage['status'];
   kind: ChatMessage['kind'];
+  activity: ChatActivity | null;
   created_at: Date;
 };
 const conversation = (r: ConversationRow): Conversation => ({
@@ -38,6 +39,7 @@ const message = (r: MessageRow): ChatMessage => ({
   content: r.content,
   status: r.status,
   kind: r.kind,
+  activity: r.activity,
   createdAt: r.created_at.toISOString(),
 });
 export type Claim =
@@ -140,7 +142,7 @@ export function createConversationRepository(pool: Pool) {
           );
         } else
           await client.query(
-            `UPDATE messages SET status='pending',kind='normal',content=CASE WHEN role='assistant' THEN '' ELSE content END WHERE conversation_id=$1 AND request_id=$2`,
+            `UPDATE messages SET status='pending',kind='normal',activity=NULL,content=CASE WHEN role='assistant' THEN '' ELSE content END WHERE conversation_id=$1 AND request_id=$2`,
             [id, input.requestId],
           );
         await client.query(
@@ -158,6 +160,7 @@ export function createConversationRepository(pool: Pool) {
       content: string,
       kind: ChatMessage['kind'],
       now: Date,
+      activity: ChatActivity | null = null,
     ) {
       return transaction(async (client) => {
         const result = await client.query<ConversationRow>(
@@ -166,8 +169,8 @@ export function createConversationRepository(pool: Pool) {
         );
         if (!result.rows[0] || result.rows[0].active_lease_id !== leaseId) return null;
         await client.query(
-          `UPDATE messages SET status=CASE WHEN role='assistant' AND $3='fallback' THEN 'failed' ELSE 'complete' END,content=CASE WHEN role='assistant' THEN $4 ELSE content END,kind=CASE WHEN role='assistant' THEN $3 ELSE kind END WHERE conversation_id=$1 AND request_id=$2`,
-          [id, requestId, kind, content],
+          `UPDATE messages SET status=CASE WHEN role='assistant' AND $3='fallback' THEN 'failed' ELSE 'complete' END,content=CASE WHEN role='assistant' THEN $4 ELSE content END,kind=CASE WHEN role='assistant' THEN $3 ELSE kind END,activity=CASE WHEN role='assistant' THEN $5 ELSE NULL END WHERE conversation_id=$1 AND request_id=$2`,
+          [id, requestId, kind, content, activity],
         );
         await client.query(
           `UPDATE conversations SET active_lease_id=NULL,active_request_id=NULL,active_until=NULL,updated_at=$2 WHERE id=$1`,

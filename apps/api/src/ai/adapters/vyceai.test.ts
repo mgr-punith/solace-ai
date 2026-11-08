@@ -5,15 +5,19 @@ const config = {
   apiKey: 'test-private-key',
   model: 'test-model',
 };
-it('uses documented bearer authentication and validates a bounded plain-text reply', async () => {
+const replyContent = (content: string) =>
+  JSON.stringify({ content, activity: null, needsSupport: false });
+it('uses documented bearer authentication and validates a bounded structured reply', async () => {
   const fetcher = vi
     .fn<typeof fetch>()
     .mockResolvedValue(
-      new Response(JSON.stringify({ choices: [{ message: { content: 'I hear you.' } }] })),
+      new Response(
+        JSON.stringify({ choices: [{ message: { content: replyContent('I hear you.') } }] }),
+      ),
     );
   expect(
     await createVyceProvider(config, fetcher).reply([{ role: 'user', content: 'Hello' }]),
-  ).toBe('I hear you.');
+  ).toEqual({ content: 'I hear you.', activity: null, needsSupport: false });
   expect(fetcher.mock.calls[0]?.[0]).toBe('https://vyceai.com/v1/chat/completions');
   const options = fetcher.mock.calls[0]?.[1];
   expect(options?.redirect).toBe('error');
@@ -75,13 +79,17 @@ it('allows a valid 16-second reply instead of returning an early fallback', asyn
       16_000,
       () =>
         new Response(
-          JSON.stringify({ choices: [{ message: { content: 'Hello. How was studying?' } }] }),
+          JSON.stringify({
+            choices: [{ message: { content: replyContent('Hello. How was studying?') } }],
+          }),
         ),
     ),
   );
-  const result = expect(createVyceProvider(config, fetcher).reply([])).resolves.toBe(
-    'Hello. How was studying?',
-  );
+  const result = expect(createVyceProvider(config, fetcher).reply([])).resolves.toEqual({
+    content: 'Hello. How was studying?',
+    activity: null,
+    needsSupport: false,
+  });
   await vi.advanceTimersByTimeAsync(16_000);
   await result;
   expect(fetcher).toHaveBeenCalledTimes(1);
@@ -143,9 +151,13 @@ it('honors a bounded Retry-After and then succeeds', async () => {
     .fn<typeof fetch>()
     .mockResolvedValueOnce(new Response('', { status: 429, headers: { 'retry-after': '2' } }))
     .mockResolvedValueOnce(
-      new Response(JSON.stringify({ choices: [{ message: { content: 'Hello.' } }] })),
+      new Response(JSON.stringify({ choices: [{ message: { content: replyContent('Hello.') } }] })),
     );
-  const result = expect(createVyceProvider(config, fetcher).reply([])).resolves.toBe('Hello.');
+  const result = expect(createVyceProvider(config, fetcher).reply([])).resolves.toEqual({
+    content: 'Hello.',
+    activity: null,
+    needsSupport: false,
+  });
   await vi.advanceTimersByTimeAsync(1999);
   expect(fetcher).toHaveBeenCalledTimes(1);
   await vi.advanceTimersByTimeAsync(1);

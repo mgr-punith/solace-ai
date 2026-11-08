@@ -36,7 +36,7 @@ it('keeps mood selection local and labels it as an unsaved preview', async () =>
   expect(
     screen.getByRole('button', { name: 'Heavy, 1 of 5' }).props.accessibilityState.selected,
   ).toBe(true);
-  expect(screen.getByText('You can take this moment at your own pace.')).toBeTruthy();
+  expect(screen.getByText('Sounds like a rough day. Want to talk?')).toBeTruthy();
   expect(screen.getByText('Preview only · This mood isn’t saved.')).toBeTruthy();
 });
 

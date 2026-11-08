@@ -112,7 +112,7 @@ export function RemindersScreen() {
   }
   return (
     <Screen keyboard>
-      <PageHeader title="Gentle reminders" back={goBack} />
+      <PageHeader title="Reminders" back={goBack} />
       <AppText tone="secondary">Choose a time that works for you. Times follow this phone.</AppText>
       <Surface>
         <AppText variant="heading">Notifications</AppText>
@@ -213,7 +213,7 @@ export function RemindersScreen() {
                   </View>
                   {r.type === 'custom' && (
                     <>
-                      <AppText variant="bodySmall">Write a gentle reminder (optional)</AppText>
+                      <AppText variant="bodySmall">Reminder message (optional)</AppText>
                       <TextInput
                         accessibilityLabel="Your reminder message"
                         value={r.customText}

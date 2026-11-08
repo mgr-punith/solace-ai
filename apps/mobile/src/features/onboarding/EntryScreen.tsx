@@ -41,7 +41,7 @@ export function EntryScreen() {
                 color={sky.palette.text}
                 accessibilityLabel="Opening your preferences"
               />
-              <AppText>Opening your space…</AppText>
+              <AppText>Opening Solace…</AppText>
             </>
           )}
         </Surface>

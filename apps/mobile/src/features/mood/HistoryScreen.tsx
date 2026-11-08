@@ -86,7 +86,7 @@ export function HistoryScreen() {
         onRefresh={() => void query.refetch()}
         ListHeaderComponent={
           <View style={{ gap: tokens.spacing.md }}>
-            <PageHeader title="Your moments" subtitle="A little perspective, without judgment." />
+            <PageHeader title="Your progress" subtitle="Review your check-ins and activities." />
             <ProgressSummary />
             <View style={styles.header}>
               <AppText variant="heading" accessibilityRole="header">

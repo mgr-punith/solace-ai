@@ -67,7 +67,7 @@ function DailyHome({ name }: { name: string }) {
             {name}
           </AppText>
           <AppText variant="bodySmall" accessibilityLiveRegion="polite">
-            {response ?? (showingSaved ? 'What would help from here?' : 'How is today feeling?')}
+            {response ?? (showingSaved ? 'Want to talk about it?' : 'How are you today?')}
           </AppText>
         </View>
         <Companion
@@ -130,7 +130,7 @@ function DailyHome({ name }: { name: string }) {
                   : 'Talk about this'}
             </Action>
             <AppText variant="caption" tone="secondary">
-              Review your check-in in a message before sending.
+              You can edit the message before you send it.
             </AppText>
             {chat.isError && (
               <AppText accessibilityRole="alert" tone="error">
@@ -169,14 +169,14 @@ function DailyHome({ name }: { name: string }) {
         <NavigationRow
           icon="wind"
           title="Breathe for a minute"
-          subtitle="A slow rhythm with Sol"
+          subtitle="Follow Sol as you breathe in and out"
           onPress={() => router.push('/breathing')}
         />
         {!showingSaved && (
           <NavigationRow
             icon="talk"
             title="Talk with Sol"
-            subtitle="Start anywhere. No check-in needed."
+            subtitle="Tell Sol what’s on your mind"
             onPress={() => router.navigate('/talk')}
           />
         )}

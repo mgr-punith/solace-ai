@@ -88,7 +88,7 @@ it('requires confirmation before deleting all messages in a conversation', async
     alert.mock.calls[0]?.[2]?.find((button) => button.text === 'Delete conversation')?.onPress?.();
   });
   await waitFor(() =>
-    expect(screen.getByText('Start with a few words. Sol will take it from there.')).toBeTruthy(),
+    expect(screen.getByText('Tell Sol about your day, or ask a question.')).toBeTruthy(),
   );
   expect(chatApi.remove).toHaveBeenCalledWith('token', conversation.id);
   alert.mockRestore();

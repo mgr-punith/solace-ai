@@ -253,3 +253,78 @@ it('shows the deployed provider and blocks sending until its privacy details loa
     screen.getByRole('button', { name: 'Send message' }).props.accessibilityState.disabled,
   ).toBe(false);
 });
+
+it.each([
+  ['breathing', 'Breathe for a minute', '/breathing'],
+  ['affirmation', 'Read today’s words', '/affirmations'],
+] as const)(
+  'opens a persisted %s suggestion and preserves the unsent draft',
+  async (activity, label, pathname) => {
+    jest.mocked(chatApi.messages).mockResolvedValue({
+      items: [{ ...assistant, activity }, user],
+      nextCursor: null,
+    });
+    const { client, view } = await mount();
+    await waitFor(() => expect(screen.getByRole('button', { name: label })).toBeTruthy());
+    await fireEvent.changeText(screen.getByLabelText('Message Sol'), 'Keep this thought');
+    await fireEvent.press(screen.getByRole('button', { name: label }));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname,
+      params: { conversation: 'conversation' },
+    });
+    expect(chatApi.send).not.toHaveBeenCalled();
+    await view.unmount();
+    await mount(client);
+    await waitFor(() =>
+      expect(screen.getByLabelText('Message Sol').props.value).toBe('Keep this thought'),
+    );
+    expect(screen.getByRole('button', { name: label })).toBeTruthy();
+  },
+);
+
+it.each([
+  { kind: 'crisis' as const, status: 'complete' as const },
+  { kind: 'fallback' as const, status: 'failed' as const },
+  { kind: 'normal' as const, status: 'pending' as const },
+])('hides all activity invitations when the latest reply is $kind/$status', async (state) => {
+  jest.mocked(chatApi.messages).mockResolvedValue({
+    items: [
+      { ...assistant, id: 'latest', sequence: 4, activity: 'affirmation', ...state },
+      { ...user, id: 'next', sequence: 3, activity: 'breathing' },
+      { ...assistant, activity: 'breathing' },
+      user,
+    ],
+    nextCursor: null,
+  });
+  await mount();
+  await waitFor(() => expect(screen.getByLabelText('Message Sol')).toBeTruthy());
+  expect(screen.queryByRole('button', { name: 'Breathe for a minute' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Read today’s words' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Take a breathing break' })).toBeNull();
+});
+
+it('hides old activity invitations while a send is pending or unconfirmed', async () => {
+  jest.mocked(chatApi.messages).mockResolvedValue({
+    items: [{ ...assistant, activity: 'breathing' }, user],
+    nextCursor: null,
+  });
+  let rejectSend: ((error: Error) => void) | undefined;
+  jest.mocked(chatApi.send).mockImplementationOnce(
+    () =>
+      new Promise((_resolve, reject) => {
+        rejectSend = reject;
+      }),
+  );
+  await mount();
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Breathe for a minute' })).toBeTruthy(),
+  );
+  await fireEvent.changeText(screen.getByLabelText('Message Sol'), 'I need help now.');
+  await fireEvent.press(screen.getByRole('button', { name: 'Send message' }));
+  await waitFor(() => expect(chatApi.send).toHaveBeenCalled());
+  expect(screen.queryByRole('button', { name: 'Breathe for a minute' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Take a breathing break' })).toBeNull();
+  await act(async () => rejectSend?.(new Error('Offline')));
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Retry message' })).toBeTruthy());
+  expect(screen.queryByRole('button', { name: 'Breathe for a minute' })).toBeNull();
+});

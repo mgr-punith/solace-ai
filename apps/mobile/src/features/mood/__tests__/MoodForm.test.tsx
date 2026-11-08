@@ -56,7 +56,7 @@ it('does not save on mood selection and sends optional details only with explici
   ).toBe(true);
   await fireEvent.press(screen.getByRole('button', { name: 'Low, 2 of 5' }));
   expect(moodApi.save).not.toHaveBeenCalled();
-  await fireEvent.press(screen.getByRole('button', { name: 'Add a little more' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Add a note or feelings' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Tired' }));
   await fireEvent.changeText(screen.getByLabelText('Optional check-in note'), 'A long day');
   await fireEvent.press(screen.getByRole('button', { name: 'Save check-in' }));
@@ -70,7 +70,7 @@ it('preserves input on failure, does not claim success, and retries the identica
   jest.mocked(moodApi.save).mockRejectedValueOnce(new Error('Connection interrupted'));
   await mount();
   await fireEvent.press(screen.getByRole('button', { name: 'Low, 2 of 5' }));
-  await fireEvent.press(screen.getByRole('button', { name: 'Add a little more' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Add a note or feelings' }));
   await fireEvent.changeText(screen.getByLabelText('Optional check-in note'), 'Keep these words');
   await fireEvent.press(screen.getByRole('button', { name: 'Save check-in' }));
   expect(onSaved).not.toHaveBeenCalled();

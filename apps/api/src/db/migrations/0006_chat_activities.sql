@@ -1,0 +1,2 @@
+ALTER TABLE "messages" ADD COLUMN "activity" text;--> statement-breakpoint
+ALTER TABLE "messages" ADD CONSTRAINT "message_activity_check" CHECK ("messages"."activity" is null or ("messages"."role" = 'assistant' and "messages"."status" = 'complete' and "messages"."kind" = 'normal' and "messages"."activity" in ('breathing', 'affirmation')));

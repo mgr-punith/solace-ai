@@ -102,7 +102,7 @@ export function MoodForm({
         ))}
       </View>
       <Action variant="quiet" disabled={locked} onPress={() => setExpanded(!expanded)}>
-        {expanded ? 'Hide extra details' : 'Add a little more'}
+        {expanded ? 'Hide extra details' : 'Add a note or feelings'}
       </Action>
       {expanded && (
         <>
@@ -149,7 +149,7 @@ export function MoodForm({
             ]}
           />
           <AppText variant="caption" tone="secondary">
-            Optional · {note.length}/500. Saved privately in your account.
+            Optional · {note.length}/500. Solace saves this in your account.
           </AppText>
         </>
       )}

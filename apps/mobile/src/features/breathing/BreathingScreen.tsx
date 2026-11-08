@@ -59,7 +59,7 @@ export function BreathingScreen() {
   const { conversation } = useLocalSearchParams<{ conversation?: string }>();
   const parsedConversation = conversationSchema.shape.id.safeParse(conversation);
   const conversationId = parsedConversation.success ? parsedConversation.data : null;
-  const goBack = useScreenBack('/wellness');
+  const goBack = useScreenBack(conversationId ? `/chat/${conversationId}` : '/wellness');
   const auth = useAuth();
   const client = useQueryClient();
   const chat = useStartConversation();
@@ -154,7 +154,9 @@ export function BreathingScreen() {
           <View style={layoutStyles.centered}>
             <Companion size={tokens.sol.onboarding} />
             <AppText variant="title">
-              {duration === 60 ? 'One minute for you.' : `${duration / 60} minutes for you.`}
+              {duration === 60
+                ? 'Breathe for one minute.'
+                : `Breathe for ${duration / 60} minutes.`}
             </AppText>
             <AppText variant="bodySmall" tone="secondary">
               {breathingPatterns[pattern].name} · {breathingPatterns[pattern].description}
@@ -174,7 +176,7 @@ export function BreathingScreen() {
               <View style={layoutStyles.gap}>
                 <View style={layoutStyles.row}>
                   <Icon name="wind" />
-                  <AppText variant="heading">Find your rhythm</AppText>
+                  <AppText variant="heading">Breathing rhythm</AppText>
                 </View>
                 {(['coherent', 'box', '478'] as BreathingPattern[]).map((key) => (
                   <Pressable
@@ -207,7 +209,7 @@ export function BreathingScreen() {
                 ))}
               </View>
               <View style={layoutStyles.gap}>
-                <AppText variant="heading">How much time feels right?</AppText>
+                <AppText variant="heading">Session length</AppText>
                 <View style={layoutStyles.wrap}>
                   {practiceDurations.map((seconds) => (
                     <Action
@@ -230,7 +232,7 @@ export function BreathingScreen() {
                   />
                 )}
                 <View style={layoutStyles.row}>
-                  <AppText style={layoutStyles.grow}>Gentle haptics</AppText>
+                  <AppText style={layoutStyles.grow}>Vibrate with each breath</AppText>
                   <Switch
                     accessibilityLabel="Breathing haptics"
                     value={haptics}

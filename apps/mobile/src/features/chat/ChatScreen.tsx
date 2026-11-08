@@ -12,7 +12,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import type { ChatMessage, SendMessageInput } from '@solace/shared';
+import {
+  chatActivitySchema,
+  type ChatActivity,
+  type ChatMessage,
+  type SendMessageInput,
+} from '@solace/shared';
 import { Action, AppText, Surface } from '../../components/ui/primitives';
 import { IconButton, layoutStyles } from '../../components/ui/layout';
 import Sol from '../../components/sol/Sol';
@@ -24,8 +29,35 @@ import { useChatProvider } from './provider-info';
 import { ProviderNotice } from './ProviderNotice';
 import { useChatDraft } from './useChatDraft';
 
-const Message = memo(function Message({ item }: { item: ChatMessage }) {
+const activities = {
+  breathing: { label: 'Breathe for a minute', icon: 'wind', pathname: '/breathing' },
+  affirmation: { label: 'Read today’s words', icon: 'book', pathname: '/affirmations' },
+} as const;
+
+function openActivity(activity: ChatActivity, conversation: string) {
+  Keyboard.dismiss();
+  router.push({ pathname: activities[activity].pathname, params: { conversation } });
+}
+
+const Message = memo(function Message({
+  item,
+  showActivities,
+  conversationId,
+}: {
+  item: ChatMessage;
+  showActivities: boolean;
+  conversationId: string;
+}) {
   const isUser = item.role === 'user';
+  const parsed = chatActivitySchema.safeParse(item.activity);
+  const activity =
+    !isUser &&
+    showActivities &&
+    item.kind === 'normal' &&
+    item.status === 'complete' &&
+    parsed.success
+      ? parsed.data
+      : null;
   return (
     <Surface
       style={[
@@ -52,6 +84,15 @@ const Message = memo(function Message({ item }: { item: ChatMessage }) {
       {item.kind === 'crisis' && (
         <Action secondary onPress={() => router.push('/support')}>
           Need support now?
+        </Action>
+      )}
+      {activity && (
+        <Action
+          secondary
+          icon={activities[activity].icon}
+          onPress={() => openActivity(activity, conversationId)}
+        >
+          {activities[activity].label}
         </Action>
       )}
     </Surface>
@@ -104,6 +145,12 @@ export function ChatScreen({ id }: { id: string }) {
   const retryInput =
     (pendingComplete ? null : pending) ??
     (retryTurn ? { requestId: retryTurn.requestId, content: retryTurn.content } : null);
+  const showActivities =
+    last?.role === 'assistant' &&
+    last.kind === 'normal' &&
+    last.status === 'complete' &&
+    !send.isPending &&
+    !retryInput;
   const missing =
     query.error instanceof AuthApiError && query.error.code === 'CONVERSATION_NOT_FOUND';
   const terminalSendError =
@@ -159,19 +206,13 @@ export function ChatScreen({ id }: { id: string }) {
               </AppText>
             </View>
           </View>
-          {last?.role === 'assistant' &&
-            last.status === 'complete' &&
-            last.kind === 'normal' &&
-            !send.isPending && (
-              <IconButton
-                icon="wind"
-                label="Take a breathing break"
-                onPress={() => {
-                  Keyboard.dismiss();
-                  router.push({ pathname: '/breathing', params: { conversation: id } });
-                }}
-              />
-            )}
+          {showActivities && (
+            <IconButton
+              icon="wind"
+              label="Take a breathing break"
+              onPress={() => openActivity('breathing', id)}
+            />
+          )}
           <IconButton
             icon="support"
             label="Need support now?"
@@ -182,8 +223,11 @@ export function ChatScreen({ id }: { id: string }) {
           testID="chat-messages"
           ref={list}
           data={items}
+          extraData={showActivities}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <Message item={item} />}
+          renderItem={({ item }) => (
+            <Message item={item} showActivities={showActivities} conversationId={id} />
+          )}
           contentContainerStyle={[styles.messages, items.length === 0 && styles.emptyMessages]}
           keyboardShouldPersistTaps="handled"
           maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
@@ -244,14 +288,14 @@ export function ChatScreen({ id }: { id: string }) {
                       ? 'This conversation was deleted or is unavailable.'
                       : 'The conversation couldn’t be loaded.'
                     : origin === 'checkin'
-                      ? 'Your check-in is ready to talk about.'
+                      ? 'Talk about your check-in.'
                       : 'What’s on your mind?'}
               </AppText>
               {!query.isPending && !query.isError && (
                 <AppText variant="bodySmall" tone="secondary" style={styles.centeredText}>
                   {origin
-                    ? 'Read or edit your message below. Nothing is sent until you choose Send.'
-                    : 'A few words is a good place to start.'}
+                    ? 'Edit the message below, then tap Send when you’re ready.'
+                    : 'Tell Sol what happened today.'}
                 </AppText>
               )}
               {!query.isPending && !query.isError && !draft && (
