@@ -5,13 +5,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 import { AffirmationsScreen } from '../AffirmationsScreen';
 import { wellnessApi } from '../api';
+import { router } from 'expo-router';
+let mockConversation: string | undefined;
 jest.mock('../api', () => ({
   wellnessApi: { save: jest.fn(), favorites: jest.fn(), favorite: jest.fn() },
 }));
 jest.mock('expo-router', () => ({
   useFocusEffect: jest.fn(),
-  useLocalSearchParams: () => ({}),
-  router: { replace: jest.fn(), canGoBack: () => false },
+  useLocalSearchParams: () => ({ conversation: mockConversation }),
+  router: { replace: jest.fn(), navigate: jest.fn(), canGoBack: () => false },
 }));
 jest.mock('../../auth/context', () => ({
   useAuth: () => ({
@@ -25,11 +27,29 @@ jest.mock('../../../lib/useMotionPreferences', () => ({
 }));
 jest.mock('expo-font', () => ({ useFonts: () => [true, null], isLoaded: () => true }));
 beforeEach(() => {
+  mockConversation = undefined;
   jest.mocked(wellnessApi.favorites).mockResolvedValue({ items: [] });
   jest
     .mocked(wellnessApi.save)
     .mockResolvedValue({ id: 'a', type: 'affirmation', completedAt: '2026-11-07T12:00:00Z' });
   jest.mocked(wellnessApi.favorite).mockResolvedValue(undefined);
+});
+
+it('returns to the originating conversation without marking a read or sending a reflection', async () => {
+  mockConversation = '550e8400-e29b-41d4-a716-446655440000';
+  await mount();
+  await fireEvent.press(screen.getByRole('button', { name: 'Back to conversation' }));
+  expect(router.navigate).toHaveBeenCalledWith({
+    pathname: '/chat/[id]',
+    params: { id: mockConversation },
+  });
+  expect(wellnessApi.save).not.toHaveBeenCalled();
+});
+
+it('ignores untrusted conversation parameters', async () => {
+  mockConversation = 'https://example.invalid';
+  await mount();
+  expect(screen.queryByRole('button', { name: 'Back to conversation' })).toBeNull();
 });
 afterEach(() => {
   jest.useRealTimers();
@@ -70,9 +90,9 @@ it('shows an honest favorites error, retries it, and allows account favorite cre
   await mount();
   await fireEvent.press(screen.getByRole('button', { name: 'Saved words' }));
   await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy());
-  expect(screen.queryByText('Keep a few words close.')).toBeNull();
+  expect(screen.queryByText('No saved affirmations yet.')).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'Reload saved words' }));
-  await waitFor(() => expect(screen.getByText('Keep a few words close.')).toBeTruthy());
+  await waitFor(() => expect(screen.getByText('No saved affirmations yet.')).toBeTruthy());
   await fireEvent.press(screen.getByRole('button', { name: 'Today' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Save to favorites' }));
   await waitFor(() =>

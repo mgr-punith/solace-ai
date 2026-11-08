@@ -16,19 +16,19 @@ export function WellnessScreen() {
   const today = affirmationForDay(localDay(now, deviceTimezone()));
   return (
     <Screen inTabs>
-      <PageHeader title="A moment for you" subtitle="Small rituals, at your pace." />
+      <PageHeader title="Take a break" subtitle="Try a breathing exercise or read today’s words." />
       <Surface>
         <View style={[layoutStyles.row, fontScale > 1.2 && styles.stacked]}>
           <View style={layoutStyles.grow}>
             <AppText variant="heading">Breathe with Sol</AppText>
             <AppText variant="bodySmall" tone="secondary">
-              Pick a rhythm. Start with a minute.
+              Start with one minute. Change the rhythm or length in Customize.
             </AppText>
           </View>
           <Companion size={tokens.sol.home} onResponse={setResponse} />
         </View>
         <AppText variant="caption" accessibilityLiveRegion="polite" tone="secondary">
-          {response ?? 'Tap Sol to say hello, or hold for a quiet breath.'}
+          {response ?? 'Tap Sol to say hello. Hold to breathe along.'}
         </AppText>
         <Action icon="play" onPress={() => router.push('/breathing')}>
           Take a breathing break
@@ -49,13 +49,13 @@ export function WellnessScreen() {
         <NavigationRow
           icon="heart"
           title="Your saved words"
-          subtitle="Come back to what resonates"
+          subtitle="Affirmations you’ve saved"
           onPress={() => router.push('/affirmations?saved=1')}
         />
         <NavigationRow
           icon="bell"
           title="Your reminders"
-          subtitle="A nudge, only when you want one"
+          subtitle="Choose the days and times"
           onPress={() => router.push('/reminders')}
         />
       </View>

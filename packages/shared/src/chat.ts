@@ -16,6 +16,8 @@ export const conversationSchema = z.object({
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });
+export const chatActivitySchema = z.enum(['breathing', 'affirmation']);
+export type ChatActivity = z.infer<typeof chatActivitySchema>;
 export const chatMessageSchema = z.object({
   id: z.uuid(),
   conversationId: z.uuid(),
@@ -25,6 +27,8 @@ export const chatMessageSchema = z.object({
   content: z.string().max(8000),
   status: z.enum(['pending', 'complete', 'failed']),
   kind: z.enum(['normal', 'crisis', 'fallback']),
+  // Older servers omit this field; future activity types must not break chat history.
+  activity: chatActivitySchema.nullable().optional().catch(null),
   createdAt: z.iso.datetime(),
 });
 export const conversationResponseSchema = z.object({ conversation: conversationSchema });

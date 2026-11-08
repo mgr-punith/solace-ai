@@ -64,9 +64,7 @@ export function WeekChart({ progress }: { progress: WellnessProgress }) {
           )}
         </Svg>
       ) : (
-        <AppText tone="secondary">
-          Your mood picture starts with a check-in. Days without one stay open.
-        </AppText>
+        <AppText tone="secondary">Check in on Home to see your mood here.</AppText>
       )}
       <View style={styles.days}>
         {progress.days.map((day) => (
@@ -124,7 +122,7 @@ export function ProgressSummary({ compact = false }: { compact?: boolean }) {
     return (
       <Surface>
         <AppText tone="secondary" accessibilityLiveRegion="polite">
-          Gathering your moments…
+          Loading your progress…
         </AppText>
       </Surface>
     );
@@ -138,14 +136,14 @@ export function ProgressSummary({ compact = false }: { compact?: boolean }) {
               ? `${progress.currentStreak} ${progress.currentStreak === 1 ? 'day' : 'days'} with Sol`
               : progress.welcomeBack
                 ? 'Welcome back.'
-                : 'A little time for you.'}
+                : 'Your progress'}
           </AppText>
           <AppText variant="caption" tone="secondary">
             {progress.welcomeBack
-              ? 'No pressure. Begin again at your own pace.'
+              ? 'Your previous check-ins are here.'
               : progress.totalDays
-                ? `${progress.totalDays} days you’ve made space for yourself.`
-                : 'Every small moment counts.'}
+                ? `You’ve checked in or saved an activity on ${progress.totalDays} ${progress.totalDays === 1 ? 'day' : 'days'}.`
+                : 'Save a check-in to get started.'}
           </AppText>
         </View>
       </View>
@@ -166,9 +164,9 @@ export function ProgressSummary({ compact = false }: { compact?: boolean }) {
         </AppText>
         <AppText tone="secondary">
           {progress.welcomeBack
-            ? 'No pressure. We’re glad you’re here.'
+            ? 'Your previous check-ins are here.'
             : progress.totalDays
-              ? `${progress.totalDays} days you’ve made a little space for yourself.`
+              ? `You’ve checked in or saved an activity on ${progress.totalDays} ${progress.totalDays === 1 ? 'day' : 'days'}.`
               : 'Save a check-in or a wellness activity to begin.'}
         </AppText>
       </Surface>
@@ -188,8 +186,8 @@ export function ProgressSummary({ compact = false }: { compact?: boolean }) {
           </View>
         </View>
         <AppText variant="caption" tone="secondary">
-          Dates follow {progress.timezone.replaceAll('_', ' ')}. Travel may regroup your past
-          moments.
+          Dates use {progress.timezone.replaceAll('_', ' ')}. Changing time zones may move an entry
+          to a different day.
         </AppText>
       </Surface>
     </View>

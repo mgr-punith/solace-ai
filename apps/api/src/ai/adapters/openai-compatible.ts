@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { LLMProvider } from '../provider.js';
+import { parseReply, solReplyFormat } from '../reply.js';
 const responseSchema = z.object({
   choices: z
     .array(
@@ -44,7 +45,12 @@ export function createOpenAICompatibleProvider(
               messages,
               stream: false,
               ...(config.groqReasoning
-                ? { max_completion_tokens: 1024, reasoning_effort: 'low', include_reasoning: false }
+                ? {
+                    max_completion_tokens: 1024,
+                    reasoning_effort: 'low',
+                    include_reasoning: false,
+                    response_format: solReplyFormat,
+                  }
                 : { max_tokens: 600 }),
               temperature: 0.6,
             }),
@@ -81,7 +87,7 @@ export function createOpenAICompatibleProvider(
           const choice = responseSchema.parse(data).choices[0]!;
           if (config.groqReasoning && choice.finish_reason !== 'stop')
             throw new Error('Incomplete reply');
-          return choice.message.content;
+          return parseReply(choice.message.content);
         }
         throw new Error('Provider unavailable');
       } catch {

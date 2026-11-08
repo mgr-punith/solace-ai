@@ -50,7 +50,7 @@ The installed app always uses the API hosted at `https://solace-ai-n8s4.onrender
 npm run dev:mobile
 ```
 
-Rebuild the development APK after installing Google Sign-In and SecureStore, then connect it to Metro. First launch shows four introduction pages. “Skip intro” still opens privacy; saving continues to sign-in. You can replay the introduction and change the device-local memory preference from your account screen. Memory is not active yet; backend consent and memory controls follow in Phase 7.
+Rebuild the development APK after installing Google Sign-In and SecureStore, then connect it to Metro. First launch shows four introduction pages. “Skip intro” still opens privacy; saving continues to sign-in. You can replay the introduction or review privacy from You. Sol uses the current conversation, including check-ins you choose to send as messages. Cross-conversation memory is not active and requires fresh consent and deletion controls before implementation.
 
 The sign-in screen opens Google's native account picker; a successful sign-in shows your name. Tokens are saved in SecureStore and restored on relaunch. The foundation connection screen remains at `/connection`.
 
@@ -110,7 +110,11 @@ Before merging the chat feature, set the four `LLM_*` values above in Render's e
 
 Chat endpoints: `POST/GET /v1/conversations`, `GET/DELETE /v1/conversations/:id`, and `GET/POST /v1/conversations/:id/messages`. Creation requires a `requestId`; sending requires a `requestId` and `content` (1–2,000 characters). Lists use cursor pagination. Replies are non-streaming, bounded and saved. See [chat decisions](docs/decisions/0006-persistent-chat.md).
 
-Run `npm run ai:eval` only when you want a manual evaluation against the real configured provider; it may incur provider usage. Its scenarios are synthetic, and the command prints their responses for review. Automated tests always mock the model. Memory across conversations, mood context and summaries remain deferred to Phase 7 consent controls.
+Run `npm run ai:eval` only when you want a manual evaluation against the real configured provider; it may incur provider usage. Its 13 scenarios are synthetic, and the command prints their responses plus HTTP status/error codes for review, without upstream error messages or credentials. To check specific cases, run `npm run ai:eval -w @solace/api -- declined-activity after-breathing`. Automated tests always mock the model. Memory across conversations, automatic mood context and summaries remain deferred to Phase 7 consent controls.
+
+Sol may attach **Breathe for a minute** or **Read today’s words** to a reply. These open the existing activities and preserve your chat draft. Breathing waits for Start; reading and saving stay explicit. Sol does not offer another button on the immediately following reply. Crisis, failed and pending replies suppress activity invitations. Old chats stay readable. The v2 prompt favors short, specific replies; `npm run ai:eval` checks the reply format and activity choices, while tone still needs review.
+
+Deploy migration `0006_chat_activities.sql` with the backend before testing suggestions on the phone. Groq uses its supported strict JSON schema mode; the server validates reply text and the activity allowlist. The existing provider-failure retry flow handles invalid output. No new environment variable or native dependency is required. See [reply and activity decisions](docs/decisions/0010-sol-activity-replies.md).
 
 ### Switching the deployed AI provider
 

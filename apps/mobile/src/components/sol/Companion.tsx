@@ -8,9 +8,9 @@ import Sol from './Sol';
 import type { SolProps, SolState } from './types';
 
 const greetings = [
-  { reaction: 'wave', text: 'A little hello, just for you.' },
-  { reaction: 'delight', text: 'A small moment to smile.' },
-  { reaction: 'wink', text: 'No rush. Stay a little.' },
+  { reaction: 'wave', text: 'Hi there!' },
+  { reaction: 'delight', text: 'Oh, hello again.' },
+  { reaction: 'wink', text: 'Caught me winking.' },
 ] as const;
 
 export function Companion({
@@ -86,7 +86,7 @@ export function Companion({
       onPressOut={() => {
         setPressed(false);
         setHolding(false);
-        if (held.current) response.current?.('A little more room.');
+        if (held.current) response.current?.('Back whenever you want another breath.');
       }}
       onPress={greet}
       style={styles.character}

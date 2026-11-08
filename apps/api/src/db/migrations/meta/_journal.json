@@ -43,6 +43,13 @@
       "when": 1794074542401,
       "tag": "0005_curved_master_chief",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794145339358,
+      "tag": "0006_chat_activities",
+      "breakpoints": true
     }
   ]
 }

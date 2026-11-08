@@ -19,7 +19,7 @@ export function PrivacyChoice() {
           Sol uses the current conversation. Your check-ins stay separate unless you choose to send
           one as a message. Sol does not remember across conversations.
         </AppText>
-        <AppText variant="heading">You stay in control</AppText>
+        <AppText variant="heading">Delete your data</AppText>
         <AppText tone="secondary">
           Delete conversations and messages from Talk, check-ins from Progress, or your account and
           its saved data from You. Sharing a check-in in chat creates a separate message; delete

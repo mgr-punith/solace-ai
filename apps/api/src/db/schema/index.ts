@@ -139,6 +139,7 @@ export const messages = pgTable(
     content: text('content').notNull(),
     status: text('status').notNull(),
     kind: text('kind').notNull().default('normal'),
+    activity: text('activity'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -148,6 +149,10 @@ export const messages = pgTable(
     check('message_status_check', sql`${t.status} in ('pending', 'complete', 'failed')`),
     check('message_kind_check', sql`${t.kind} in ('normal', 'crisis', 'fallback')`),
     check('message_content_check', sql`char_length(${t.content}) <= 8000`),
+    check(
+      'message_activity_check',
+      sql`${t.activity} is null or (${t.role} = 'assistant' and ${t.status} = 'complete' and ${t.kind} = 'normal' and ${t.activity} in ('breathing', 'affirmation'))`,
+    ),
   ],
 );
 

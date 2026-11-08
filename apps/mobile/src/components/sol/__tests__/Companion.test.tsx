@@ -37,7 +37,7 @@ it('cycles visible reactions, replaces the expiry timer and returns to rest', as
     });
     expect(drawing()?.reaction).toBe(reaction);
   }
-  expect(response).toHaveBeenLastCalledWith('No rush. Stay a little.');
+  expect(response).toHaveBeenLastCalledWith('Caught me winking.');
   await act(async () => {
     jest.advanceTimersByTime(1);
   });
@@ -51,7 +51,7 @@ it('ends hold breathing on release or losing focus and keeps reduced-motion resp
   const response = jest.fn();
   const view = await render(<Companion mood={0} onResponse={response} />);
   const button = screen.getByRole('button', { name: 'Say hello to Sol' });
-  expect(response).toHaveBeenLastCalledWith('You can take this moment at your own pace.');
+  expect(response).toHaveBeenLastCalledWith('Sounds like a rough day. Want to talk?');
   await fireEvent(button, 'pressIn');
   await fireEvent(button, 'longPress');
   expect(drawing()).toMatchObject({ state: 'breathing', reduceMotion: true, pressed: false });

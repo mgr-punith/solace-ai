@@ -7,25 +7,25 @@ export const reminderLabels: Record<ReminderType, string> = {
   custom: 'Your own reminder',
 };
 export const affirmations = [
-  'You can take today one moment at a time.',
-  'Your needs deserve a little space today.',
-  'You do not have to solve everything at once.',
-  'A small step can be enough for now.',
-  'Rest is something you are allowed to need.',
-  'There is room for how you feel today.',
-  'You can begin again at your own pace.',
+  'I can focus on today.',
+  'My needs belong on the list too.',
+  'I can deal with one thing at a time.',
+  'I did what I could with the time I had.',
+  'I need rest, and I can make time for it.',
+  'I can be honest about how I feel.',
+  'I can start again without rushing.',
 ] as const;
 export function reminderBody(type: ReminderType, weekday: number, customText = '') {
   switch (type) {
     case 'mood':
-      return 'How are you feeling? Take a moment to check in, if you like.';
+      return 'How are you feeling? Your check-in is here when you’re ready.';
     case 'affirmation':
       return affirmations[(weekday - 1) % affirmations.length]!;
     case 'breathing':
-      return 'A pause is here if you need it. Let your next breath come gently, at your own pace.';
+      return 'Ready for a breathing break? Open Solace to start.';
     case 'self-care':
-      return 'Is there one small thing you need right now? A stretch, some water, or a little rest?';
+      return 'Time for the break you planned.';
     case 'custom':
-      return customText || 'A little moment for yourself, when you are ready.';
+      return customText || 'Here’s the reminder you set.';
   }
 }

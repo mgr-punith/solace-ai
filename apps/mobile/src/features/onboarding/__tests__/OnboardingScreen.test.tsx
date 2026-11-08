@@ -62,7 +62,7 @@ it('skip still shows current privacy without inactive memory controls, and requi
     ).toBe(false),
   );
   await fireEvent.press(screen.getByRole('button', { name: 'Skip intro' }));
-  expect(screen.getByText('Your space. Your choice.')).toBeTruthy();
+  expect(screen.getByText('Your privacy.')).toBeTruthy();
   expect(screen.queryByRole('switch')).toBeNull();
   expect(screen.getByText(/Sol uses the current conversation/)).toBeTruthy();
   expect(router.replace).not.toHaveBeenCalled();
@@ -79,7 +79,7 @@ it('does not save the practice mood as consent, and preserves the current step',
   await act(async () => {});
   await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Heavy, 1 of 5' }));
-  expect(screen.getByText('Just a practice check-in. This choice isn’t saved.')).toBeTruthy();
+  expect(screen.getByText('This is a practice check-in. Solace won’t save it.')).toBeTruthy();
   expect(JSON.parse(saved!)).toMatchObject({ step: 1, pendingChoice: null, choices: {} });
 });
 it('never exposes a previous account preference during an identity change', async () => {

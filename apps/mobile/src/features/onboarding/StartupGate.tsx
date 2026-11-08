@@ -60,7 +60,7 @@ export function StartupGate({ children }: { children: ReactNode }) {
                   accessibilityLabel="Opening your introduction"
                   color={theme.sky.palette.text}
                 />
-                <AppText tone="secondary">Opening your space…</AppText>
+                <AppText tone="secondary">Opening Solace…</AppText>
               </>
             )}
             {onboarding.status === 'ready' && (

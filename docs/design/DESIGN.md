@@ -551,3 +551,27 @@ Today's words / Progress
 Phone refinement: tighter message padding, a quiet breathing tool in the chat header instead of repeating an invitation after every reply, and two editable starter prompts for an empty conversation. The breathing tool is hidden during a crisis response. Neither starter prompts nor breathing reflections send automatically. The user explicitly requested a modern chat interface; give the reading area priority, use a compact arrow send control and preserve meaningful status feedback.
 
 Verification focuses on saved-day/revisit/new-day states, explicit draft sharing and account isolation, create/send retries, conversation resumption, preserved drafts across breathing, completion/save/return, legacy reminder destinations, native Back and enlarged text. Preserve the connected phone's account, signing certificate and preferences. No new rating is claimed from a visual pass.
+
+## Sol replies and activity suggestions — 8 November 2026
+
+Copy refinement requested by the user: use the installed `stop-slop` guidance to remove repeated wellness slogans, filler and staged reassurance. Name the screen or action: “Reminders” instead of “Gentle reminders”, “Meet Sol” instead of “A little space for you”, and “Choose the days and times” instead of “A nudge, on your terms”. Keep ordinary questions where they help a conversation. Avoid granting permission for feelings, promising a better mood or implying Sol is human. Privacy, consent and urgent support remain explicit. Affirmations should use everyday first-person language and preserve the topic and stable ID of each saved line.
+
+The user authorized comparing Uizze with the earlier `frontend-design` skill and keeping one. The comparison favored Uizze's `ui-taste` for this app: native controls, keyboard/state preservation and evidence-based review while respecting the established design. Fraunces gives short headings a friendly editorial character, Figtree keeps chat and controls readable, sea glass identifies actions, and Sol carries the expressive motion. New activity buttons reuse those tokens and native accessibility behavior. No new visual theme or decorative background is needed for this slice; compare copy and controls against the incumbent screens. Its optional paid reference service is not required or connected.
+
+Sol responds to the specific thought or feeling in the current conversation. Keep replies brief and varied, with at most one relevant question; listening does not always need a question or an exercise. Respect requests to vent, declined suggestions and the user's own words after a practice. Shared check-ins remain explicit messages. No account context or cross-conversation memory is added.
+
+A normal reply may include one optional activity: **Breathe for a minute** or **Read today’s words**. Use the existing outlined Action with a wind/book icon below the reply, a wrapping label and a 48 dp target. No extra card, badge or animation. The app owns all button labels and destinations; generated URLs or navigation parameters are never used. Breathing opens the existing one-minute coherent setup and waits for Start. Affirmations opens the existing daily words and waits for an explicit read/favorite action. Both preserve the conversation and its unsent draft, with Back returning to the chat. Reading an affirmation does not automatically send a reflection.
+
+Suggestions are stored with the reply and survive history/retries. The next assistant reply cannot offer another activity immediately after one was offered. While a new message is pending, a send is unconfirmed, or the latest reply is crisis/fallback, hide all activity invitations in the visible transcript and the breathing shortcut. Crisis support stays accessible. Legacy messages without suggestions remain readable.
+
+The provider returns a validated object containing reply text, an allowlisted activity or null, and an urgent-support flag. Groq's supported strict JSON schema mode constrains the format; server validation still rejects malformed or unsupported output. Either the deterministic safety check or the model's urgent-support flag selects the existing crisis response and suppresses activities. Invalid provider output uses the existing saved-message retry flow. Format validation is not proof of emotional quality, so assess synthetic multi-turn replies separately.
+
+```text
+Back  Sol · AI                    Support
+You: I could use a short pause.
+Sol: A pause sounds welcome after that meeting.
+     We can leave the rest here for a moment.
+[wind  Breathe for a minute]
+
+[Editable message ...]                 [↑]
+```

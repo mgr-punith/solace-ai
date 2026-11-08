@@ -26,9 +26,11 @@ const auth = createAuthService({
     avatarUrl: null,
   }),
 });
-const reply = vi
-  .fn<LLMProvider['reply']>()
-  .mockResolvedValue('That sounds like a lot. What feels hardest right now?');
+const reply = vi.fn<LLMProvider['reply']>().mockResolvedValue({
+  content: 'That sounds like a lot. What feels hardest right now?',
+  activity: null,
+  needsSupport: false,
+});
 const safety = vi.fn();
 const repo = createConversationRepository(db.pool);
 const chat = createConversationService({
@@ -91,6 +93,11 @@ it('persists complete turns, returns the same retry and includes current convers
   const a = await login();
   const id = await conversation(a.accessToken);
   const input = { requestId: randomUUID(), content: 'I am anxious about tomorrow' };
+  reply.mockResolvedValueOnce({
+    content: 'We can pause here for a minute.',
+    activity: 'breathing',
+    needsSupport: false,
+  });
   const first = await request(app)
     .post(`/v1/conversations/${id}/messages`)
     .set('Authorization', `Bearer ${a.accessToken}`)
@@ -103,6 +110,8 @@ it('persists complete turns, returns the same retry and includes current convers
     .send(input)
     .expect(200);
   expect(second.body).toEqual(first.body);
+  expect(first.body.assistantMessage.activity).toBe('breathing');
+  expect(first.body.userMessage.activity).toBeNull();
   expect(reply).toHaveBeenCalledTimes(calls);
   await request(app)
     .post(`/v1/conversations/${id}/messages`)
@@ -116,6 +125,7 @@ it('persists complete turns, returns the same retry and includes current convers
   });
   const history = await fresh.messages(a.user.id, id, { limit: 20 });
   expect(history.items).toHaveLength(2);
+  expect(history.items[0]?.activity).toBe('breathing');
   expect(history.items[1]?.content).toBe(input.content);
   await fresh.send(a.user.id, id, { requestId: randomUUID(), content: 'Mostly the meeting' });
   expect(reply.mock.calls.at(-1)?.[0]).toEqual(
@@ -149,6 +159,7 @@ it('reserves one active turn, recovers failures without duplicates and prevents 
   reply.mockRejectedValueOnce(new Error('secret-provider-error'));
   const failed = await chat.send(a.user.id, id, input);
   expect(failed.assistantMessage.kind).toBe('fallback');
+  expect(failed.assistantMessage.activity).toBeNull();
   expect(JSON.stringify(failed)).not.toContain('secret-provider-error');
   const retried = await chat.send(a.user.id, id, input);
   expect(retried.assistantMessage.status).toBe('complete');
@@ -170,9 +181,58 @@ it('takes the crisis path without calling the LLM and persists supportive conten
     content: 'I want to kill myself',
   });
   expect(result.assistantMessage.kind).toBe('crisis');
+  expect(result.assistantMessage.activity).toBeNull();
   expect(result.assistantMessage.content).toContain('someone you trust');
   expect(reply).toHaveBeenCalledTimes(calls);
   expect(safety).toHaveBeenCalled();
+});
+
+it('persists model-detected crisis support and records only a content-free safety signal', async () => {
+  const a = await login();
+  const id = await conversation(a.accessToken);
+  reply.mockResolvedValueOnce({
+    content: 'Discard this generated advice.',
+    activity: 'breathing',
+    needsSupport: true,
+  });
+  const result = await chat.send(a.user.id, id, {
+    requestId: randomUUID(),
+    content: 'Everything is ready and tonight is the night.',
+  });
+  expect(result.assistantMessage).toMatchObject({
+    kind: 'crisis',
+    activity: null,
+    status: 'complete',
+  });
+  expect(result.assistantMessage.content).not.toContain('generated advice');
+  expect(safety.mock.calls.at(-1)).toEqual([]);
+  const history = await chat.messages(a.user.id, id, { limit: 20 });
+  expect(history.items[0]).toEqual(result.assistantMessage);
+});
+
+it('enforces supported activities and assistant-only metadata in PostgreSQL', async () => {
+  const a = await login();
+  const id = await conversation(a.accessToken);
+  const result = await chat.send(a.user.id, id, { requestId: randomUUID(), content: 'Hello' });
+  await expect(
+    db.pool.query('UPDATE messages SET activity=$1 WHERE id=$2', [
+      'external-link',
+      result.assistantMessage.id,
+    ]),
+  ).rejects.toMatchObject({ code: '23514' });
+  await expect(
+    db.pool.query('UPDATE messages SET activity=$1 WHERE id=$2', [
+      'breathing',
+      result.userMessage.id,
+    ]),
+  ).rejects.toMatchObject({ code: '23514' });
+  await db.pool.query('UPDATE messages SET activity=$1 WHERE id=$2', [
+    'affirmation',
+    result.assistantMessage.id,
+  ]);
+  await expect(
+    db.pool.query("UPDATE messages SET kind='crisis' WHERE id=$1", [result.assistantMessage.id]),
+  ).rejects.toMatchObject({ code: '23514' });
 });
 it('cascades deletion and rejects a late reply after its conversation is removed', async () => {
   const a = await login();

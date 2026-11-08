@@ -56,7 +56,7 @@ export function AuthScreen() {
         >
           {auth.status === 'signedIn'
             ? `Hello, ${firstName(auth.session?.user.name)}.`
-            : 'A little space, just for you.'}
+            : 'Welcome to Solace.'}
         </AppText>
         {auth.status === 'restoring' ? (
           <>
@@ -64,11 +64,12 @@ export function AuthScreen() {
               color={sky.palette.text}
               accessibilityLabel="Restoring your session"
             />
-            <AppText>Opening your space…</AppText>
+            <AppText>Signing you in…</AppText>
           </>
         ) : auth.status === 'signedOut' ? (
           <AppText tone="secondary">
-            Sign in to start your space. Your Google name and email create your account.
+            Sign in with Google to save your check-ins and chats. Solace uses your name and email to
+            create your account.
           </AppText>
         ) : null}
         {busy && auth.status !== 'restoring' && (
@@ -100,16 +101,14 @@ export function AuthScreen() {
               onPress={() => void auth.signIn()}
             />
           ) : (
-            <AppText tone="secondary">
-              Google sign-in is available in the Android development app.
-            </AppText>
+            <AppText tone="secondary">Open the Android app to sign in with Google.</AppText>
           ))}
         {auth.status === 'signedIn' && (
           <>
             <NavigationRow
               icon="bell"
               title="Reminders"
-              subtitle="A gentle nudge, on your terms"
+              subtitle="Choose the days and times"
               disabled={busy}
               onPress={() => router.push('/reminders')}
             />
@@ -123,14 +122,14 @@ export function AuthScreen() {
             <NavigationRow
               icon="heart"
               title="Saved affirmations"
-              subtitle="Words you want to return to"
+              subtitle="Read your favorites"
               disabled={busy}
               onPress={() => router.push('/affirmations?saved=1')}
             />
             <NavigationRow
               icon="support"
               title="Need support now?"
-              subtitle="Find someone you can reach out to"
+              subtitle="Find a crisis helpline"
               disabled={busy}
               onPress={() => router.push('/support')}
             />

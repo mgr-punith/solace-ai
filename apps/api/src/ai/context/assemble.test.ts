@@ -20,3 +20,10 @@ it('retains the newest user message and bounds context without accepting a suppl
   );
   expect(result[1]?.role).toBe('user');
 });
+
+it('keeps stored message metadata out of provider messages and can disable an adjacent offer', () => {
+  const stored = { role: 'user' as const, content: 'Keep listening.', id: 'private-row-id' };
+  const result = assembleContext([stored], { allowActivity: false });
+  expect(result[1]).toEqual({ role: 'user', content: 'Keep listening.' });
+  expect(result[0]?.content).toContain('For this reply, activity must be null');
+});

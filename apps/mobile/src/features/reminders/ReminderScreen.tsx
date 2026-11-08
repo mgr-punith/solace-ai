@@ -24,7 +24,7 @@ export function ReminderScreen() {
       <Companion size={tokens.sol.onboarding} state="greeting" />
       <Surface>
         <AppText variant="display" accessibilityRole="header">
-          {kind ? reminderLabels[kind] : 'A moment for you'}
+          {kind ? reminderLabels[kind] : 'Your reminder'}
         </AppText>
         <AppText>
           {kind === 'custom' && !reminders.settings
@@ -35,7 +35,7 @@ export function ReminderScreen() {
               ? reminderBody(kind, new Date().getDay() + 1, custom)
               : 'This reminder is no longer available. You can choose a new one in Reminders.'}
         </AppText>
-        <Action onPress={() => router.replace('/wellness')}>Take a moment</Action>
+        <Action onPress={() => router.replace('/wellness')}>Open activities</Action>
         <Action variant="quiet" onPress={() => router.replace('/reminders')}>
           Edit reminders
         </Action>

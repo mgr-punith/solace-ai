@@ -25,20 +25,20 @@ import { PrivacyChoice } from './PrivacyChoice';
 
 const pages = [
   {
-    title: 'A little space for you.',
-    body: 'Meet Sol, your AI companion for a check-in, a conversation, or a quiet pause.',
+    title: 'Meet Sol.',
+    body: 'Talk about your day with an AI companion, or take a breathing break.',
   },
   {
-    title: 'Start with how you feel.',
-    body: 'Some days feel heavy. Others feel lighter. There’s room for all of them.',
+    title: 'How are you today?',
+    body: 'Pick the closest match. Add a note when you have more to say.',
   },
   {
-    title: 'You can talk it through.',
-    body: 'Bring what’s on your mind. Sol can help you reflect and explore a small next step.',
+    title: 'Talk it through.',
+    body: 'Tell Sol what happened. You can ask for ideas or ask it to listen.',
   },
   {
-    title: 'Your space. Your choice.',
-    body: 'Before you continue, here’s how Solace handles your information.',
+    title: 'Your privacy.',
+    body: 'Read what Solace stores and what you can delete.',
   },
 ] as const;
 
@@ -147,9 +147,7 @@ export function OnboardingScreen() {
             </AppText>
             <AppText tone="secondary">{page.body}</AppText>
             {step === 0 && (
-              <AppText variant="bodySmall">
-                A few moments, at your own pace. You decide what to share.
-              </AppText>
+              <AppText variant="bodySmall">You choose what to share with Sol.</AppText>
             )}
             {step === 1 && (
               <>
@@ -182,7 +180,7 @@ export function OnboardingScreen() {
                   {mood === null ? 'Try a mood and watch Sol respond.' : moods[mood]?.response}
                 </AppText>
                 <AppText variant="caption" tone="secondary">
-                  Just a practice check-in. This choice isn’t saved.
+                  This is a practice check-in. Solace won’t save it.
                 </AppText>
               </>
             )}
@@ -191,12 +189,12 @@ export function OnboardingScreen() {
                 <AppText variant="caption" tone="secondary">
                   Example conversation
                 </AppText>
-                <AppText variant="bodySmall">You: “My thoughts won’t slow down.”</AppText>
-                <AppText>
-                  Sol: “That sounds tiring. What’s taking up the most space right now?”
+                <AppText variant="bodySmall">
+                  You: “I keep thinking about tomorrow’s meeting.”
                 </AppText>
+                <AppText>Sol: “What part of the meeting are you worried about?”</AppText>
                 <AppText variant="bodySmall" tone="secondary">
-                  Small steps, without pressure. You can pause whenever you need.
+                  Come back to the same conversation later.
                 </AppText>
               </View>
             )}
