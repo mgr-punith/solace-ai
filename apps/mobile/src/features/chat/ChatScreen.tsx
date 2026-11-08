@@ -1,7 +1,6 @@
 import { useScreenBack } from '../../lib/useScreenBack';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
   Keyboard,
@@ -11,14 +10,14 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import {
   chatActivitySchema,
   type ChatActivity,
   type ChatMessage,
   type SendMessageInput,
 } from '@solace/shared';
-import { Action, AppText, Surface } from '../../components/ui/primitives';
+import { Action, AppText } from '../../components/ui/primitives';
 import { IconButton, layoutStyles } from '../../components/ui/layout';
 import Sol from '../../components/sol/Sol';
 import { tokens } from '../../theme/tokens';
@@ -28,6 +27,7 @@ import { newChatRequestId, useMessages, useSendMessage } from './hooks';
 import { useChatProvider } from './provider-info';
 import { ProviderNotice } from './ProviderNotice';
 import { useChatDraft } from './useChatDraft';
+import { ChatBubble, ThinkingBubble, type ClaimEntrance } from './ChatBubble';
 
 const activities = {
   breathing: { label: 'Breathe for a minute', icon: 'wind', pathname: '/breathing' },
@@ -43,10 +43,16 @@ const Message = memo(function Message({
   item,
   showActivities,
   conversationId,
+  motionActive,
+  claimEntrance,
+  delivery,
 }: {
   item: ChatMessage;
   showActivities: boolean;
   conversationId: string;
+  motionActive: boolean;
+  claimEntrance: ClaimEntrance;
+  delivery?: 'sending' | 'unconfirmed' | undefined;
 }) {
   const isUser = item.role === 'user';
   const parsed = chatActivitySchema.safeParse(item.activity);
@@ -59,19 +65,12 @@ const Message = memo(function Message({
       ? parsed.data
       : null;
   return (
-    <Surface
-      style={[
-        styles.message,
-        {
-          alignSelf: isUser ? 'flex-end' : 'flex-start',
-          maxWidth: isUser ? '92%' : '100%',
-          backgroundColor: isUser ? tokens.action.background : tokens.colors.clear,
-          borderWidth: 0,
-          paddingHorizontal: isUser ? tokens.spacing.md : 0,
-          borderBottomRightRadius: isUser ? tokens.spacing.xs : tokens.radius.surface,
-          borderBottomLeftRadius: isUser ? tokens.radius.surface : tokens.spacing.xs,
-        },
-      ]}
+    <ChatBubble
+      isUser={isUser}
+      motionActive={motionActive}
+      entranceKey={`${item.requestId}-${item.role}-${item.status}`}
+      claimEntrance={claimEntrance}
+      immediate={item.kind === 'crisis' || (item.status !== 'complete' && !isUser)}
     >
       {!isUser && (
         <AppText variant="caption" tone="secondary">
@@ -81,6 +80,15 @@ const Message = memo(function Message({
       <AppText selectable style={isUser && { color: tokens.action.text }}>
         {item.content || 'Sol is preparing a reply…'}
       </AppText>
+      {delivery && (
+        <AppText
+          variant="caption"
+          accessibilityLiveRegion="polite"
+          style={{ color: tokens.action.text }}
+        >
+          {delivery === 'sending' ? 'Sending…' : 'Not confirmed · retry below'}
+        </AppText>
+      )}
       {item.kind === 'crisis' && (
         <Action secondary onPress={() => router.push('/support')}>
           Need support now?
@@ -95,7 +103,7 @@ const Message = memo(function Message({
           {activities[activity].label}
         </Action>
       )}
-    </Surface>
+    </ChatBubble>
   );
 });
 
@@ -116,6 +124,22 @@ export function ChatScreen({ id }: { id: string }) {
   const nearBottom = useRef(true);
   const followReply = useRef(true);
   const [showLatest, setShowLatest] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const entranceKeys = useRef(new Set<string>());
+  const claimEntrance = useCallback((key: string) => entranceKeys.current.delete(key), []);
+  useFocusEffect(
+    useCallback(() => {
+      setFocused(true);
+      return () => {
+        setFocused(false);
+        entranceKeys.current.clear();
+      };
+    }, []),
+  );
+  const motionActive = active && focused;
+  useEffect(() => {
+    if (!active) entranceKeys.current.clear();
+  }, [active]);
   const { fontScale } = useWindowDimensions();
   const items = useMemo(() => {
     const rows = query.data?.pages.flatMap((page) => page.items) ?? [];
@@ -132,6 +156,48 @@ export function ChatScreen({ id }: { id: string }) {
         item.requestId === pending.requestId &&
         item.status === 'complete',
     );
+  const awaitingReply =
+    send.isPending &&
+    !items.some(
+      (item) =>
+        item.role === 'assistant' &&
+        item.requestId === send.variables?.requestId &&
+        item.status === 'complete',
+    );
+  const outgoing =
+    pending &&
+    !pendingComplete &&
+    !items.some((item) => item.role === 'user' && item.requestId === pending.requestId)
+      ? pending
+      : null;
+  const displayedItems = useMemo(() => {
+    const visible =
+      awaitingReply && pending
+        ? items.filter(
+            (item) =>
+              !(
+                item.role === 'assistant' &&
+                item.requestId === pending.requestId &&
+                item.status !== 'complete'
+              ),
+          )
+        : items;
+    if (!outgoing) return visible;
+    return [
+      ...visible,
+      {
+        id: `pending-${outgoing.requestId}`,
+        conversationId: id,
+        requestId: outgoing.requestId,
+        sequence: (items.at(-1)?.sequence ?? 0) + 1,
+        role: 'user' as const,
+        content: outgoing.content,
+        status: 'pending' as const,
+        kind: 'normal' as const,
+        createdAt: '',
+      },
+    ];
+  }, [awaitingReply, id, items, outgoing, pending]);
   useEffect(() => {
     if (pendingComplete) {
       updateDraft({ pending: null, text: '', origin: null });
@@ -161,7 +227,11 @@ export function ChatScreen({ id }: { id: string }) {
     const value = input ?? retryInput ?? { requestId: newChatRequestId(), content: draft.trim() };
     if (!value.content || value.content.length > 2000) return;
     busy.current = true;
-    draftState.update({ pending: value });
+    entranceKeys.current.clear();
+    if (!items.some((item) => item.role === 'user' && item.requestId === value.requestId))
+      entranceKeys.current.add(`${value.requestId}-user-pending`);
+    entranceKeys.current.add(`${value.requestId}-assistant-complete`);
+    draftState.update({ pending: value, text: value.content });
     followReply.current = true;
     setError(null);
     try {
@@ -169,7 +239,6 @@ export function ChatScreen({ id }: { id: string }) {
       draftState.update({ text: '', pending: null, origin: null });
       if (result.assistantMessage.status === 'failed')
         setError('Sol couldn’t reply. Your message is saved; you can retry it below.');
-      await query.refetch();
       if (followReply.current) list.current?.scrollToEnd({ animated: false });
     } catch (reason) {
       setError(
@@ -192,10 +261,10 @@ export function ChatScreen({ id }: { id: string }) {
           <IconButton icon="back" label="Chats" onPress={goBack} />
           <View style={[layoutStyles.row, layoutStyles.grow]}>
             <Sol
-              state={send.isPending ? 'thinking' : 'idle'}
+              state={awaitingReply ? 'thinking' : 'idle'}
               mood={2}
               size={tokens.sol.mini}
-              active={active && send.isPending}
+              active={motionActive && awaitingReply}
               reduceMotion={reduceMotion}
               greeting={0}
             />
@@ -222,17 +291,34 @@ export function ChatScreen({ id }: { id: string }) {
         <FlatList
           testID="chat-messages"
           ref={list}
-          data={items}
-          extraData={showActivities}
-          keyExtractor={(item) => item.id}
+          data={displayedItems}
+          extraData={`${showActivities}-${motionActive}-${awaitingReply}`}
+          keyExtractor={(item) => `${item.requestId}-${item.role}`}
           renderItem={({ item }) => (
-            <Message item={item} showActivities={showActivities} conversationId={id} />
+            <Message
+              item={item}
+              showActivities={showActivities}
+              conversationId={id}
+              motionActive={motionActive}
+              claimEntrance={claimEntrance}
+              delivery={
+                item.role === 'user' && item.id.startsWith('pending-')
+                  ? awaitingReply
+                    ? 'sending'
+                    : 'unconfirmed'
+                  : undefined
+              }
+            />
           )}
-          contentContainerStyle={[styles.messages, items.length === 0 && styles.emptyMessages]}
+          contentContainerStyle={[
+            styles.messages,
+            displayedItems.length === 0 && styles.emptyMessages,
+          ]}
           keyboardShouldPersistTaps="handled"
           maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
           onScrollBeginDrag={() => {
             followReply.current = false;
+            entranceKeys.current.clear();
           }}
           onScroll={({ nativeEvent }) => {
             const { contentOffset, contentSize, layoutMeasurement } = nativeEvent;
@@ -245,7 +331,8 @@ export function ChatScreen({ id }: { id: string }) {
             if (nearBottom.current) list.current?.scrollToEnd({ animated: false });
           }}
           onContentSizeChange={() => {
-            const key = last ? `${last.id}-${last.status}` : null;
+            const latest = displayedItems.at(-1);
+            const key = latest ? `${latest.id}-${latest.status}-${awaitingReply}` : null;
             if (key && key !== lastScrolled.current) {
               const first = !lastScrolled.current;
               lastScrolled.current = key;
@@ -267,6 +354,9 @@ export function ChatScreen({ id }: { id: string }) {
                 Load earlier messages
               </Action>
             ) : undefined
+          }
+          ListFooterComponent={
+            awaitingReply ? <ThinkingBubble motionActive={motionActive} /> : undefined
           }
           ListEmptyComponent={
             <View style={styles.empty}>
@@ -347,18 +437,6 @@ export function ChatScreen({ id }: { id: string }) {
             </>
           )}
           {error && <AppText accessibilityRole="alert">{error}</AppText>}
-          {send.isPending && (
-            <View accessibilityLiveRegion="polite" style={layoutStyles.row}>
-              <ActivityIndicator color={sky.palette.text} />
-              <AppText variant="bodySmall">Sol is thinking…</AppText>
-            </View>
-          )}
-          {pending && !items.some((item) => item.requestId === pending.requestId) && (
-            <AppText
-              variant="bodySmall"
-              numberOfLines={2}
-            >{`${send.isPending ? 'Sending' : 'Not confirmed'}: ${pending.content}`}</AppText>
-          )}
           {terminalSendError && (
             <Action
               secondary
@@ -401,7 +479,7 @@ export function ChatScreen({ id }: { id: string }) {
                   multiline
                   textAlignVertical="top"
                   maxLength={2000}
-                  value={draft}
+                  value={send.isPending ? '' : draft}
                   onChangeText={(text) => draftState.update({ text })}
                   editable={!send.isPending && !retryInput}
                   style={[
@@ -442,7 +520,6 @@ const styles = StyleSheet.create({
   },
   largeHeader: { flexWrap: 'wrap' },
   messages: { padding: tokens.spacing.md, gap: tokens.spacing.sm, flexGrow: 1 },
-  message: { padding: tokens.spacing.sm, gap: tokens.spacing.xs },
   composer: {
     paddingHorizontal: tokens.spacing.md,
     paddingTop: tokens.spacing.sm,

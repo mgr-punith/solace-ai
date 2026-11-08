@@ -1,4 +1,9 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+  type InfiniteData,
+} from '@tanstack/react-query';
 import type { SendMessageInput } from '@solace/shared';
 import { useAuth } from '../auth/context';
 import { chatApi } from './api';
@@ -35,6 +40,33 @@ export function useSendMessage(id: string) {
     mutationFn: (input: SendMessageInput) =>
       auth.request((token) => chatApi.send(token, id, input)),
     retry: false,
+    onSuccess: async (result) => {
+      // Use the confirmed response immediately; a slow history refresh must not hide the reply.
+      const key = ['chat', userId, id];
+      await client.cancelQueries({ queryKey: key, exact: true });
+      client.setQueryData<InfiniteData<Awaited<ReturnType<typeof chatApi.messages>>>>(
+        key,
+        (current) => {
+          if (!current?.pages.length) return current;
+          const saved = [result.assistantMessage, result.userMessage];
+          return {
+            ...current,
+            pages: current.pages.map((page, index) => {
+              const items = page.items.filter(
+                (item) => item.requestId !== result.userMessage.requestId,
+              );
+              return {
+                ...page,
+                items:
+                  index === 0
+                    ? [...saved, ...items].sort((a, b) => b.sequence - a.sequence)
+                    : items,
+              };
+            }),
+          };
+        },
+      );
+    },
     onSettled: () => {
       void client.invalidateQueries({ queryKey: ['chat', userId] });
     },

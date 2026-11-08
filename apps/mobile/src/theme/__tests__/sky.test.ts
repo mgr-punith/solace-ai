@@ -1,5 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 import { contrastRatio, mixColors, skyAtMinute, surfaceAt } from '../sky';
+import { tokens } from '../tokens';
 
 describe('the local-time sky', () => {
   it('wraps midnight and keeps the last minute close to the first', () => {
@@ -33,5 +34,16 @@ describe('the local-time sky', () => {
     expect(contrastRatio('#000000', '#ffffff')).toBe(21);
     expect(mixColors('#000000', '#ffffff', 0)).toBe('#000000');
     expect(mixColors('#000000', '#ffffff', 1)).toBe('#ffffff');
+  });
+
+  it('keeps message text and thinking status readable on both chat surfaces', () => {
+    for (const [background, palette] of [
+      [tokens.chat.solDay, tokens.day],
+      [tokens.chat.solNight, tokens.night],
+    ] as const) {
+      for (const foreground of [palette.text, palette.secondary, palette.error])
+        expect(contrastRatio(foreground, background)).toBeGreaterThanOrEqual(4.5);
+    }
+    expect(contrastRatio(tokens.action.text, tokens.action.background)).toBeGreaterThanOrEqual(4.5);
   });
 });

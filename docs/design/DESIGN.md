@@ -566,6 +566,18 @@ Suggestions are stored with the reply and survive history/retries. The next assi
 
 The provider returns a validated object containing reply text, an allowlisted activity or null, and an urgent-support flag. Groq's supported strict JSON schema mode constrains the format; server validation still rejects malformed or unsupported output. Either the deterministic safety check or the model's urgent-support flag selects the existing crisis response and suppresses activities. Invalid provider output uses the existing saved-message retry flow. Format validation is not proof of emotional quality, so assess synthetic multi-turn replies separately.
 
+## Chat bubbles and send feedback — 8 November 2026
+
+The user requested visible sending/thinking motion and a bubble around Sol's replies. This supersedes the open-reply treatment above. Keep the current sea-glass/Fraunces/Figtree identity: Figtree remains the readable chat face, sea glass marks the person's messages, and Sol's replies use a quiet blue-green surface. Use `#E1ECE9` by day and `#1B303A` by night for Sol, with the existing day/night foregrounds. Keep 24 dp outer corners and a 4 dp lower corner toward the speaker; 16 dp horizontal and 12 dp vertical padding. Sol's name sits inside its bubble. Activity buttons remain part of that reply, wrap at large text and keep 48 dp targets.
+
+The constrained visual baseline is the current vivo V2168 capture `/tmp/solace-reply-qa/postdeploy-breathing-settled.png`, 1080 × 2400 pixels, portrait, night, 100% system text, plus the user's screenshot of the same conversation. Approved changes cover message surfaces and pending feedback only. No authorized image-generation tool or paid reference retrieval is connected; use the inspected native baseline and established app controls rather than claim a generated target.
+
+On Send, place one pending user bubble in the thread immediately and show a small Sending status. Keep the original draft/request key for failure recovery. Display a compact Sol bubble with three moving dots and `Sol is thinking…` while the request runs. When the server responds, reconcile the pending row with the saved user message by request ID, then reveal the reply without duplicate bubbles. Never imply the server saved a message before confirmation; an unconfirmed send stops thinking and offers the existing retry with the same request key.
+
+Use Reanimated 4.7's shared-value transforms and opacity: an 8 dp lift and short fade over 220 ms for a newly submitted message and a new normal reply, with a gentle 420 ms dot pulse while waiting. Do not animate recycled history rows, reanimate on Back, move older content for decoration, or delay a fast reply to show an animation. An urgent-support reply appears immediately. Reduce Motion shows static bubbles and dots with the same status text; backgrounding or leaving the chat stops the repeating motion. Keyboard, selection, chronological reading order, retry, activity navigation and the reading-position guard retain their existing behavior.
+
+Sol's product instructions must describe the actual breathing controls: the default is one minute of Coherent breathing; Customize offers Coherent, Box and 4–7–8 plus 1, 3 and 5 minutes. When asked about changing a practice, explain those choices and the Customize path. The person changes settings and taps Start; Sol does not claim to have changed them, prescribe a pattern, or invent a rhythm. Keep activity suppression after a previous offer, decline or urgent-support turn while allowing factual navigation guidance.
+
 ```text
 Back  Sol · AI                    Support
 You: I could use a short pause.

@@ -19,6 +19,6 @@ export function assembleContext(
   while (selected[0]?.role === 'assistant') selected.shift();
   const content = allowActivity
     ? solPrompt
-    : `${solPrompt}\nFor this reply, activity must be null. Stay with the conversation; do not offer another practice.`;
+    : `${solPrompt}\nFor this reply, activity must be null. Do not offer another practice. Answer direct questions about the existing app controls, including breathing customization; otherwise stay with the conversation.`;
   return [{ role: 'system', content }, ...selected];
 }
