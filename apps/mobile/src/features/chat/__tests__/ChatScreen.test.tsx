@@ -65,9 +65,97 @@ async function mount(
 }
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.mocked(chatApi.send).mockReset();
   jest.spyOn(providerInfoApi, 'get').mockResolvedValue({ provider: 'groq' });
   jest.mocked(chatApi.messages).mockResolvedValue({ items: [], nextCursor: null });
 });
+it('shows the outgoing message immediately and replaces thinking with one saved reply', async () => {
+  let finish: ((value: Awaited<ReturnType<typeof chatApi.send>>) => void) | undefined;
+  jest.mocked(chatApi.send).mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  await mount();
+  await waitFor(() => expect(screen.getByLabelText('Message Sol')).toBeTruthy());
+  await fireEvent.changeText(screen.getByLabelText('Message Sol'), user.content);
+  await fireEvent.press(screen.getByRole('button', { name: 'Send message' }));
+  await waitFor(() => expect(chatApi.send).toHaveBeenCalledTimes(1));
+  expect(screen.getAllByText(user.content)).toHaveLength(1);
+  expect(screen.getByText('Sending…')).toBeTruthy();
+  expect(screen.getByLabelText('Sol is thinking…')).toBeTruthy();
+  expect(screen.getByLabelText('Message Sol').props.value).toBe('');
+  expect(screen.queryByRole('button', { name: 'Talk through my day' })).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: 'Send message' }));
+  expect(chatApi.send).toHaveBeenCalledTimes(1);
+
+  const requestId = jest.mocked(chatApi.send).mock.calls[0]![2].requestId;
+  const savedUser = { ...user, requestId };
+  const savedReply = { ...assistant, requestId };
+  // A slow history refresh must not make a confirmed reply disappear.
+  let refresh: ((value: Awaited<ReturnType<typeof chatApi.messages>>) => void) | undefined;
+  jest.mocked(chatApi.messages).mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        refresh = resolve;
+      }),
+  );
+  await act(async () => finish?.({ userMessage: savedUser, assistantMessage: savedReply }));
+  await waitFor(() => expect(screen.getByText(savedReply.content)).toBeTruthy());
+  expect(screen.getAllByText(user.content)).toHaveLength(1);
+  expect(screen.queryByLabelText('Sol is thinking…')).toBeNull();
+  expect(screen.queryByText('Sending…')).toBeNull();
+  await act(async () => refresh?.({ items: [savedReply, savedUser], nextCursor: null }));
+});
+
+it('stops thinking after an unconfirmed send and keeps the original draft for retry', async () => {
+  let fail: ((reason: Error) => void) | undefined;
+  jest.mocked(chatApi.send).mockImplementationOnce(
+    () =>
+      new Promise((_resolve, reject) => {
+        fail = reject;
+      }),
+  );
+  await mount();
+  await waitFor(() => expect(screen.getByLabelText('Message Sol')).toBeTruthy());
+  await fireEvent.changeText(screen.getByLabelText('Message Sol'), user.content);
+  await fireEvent.press(screen.getByRole('button', { name: 'Send message' }));
+  await waitFor(() => expect(screen.getByLabelText('Sol is thinking…')).toBeTruthy());
+  await act(async () => fail?.(new Error('Offline')));
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Retry message' })).toBeTruthy());
+  expect(screen.queryByLabelText('Sol is thinking…')).toBeNull();
+  expect(screen.getByText('Not confirmed · retry below')).toBeTruthy();
+  expect(screen.getByLabelText('Message Sol').props.value).toBe(user.content);
+  expect(screen.getAllByText(user.content)).toHaveLength(1);
+});
+
+it('keeps one saved user bubble and hides the old fallback while retrying its reply', async () => {
+  jest.mocked(chatApi.messages).mockResolvedValue({
+    items: [{ ...assistant, kind: 'fallback', status: 'failed' }, user],
+    nextCursor: null,
+  });
+  let finish: ((value: Awaited<ReturnType<typeof chatApi.send>>) => void) | undefined;
+  jest.mocked(chatApi.send).mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  await mount();
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Retry message' })).toBeTruthy());
+  await fireEvent.press(screen.getByRole('button', { name: 'Retry message' }));
+  await waitFor(() => expect(screen.getByLabelText('Sol is thinking…')).toBeTruthy());
+  expect(screen.getAllByText(user.content)).toHaveLength(1);
+  expect(screen.queryByText(assistant.content)).toBeNull();
+  expect(screen.queryByText('Sending…')).toBeNull();
+  jest.mocked(chatApi.messages).mockResolvedValue({ items: [assistant, user], nextCursor: null });
+  await act(async () => finish?.({ userMessage: user, assistantMessage: assistant }));
+  await waitFor(() => expect(screen.queryByLabelText('Sol is thinking…')).toBeNull());
+  expect(screen.getAllByText(user.content)).toHaveLength(1);
+  expect(screen.getByText(assistant.content)).toBeTruthy();
+});
+
 it('preserves a failed send and retries the same content and request ID', async () => {
   jest
     .mocked(chatApi.send)
@@ -179,7 +267,11 @@ it('retains the original retry key after leaving an unconfirmed send', async () 
   const original = jest.mocked(chatApi.send).mock.calls[0]?.[2];
   await view.unmount();
   await mount(client);
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Retry message' })).toBeTruthy());
+  await waitFor(() =>
+    expect(
+      screen.getByRole('button', { name: 'Retry message' }).props.accessibilityState.disabled,
+    ).toBe(false),
+  );
   await fireEvent.press(screen.getByRole('button', { name: 'Retry message' }));
   await waitFor(() => expect(chatApi.send).toHaveBeenCalledTimes(2));
   expect(jest.mocked(chatApi.send).mock.calls[1]?.[2]).toEqual(original);
@@ -205,7 +297,13 @@ it('keeps the reading position when a new reply arrives and offers a jump to lat
       pages: [
         {
           items: [
-            { ...assistant, id: 'reply-2', sequence: 4, content: 'A new reply.' },
+            {
+              ...assistant,
+              id: 'reply-2',
+              requestId: 'second-request-for-test',
+              sequence: 4,
+              content: 'A new reply.',
+            },
             assistant,
             user,
           ],
@@ -289,8 +387,21 @@ it.each([
 ])('hides all activity invitations when the latest reply is $kind/$status', async (state) => {
   jest.mocked(chatApi.messages).mockResolvedValue({
     items: [
-      { ...assistant, id: 'latest', sequence: 4, activity: 'affirmation', ...state },
-      { ...user, id: 'next', sequence: 3, activity: 'breathing' },
+      {
+        ...assistant,
+        id: 'latest',
+        requestId: 'second-request-for-test',
+        sequence: 4,
+        activity: 'affirmation',
+        ...state,
+      },
+      {
+        ...user,
+        id: 'next',
+        requestId: 'second-request-for-test',
+        sequence: 3,
+        activity: 'breathing',
+      },
       { ...assistant, activity: 'breathing' },
       user,
     ],

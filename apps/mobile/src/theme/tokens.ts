@@ -3,6 +3,7 @@ export const tokens = {
   day: { background: '#EEF3F2', text: '#1F3A44', secondary: '#4B6670', error: '#914359' },
   night: { background: '#0F1A24', text: '#EAF3F2', secondary: '#B7CBD0', error: '#E59AAB' },
   action: { background: '#9CC9BF', text: '#12303A' },
+  chat: { solDay: '#E1ECE9', solNight: '#1B303A', dotSize: 6, dotLift: 3 },
   spacing: { xs: 4, sm: 8, smd: 12, md: 16, ml: 20, lg: 24, xl: 32, xxl: 40, hero: 56 },
   typography: { title: 24, titleLine: 32, body: 16, bodyLine: 24 },
   radius: { pill: 999, surface: 24, input: 16, button: 16, sheet: 32, tag: 12 },

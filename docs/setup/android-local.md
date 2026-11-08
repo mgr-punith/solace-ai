@@ -89,6 +89,20 @@ The Phase 2 native build completed Gradle compilation in **17 minutes 15 seconds
 
 If Linux logs repeated `device descriptor read/64, error -71`, switch the data cable or USB port. These USB protocol errors occur below ADB and can make repeated authorization ineffective.
 
+### Phone says connected, but ADB lists no device
+
+Check from a normal host terminal. A sandbox can deny ADB's local socket or USB access even when the phone is connected. Compare `adb devices -l` with `lsusb -t` before assuming the cable disconnected. If Linux still shows the phone and its ADB interface, restart the host debugger:
+
+```sh
+adb kill-server
+adb start-server
+adb devices -l
+```
+
+On 8 November, the vivo remained active on the Linux USB bus while ADB 37.0.1 logged transport read failures. Restarting ADB restored it temporarily. The alternate `ADB_LIBUSB=1 adb start-server` backend also failed later, so it is not a confirmed fix and was not made permanent. The default backend was restored.
+
+If restarting does not recover it, stop ADB, read the phone's current bus/device address from `lsusb`, and run `usbreset BUS/DEVICE` for that phone only, then start ADB again. This reconnects the USB interface; it does not reset the phone or delete app data. The observed address was `001/017`, but it can change on reconnect, so do not reuse it without checking. A software reset restored access in this session. No USB power or phone debugging settings needed changing; the underlying intermittent transport failure remains unresolved.
+
 ## Live changes over Wi-Fi
 
 Use this when USB is unstable. Connect the phone and laptop to the same Wi-Fi, then run from the repository root:
