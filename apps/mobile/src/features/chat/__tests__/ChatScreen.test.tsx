@@ -341,7 +341,12 @@ it('shows the deployed provider and blocks sending until its privacy details loa
   await waitFor(() =>
     expect(screen.getByRole('button', { name: 'Reload chat details' })).toBeTruthy(),
   );
-  await fireEvent.changeText(screen.getByLabelText('Message Sol'), 'Hello');
+  // Message history and provider details finish independently.
+  const composer = await screen.findByLabelText('Message Sol');
+  await fireEvent.changeText(composer, 'Hello');
+  expect(
+    screen.getByRole('button', { name: 'Send message' }).props.accessibilityState.disabled,
+  ).toBe(true);
   await fireEvent.press(screen.getByRole('button', { name: 'Send message' }));
   expect(chatApi.send).not.toHaveBeenCalled();
   jest.mocked(providerInfoApi.get).mockResolvedValue({ provider: 'vyceai' });
