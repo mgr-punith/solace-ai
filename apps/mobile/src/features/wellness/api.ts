@@ -1,5 +1,6 @@
 import {
   activityResponseSchema,
+  dailyWellnessSchema,
   favoritesSchema,
   progressSchema,
   type ActivityInput,
@@ -7,6 +8,17 @@ import {
 import { createHttpClient } from '../../lib/api';
 const http = createHttpClient(process.env.EXPO_PUBLIC_API_URL);
 export const wellnessApi = {
+  async daily(token: string, timezone: string) {
+    return http.parse(
+      dailyWellnessSchema,
+      await http.request(
+        `/v1/wellness/today?timezone=${encodeURIComponent(timezone)}`,
+        'GET',
+        undefined,
+        token,
+      ),
+    );
+  },
   async save(token: string, input: ActivityInput) {
     return http.parse(
       activityResponseSchema,

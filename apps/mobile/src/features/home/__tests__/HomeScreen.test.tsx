@@ -7,10 +7,12 @@ import { HomeScreen } from '../HomeScreen';
 import { moodApi } from '../../mood/api';
 import { chatApi } from '../../chat/api';
 import { chatDraftKey } from '../../chat/drafts';
-import type { MoodCheckin } from '@solace/shared';
+import { localDay, type MoodCheckin } from '@solace/shared';
+import { wellnessApi } from '../../wellness/api';
 
 jest.mock('../../mood/api', () => ({ moodApi: { list: jest.fn(), save: jest.fn() } }));
 jest.mock('../../chat/api', () => ({ chatApi: { create: jest.fn(), send: jest.fn() } }));
+jest.mock('../../wellness/api', () => ({ wellnessApi: { daily: jest.fn() } }));
 jest.mock('../../auth/context', () => ({
   useAuth: () => ({
     session: { user: { id: 'a', name: 'MAYA' } },
@@ -24,7 +26,10 @@ jest.mock('../../../lib/useMotionPreferences', () => ({
 }));
 jest.mock('../../../lib/haptics', () => ({ gentleHaptic: jest.fn() }));
 jest.mock('expo-font', () => ({ useFonts: () => [true, null], isLoaded: () => true }));
-jest.mock('expo-router', () => ({ router: { push: jest.fn(), navigate: jest.fn() } }));
+jest.mock('expo-router', () => ({
+  useIsFocused: () => true,
+  router: { push: jest.fn(), navigate: jest.fn() },
+}));
 const entry: MoodCheckin = {
   id: 'entry',
   mood: 2,
@@ -36,6 +41,13 @@ const entry: MoodCheckin = {
 beforeEach(() => {
   jest.clearAllMocks();
   jest.mocked(moodApi.list).mockResolvedValue({ items: [entry], nextCursor: null });
+  jest.mocked(wellnessApi.daily).mockImplementation(async (_token, timezone) => ({
+    day: localDay(new Date(), timezone),
+    timezone,
+    checkedIn: true,
+    breathingSessions: 0,
+    readAffirmationIds: [],
+  }));
   jest.mocked(chatApi.create).mockResolvedValue({
     id: 'thread',
     title: 'Conversation with Sol',
@@ -125,4 +137,55 @@ it('retries the same chat handoff after a lost creation response', async () => {
     text: expect.stringContaining(entry.note),
   });
   expect(chatApi.send).not.toHaveBeenCalled();
+});
+it('offers a recommendation based on selected tags and keeps all alternatives available', async () => {
+  await mount();
+  expect(
+    await screen.findByText(
+      'You chose Tired in your check-in. Reading a few words takes little effort.',
+    ),
+  ).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Read today’s words' }));
+  expect(router.push).toHaveBeenCalledWith('/affirmations');
+  await fireEvent.press(screen.getByRole('button', { name: 'Other ideas' }));
+  expect(screen.getByRole('button', { name: 'Breathe for a minute' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Reflect with Sol' })).toBeTruthy();
+});
+it('opens a reflection as a draft without sharing private check-in content or sending it', async () => {
+  jest
+    .mocked(moodApi.list)
+    .mockResolvedValue({ items: [{ ...entry, mood: 4, tags: ['Grateful'] }], nextCursor: null });
+  const client = await mount();
+  await fireEvent.press(await screen.findByRole('button', { name: 'Reflect with Sol' }));
+  await waitFor(() =>
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/chat/[id]', params: { id: 'thread' } }),
+  );
+  expect(client.getQueryData(chatDraftKey('a', 'thread'))).toMatchObject({
+    text: 'One part of today I’d like to remember is…',
+    pending: null,
+  });
+  expect(chatApi.send).not.toHaveBeenCalled();
+});
+it('keeps daily progress at two stops and moves a completed suggestion behind other choices', async () => {
+  jest.mocked(wellnessApi.daily).mockImplementation(async (_token, timezone) => ({
+    day: localDay(new Date(), timezone),
+    timezone,
+    checkedIn: true,
+    breathingSessions: 8,
+    readAffirmationIds: [],
+  }));
+  await mount();
+  expect(await screen.findByText('Both moments saved. Come back when you want to.')).toBeTruthy();
+  expect(screen.getByRole('progressbar').props.accessibilityValue.now).toBe(2);
+  expect(screen.queryByRole('button', { name: 'Read today’s words' })).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: 'More ideas for today' }));
+  expect(screen.getByRole('button', { name: 'Read today’s words' })).toBeTruthy();
+});
+it('offers a recoverable daily failure with access to existing practices', async () => {
+  jest.mocked(wellnessApi.daily).mockRejectedValueOnce(new Error('offline'));
+  await mount();
+  expect(await screen.findByRole('button', { name: 'Open Wellness' })).toBeTruthy();
+  expect(screen.queryByRole('progressbar')).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: 'Reload suggestions' }));
+  expect(await screen.findByRole('progressbar')).toBeTruthy();
 });

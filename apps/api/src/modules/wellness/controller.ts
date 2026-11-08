@@ -28,6 +28,9 @@ export function createWellnessController(service: WellnessService) {
     async progress(req: Request, res: Response) {
       res.json(await service.progress(owner(res), parse(wellnessQuerySchema, req.query).timezone));
     },
+    async daily(req: Request, res: Response) {
+      res.json(await service.daily(owner(res), parse(wellnessQuerySchema, req.query).timezone));
+    },
     async favorites(req: Request, res: Response) {
       parse(z.strictObject({}), req.query);
       res.json(await service.favorites(owner(res)));

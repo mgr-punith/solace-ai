@@ -37,3 +37,4 @@ export * from './chat.ts';
 export * from './support.ts';
 export * from './reminders.ts';
 export * from './wellness.ts';
+export * from './daily.ts';

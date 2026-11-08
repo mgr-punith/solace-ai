@@ -13,6 +13,7 @@ import { createMoodRepository } from '../mood/repository.js';
 import { createMoodService } from '../mood/service.js';
 import { createWellnessRepository } from './repository.js';
 import { createWellnessService } from './service.js';
+import { affirmationForDay } from '@solace/shared';
 const database = createTestDatabase();
 const users = new Set<string>();
 let now = new Date('2026-11-07T12:00:00Z');
@@ -63,7 +64,7 @@ const breathing = () => ({
   afterMood: 3,
 });
 it('requires auth and rejects invalid, spoofed and timestamped activity requests', async () => {
-  for (const path of ['/v1/progress', '/v1/affirmation-favorites'])
+  for (const path of ['/v1/progress', '/v1/affirmation-favorites', '/v1/wellness/today'])
     await request(app).get(path).expect(401);
   await request(app).post('/v1/activities').send(breathing()).expect(401);
   const a = await login();
@@ -88,6 +89,99 @@ it('requires auth and rejects invalid, spoofed and timestamped activity requests
     .put('/v1/affirmation-favorites/no-such-line')
     .auth(a.accessToken, { type: 'bearer' })
     .expect(400);
+});
+it('returns private daily completion and reads an affirmation once across devices and midnight', async () => {
+  now = new Date('2026-11-08T18:29:00Z');
+  const a = await login();
+  const b = await login();
+  const daily = (token: string, timezone = 'Asia/Kolkata') =>
+    request(app)
+      .get(`/v1/wellness/today?timezone=${encodeURIComponent(timezone)}`)
+      .auth(token, { type: 'bearer' });
+  const empty = await daily(a.accessToken).expect(200);
+  expect(empty.body).toEqual({
+    day: '2026-11-08',
+    timezone: 'Asia/Kolkata',
+    checkedIn: false,
+    breathingSessions: 0,
+    readAffirmationIds: [],
+  });
+  expect(empty.headers['cache-control']).toBe('no-store');
+  const affirmationId = affirmationForDay('2026-11-08').id;
+  const input = {
+    requestId: randomUUID(),
+    type: 'affirmation',
+    timezone: 'Asia/Kolkata',
+    affirmationId,
+  };
+  const inputs = [input, input];
+  const responses = await Promise.all(
+    inputs.map((body) =>
+      request(app).post('/v1/activities').auth(a.accessToken, { type: 'bearer' }).send(body),
+    ),
+  );
+  expect(responses.map((r) => r.status).sort()).toEqual([200, 201]);
+  expect(responses[0]!.body.activity.id).toBe(responses[1]!.body.activity.id);
+  const originalInput = inputs[responses.findIndex((r) => r.status === 201)]!;
+  const mood = await request(app)
+    .post('/v1/mood-checkins')
+    .auth(a.accessToken, { type: 'bearer' })
+    .send({
+      requestId: randomUUID(),
+      timezone: 'Asia/Kolkata',
+      mood: 1,
+      tags: ['Tired'],
+      note: 'Private note, excluded from daily status',
+    })
+    .expect(201);
+  await request(app)
+    .post('/v1/activities')
+    .auth(a.accessToken, { type: 'bearer' })
+    .send(breathing())
+    .expect(201);
+  expect((await daily(a.accessToken).expect(200)).body).toMatchObject({
+    checkedIn: true,
+    breathingSessions: 1,
+    readAffirmationIds: [affirmationId],
+  });
+  expect((await daily(b.accessToken).expect(200)).body).toMatchObject({
+    checkedIn: false,
+    breathingSessions: 0,
+    readAffirmationIds: [],
+  });
+  await request(app)
+    .delete(`/v1/mood-checkins/${mood.body.checkin.id}`)
+    .auth(a.accessToken, { type: 'bearer' })
+    .expect(204);
+  expect((await daily(a.accessToken).expect(200)).body.checkedIn).toBe(false);
+  now = new Date('2026-11-08T18:31:00Z');
+  expect((await daily(a.accessToken).expect(200)).body).toMatchObject({
+    day: '2026-11-09',
+    checkedIn: false,
+    breathingSessions: 0,
+    readAffirmationIds: [],
+  });
+  await request(app)
+    .post('/v1/activities')
+    .auth(a.accessToken, { type: 'bearer' })
+    .send(originalInput)
+    .expect(200);
+  expect((await daily(a.accessToken).expect(200)).body.readAffirmationIds).toEqual([]);
+  expect((await daily(a.accessToken, 'UTC').expect(200)).body.readAffirmationIds).toEqual([
+    affirmationId,
+  ]);
+  await request(app)
+    .post('/v1/activities')
+    .auth(a.accessToken, { type: 'bearer' })
+    .send({ ...input, requestId: randomUUID() })
+    .expect(201);
+  expect((await daily(a.accessToken).expect(200)).body.readAffirmationIds).toEqual([affirmationId]);
+  await daily(a.accessToken, 'Bad/Zone').expect(400);
+  await request(app)
+    .get(`/v1/wellness/today?userId=${b.user.id}`)
+    .auth(a.accessToken, { type: 'bearer' })
+    .expect(400);
+  now = new Date('2026-11-07T12:00:00Z');
 });
 it('saves exactly one completed activity for concurrent retries, detects conflicts and isolates owners', async () => {
   const a = await login();

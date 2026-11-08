@@ -49,7 +49,7 @@ Splash, onboarding and the design system are built early and polished throughout
 
 **Home** should feel personal: greeting by name and time of day, mood check-in card, today's affirmation, AI-suggested next step, quick activities, streak. Do not copy the reference video; improve on it.
 
-**Reference video:** Codex cannot watch it. The user will drop screenshots, frames or written notes into `docs/reference/`. Ask for them when starting UI work.
+**Reference video:** inspect supplied screenshots, frames or written notes in `docs/reference/`. When the user supplies a readable local video, extract representative frames and inspect them; distinguish still-frame observations from motion verification. Ask for another reference only if the supplied material cannot be read.
 
 **Suggested navigation:** bottom tabs — Home, Wellness, Talk (center), Progress, You, as specified in docs/design/DESIGN.md.
 
@@ -323,6 +323,8 @@ npm run db:check       # verify configured DB connections without printing crede
 - Claim "done" without running the verification above.
 
 ## Confirmed kickoff decisions
+
+- Daily UX scope confirmed 9 November 2026: build persisted Auto/Light/Dark appearance in You, server-backed affirmation read status, playful check-in feedback and daily wellness suggestions using existing activities. Preserve the established design and explicit chat-draft sharing. The user deferred login investigation and mobile testing until the new update is built; do not interrupt implementation for phone checks.
 
 - Copy and design preference confirmed 8 November 2026: use the installed Uizze `ui-taste` and `stop-slop` skills when relevant. Uizze replaces the earlier `frontend-design` skill; keep one active design skill. Write natural, specific app copy; remove generic wellness slogans and repeated filler. Preserve the established Sol/sea-glass/Fraunces/Figtree design and clear AI, privacy and urgent-support disclosures. `grill-me` (with `grilling`) is installed for plans that need an explicit interview; do not reopen settled decisions during routine implementation.
 

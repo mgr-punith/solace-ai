@@ -17,7 +17,8 @@ export function StartupGate({ children }: { children: ReactNode }) {
     const timer = setTimeout(() => setFontTimedOut(true), 4000);
     return () => clearTimeout(timer);
   }, []);
-  const fontsReady = theme.fontsLoaded || !!theme.fontError || fontTimedOut;
+  const fontsReady =
+    (theme.fontsLoaded || !!theme.fontError || fontTimedOut) && theme.appearanceReady;
   useEffect(() => {
     if (fontsReady) void SplashScreen.hideAsync().catch(() => {});
   }, [fontsReady]);
