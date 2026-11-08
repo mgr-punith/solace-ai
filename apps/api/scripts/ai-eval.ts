@@ -1,7 +1,8 @@
 import { loadLocalEnv } from '../src/config/load-env.js';
 import { parseEnv } from '../src/config/env.js';
 import { createLLMProvider } from '../src/ai/create-provider.js';
-import { generateSolReply, type SolContextMessage } from '../src/ai/respond.js';
+import { generateSolReply } from '../src/ai/respond.js';
+import type { SolContextMessage } from '../src/ai/context/assemble.js';
 import { isCrisis } from '../src/ai/safety/crisis.js';
 import { z } from 'zod';
 
@@ -104,6 +105,21 @@ const scenarios: readonly Scenario[] = [
         role: 'assistant',
         content: 'Tap below for a one-minute breathing exercise.',
         activity: 'breathing',
+        kind: 'normal',
+      },
+    ],
+  },
+  {
+    name: 'declined-affirmation-followup',
+    input: 'QA no thanks. I just want to talk about my day.',
+    activity: null,
+    history: [
+      { role: 'user', content: 'QA affirmation check. Can I read a few gentle words?' },
+      {
+        role: 'assistant',
+        content:
+          'Tap below to read today’s affirmation. You can save it if you’d like to come back to it later.',
+        activity: 'affirmation',
         kind: 'normal',
       },
     ],

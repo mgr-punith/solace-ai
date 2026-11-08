@@ -1,13 +1,9 @@
 import type { ChatActivity, ChatMessage } from '@solace/shared';
-import { assembleContext } from './context/assemble.js';
-import type { LLMMessage, LLMProvider } from './provider.js';
+import { assembleContext, type SolContextMessage } from './context/assemble.js';
+import type { LLMProvider } from './provider.js';
 import { llmReplySchema } from './reply.js';
 import { crisisReply, isCrisis, unavailableReply } from './safety/crisis.js';
 
-export type SolContextMessage = LLMMessage & {
-  activity?: ChatActivity | null | undefined;
-  kind?: ChatMessage['kind'];
-};
 export type SolReply = {
   content: string;
   kind: ChatMessage['kind'];

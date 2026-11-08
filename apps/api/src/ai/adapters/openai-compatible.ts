@@ -11,6 +11,9 @@ const responseSchema = z.object({
     )
     .min(1),
 });
+const groqFormatErrorSchema = z.object({
+  error: z.object({ code: z.literal('json_validate_failed') }),
+});
 export function createOpenAICompatibleProvider(
   config: {
     baseUrl: string;
@@ -55,6 +58,14 @@ export function createOpenAICompatibleProvider(
               temperature: 0.6,
             }),
           });
+          if (config.groqReasoning && response.status === 400 && attempt === 0) {
+            // Groq can reject a generation even in strict mode. Retry only this
+            // specific code; never use or log its unvalidated failed_generation.
+            const error = groqFormatErrorSchema.safeParse(await readBoundedJson(response));
+            if (!error.success) throw new Error('Provider unavailable');
+            await waitForRetry(controller.signal, 400);
+            continue;
+          }
           if ((response.status === 429 || response.status >= 500) && attempt === 0) {
             await response.body?.cancel();
             const seconds = Number(response.headers.get('retry-after'));
@@ -68,22 +79,7 @@ export function createOpenAICompatibleProvider(
             await response.body?.cancel();
             throw new Error('Provider unavailable');
           }
-          const reader = response.body?.getReader();
-          if (!reader) throw new Error('Missing body');
-          const chunks: Uint8Array[] = [];
-          let total = 0;
-          try {
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              total += value.byteLength;
-              if (total > 64000) throw new Error('Oversized response');
-              chunks.push(value);
-            }
-          } finally {
-            await reader.cancel();
-          }
-          const data: unknown = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+          const data = await readBoundedJson(response);
           const choice = responseSchema.parse(data).choices[0]!;
           if (config.groqReasoning && choice.finish_reason !== 'stop')
             throw new Error('Incomplete reply');
@@ -97,6 +93,25 @@ export function createOpenAICompatibleProvider(
       }
     },
   };
+}
+
+async function readBoundedJson(response: Response): Promise<unknown> {
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('Missing body');
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > 64000) throw new Error('Oversized response');
+      chunks.push(value);
+    }
+  } finally {
+    await reader.cancel();
+  }
+  return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
 
 function waitForRetry(signal: AbortSignal, milliseconds: number) {
