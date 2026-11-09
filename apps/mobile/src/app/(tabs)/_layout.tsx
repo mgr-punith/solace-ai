@@ -28,8 +28,8 @@ export default function TabLayout() {
         tabBarActiveTintColor: sky.palette.text,
         tabBarInactiveTintColor: sky.palette.secondary,
         tabBarStyle: {
-          backgroundColor: sky.palette.background,
-          borderTopColor: sky.surface,
+          backgroundColor: sky.surface,
+          borderTopColor: sky.outline,
           paddingTop: tokens.spacing.sm,
           paddingBottom: Math.max(bottom, tokens.spacing.sm),
           height:

@@ -74,16 +74,53 @@ export function MoodForm({
           mood === null ? 'Step 1 of 2. Choose a mood.' : 'Step 2 of 2. Save when you’re ready.'
         }
       >
-        <Icon name={mood === null ? 'sun' : 'check'} size={tokens.icon.sm} />
-        <AppText variant="caption" tone="secondary">
-          {mood === null ? 'Choose a mood' : `${moods[mood - 1]!.label} selected`}
-        </AppText>
-        <Icon name="arrow" size={tokens.icon.sm} />
-        <AppText variant="caption" tone="secondary">
-          Save your check-in
-        </AppText>
+        <View style={styles.step}>
+          <View
+            style={[
+              styles.marker,
+              { backgroundColor: mood === null ? tokens.action.background : tokens.colors.lantern },
+            ]}
+          >
+            {mood === null ? (
+              <AppText variant="caption" style={{ color: tokens.action.text }}>
+                1
+              </AppText>
+            ) : (
+              <Icon name="check" size={tokens.icon.sm} color={tokens.colors.face} />
+            )}
+          </View>
+          <AppText variant="caption">
+            {mood === null ? 'Choose a mood' : `${moods[mood - 1]!.label} selected`}
+          </AppText>
+        </View>
+        <View
+          style={[
+            styles.stepLine,
+            { backgroundColor: mood === null ? sky.outline : tokens.action.background },
+          ]}
+        />
+        <View style={styles.step}>
+          <View
+            style={[
+              styles.marker,
+              {
+                backgroundColor: mood === null ? sky.palette.background : tokens.action.background,
+              },
+            ]}
+          >
+            <AppText
+              variant="caption"
+              style={{ color: mood === null ? sky.palette.secondary : tokens.action.text }}
+            >
+              2
+            </AppText>
+          </View>
+          <AppText variant="caption" tone={mood === null ? 'secondary' : 'text'}>
+            Save
+          </AppText>
+        </View>
       </View>
-      <View style={styles.moods}>
+      <View style={[styles.moods, { backgroundColor: sky.palette.background }]}>
         {moods.map((item, index) => (
           <MoodChoice
             key={item.label}
@@ -98,7 +135,7 @@ export function MoodForm({
           />
         ))}
       </View>
-      <Action variant="quiet" disabled={locked} onPress={() => setExpanded(!expanded)}>
+      <Action variant="quiet" icon="plus" disabled={locked} onPress={() => setExpanded(!expanded)}>
         {expanded ? 'Hide extra details' : 'Add a note or feelings'}
       </Action>
       {expanded && (
@@ -159,6 +196,7 @@ export function MoodForm({
         <ActivityIndicator accessibilityLabel="Saving your check-in" color={sky.palette.text} />
       )}
       <Action
+        icon="check"
         disabled={mutation.isPending || (mood === null && !retryInput.current)}
         onPress={() => void save()}
       >
@@ -196,8 +234,24 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     gap: tokens.spacing.xs,
+    padding: tokens.spacing.xs,
+    borderRadius: tokens.radius.input,
   },
-  steps: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: tokens.spacing.xs },
+  steps: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: tokens.spacing.sm,
+    paddingVertical: tokens.spacing.xs,
+  },
+  step: { flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.xs, flexShrink: 1 },
+  marker: {
+    width: tokens.spacing.lg,
+    height: tokens.spacing.lg,
+    borderRadius: tokens.radius.pill,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stepLine: { flex: 1, minWidth: tokens.spacing.sm, height: tokens.selectedBorder },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.sm },
   input: {
     ...tokens.type.body,

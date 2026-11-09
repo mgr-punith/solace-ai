@@ -8,6 +8,7 @@ export type Sky = {
   night: boolean;
   palette: Palette;
   surface: string;
+  outline: string;
 };
 
 function channels(hex: string): [number, number, number] {
@@ -56,7 +57,8 @@ export function skyAtMinute(input: number, appearance: Appearance = 'auto'): Sky
     bottom: mixColors(start.bottom, end.bottom, amount),
     night,
     palette,
-    surface: `rgba(${channels(palette.background).join(',')},${tokens.surfaceOpacity})`,
+    surface: night ? tokens.surface.night.background : tokens.surface.day.background,
+    outline: night ? tokens.surface.night.border : tokens.surface.day.border,
   };
 }
 

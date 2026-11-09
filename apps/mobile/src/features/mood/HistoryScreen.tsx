@@ -1,5 +1,6 @@
 import { ProgressSummary } from '../progress/ProgressSummary';
-import { PageHeader } from '../../components/ui/layout';
+import { IconButton, PageHeader, layoutStyles } from '../../components/ui/layout';
+import { MoodFace } from '../../components/ui/MoodFace';
 import { memo, useCallback } from 'react';
 import { ActivityIndicator, Alert, FlatList, Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,6 +10,7 @@ import { AppText, Action, Surface } from '../../components/ui/primitives';
 import { useTheme } from '../../theme/ThemeProvider';
 import { moods, tokens } from '../../theme/tokens';
 import { useMoodHistory, useDeleteMood } from './hooks';
+import { useLayoutMetrics } from '../../theme/layout';
 
 const Entry = memo(function Entry({
   entry,
@@ -21,30 +23,32 @@ const Entry = memo(function Entry({
 }) {
   return (
     <Surface>
-      <AppText variant="caption" tone="secondary">
-        {new Date(entry.createdAt).toLocaleString(undefined, {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit',
-        })}
-      </AppText>
-      <AppText variant="title">{moods[entry.mood - 1]?.label}</AppText>
+      <View style={layoutStyles.row}>
+        <MoodFace mood={entry.mood - 1} />
+        <View style={layoutStyles.grow}>
+          <AppText variant="heading">{moods[entry.mood - 1]?.label}</AppText>
+          <AppText variant="caption" tone="secondary">
+            {new Date(entry.createdAt).toLocaleString(undefined, {
+              month: 'short',
+              day: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+            })}
+          </AppText>
+        </View>
+        <IconButton
+          icon="delete"
+          disabled={disabled}
+          label={`Delete ${moods[entry.mood - 1]?.label} check-in from ${new Date(entry.createdAt).toLocaleDateString()}`}
+          onPress={() => onDelete(entry.id)}
+        />
+      </View>
       {entry.tags.length > 0 && (
         <AppText variant="bodySmall" tone="secondary">
           {entry.tags.join(' · ')}
         </AppText>
       )}
       {entry.note ? <AppText>{entry.note}</AppText> : null}
-      <Action
-        secondary
-        disabled={disabled}
-        label={`Delete ${moods[entry.mood - 1]?.label} check-in from ${new Date(entry.createdAt).toLocaleDateString()}`}
-        onPress={() => onDelete(entry.id)}
-      >
-        Delete check-in
-      </Action>
     </Surface>
   );
 });
@@ -52,6 +56,7 @@ export function HistoryScreen() {
   const query = useMoodHistory();
   const deletion = useDeleteMood();
   const { sky } = useTheme();
+  const layout = useLayoutMetrics();
   const { mutate } = deletion;
   const confirm = useCallback(
     (id: string) => {
@@ -77,16 +82,20 @@ export function HistoryScreen() {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.screen}>
       <FlatList
+        style={styles.screen}
         data={items}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingHorizontal: layout.gutter, paddingTop: layout.top },
+        ]}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         refreshing={query.isRefetching}
         onRefresh={() => void query.refetch()}
         ListHeaderComponent={
           <View style={{ gap: tokens.spacing.md }}>
-            <PageHeader title="Your progress" subtitle="Review your check-ins and activities." />
+            <PageHeader title="Your progress" />
             <ProgressSummary />
             <View style={styles.header}>
               <AppText variant="heading" accessibilityRole="header">
@@ -151,7 +160,7 @@ export function HistoryScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: {
-    padding: tokens.spacing.ml,
+    paddingBottom: tokens.spacing.lg,
     width: '100%',
     maxWidth: tokens.maxWidth + tokens.spacing.ml * 2,
     alignSelf: 'center',

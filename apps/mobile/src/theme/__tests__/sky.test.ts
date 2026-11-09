@@ -46,4 +46,12 @@ describe('the local-time sky', () => {
     }
     expect(contrastRatio(tokens.action.text, tokens.action.background)).toBeGreaterThanOrEqual(4.5);
   });
+
+  it('keeps card text readable in either appearance', () => {
+    for (const appearance of ['day', 'night'] as const) {
+      const sky = skyAtMinute(0, appearance);
+      for (const foreground of [sky.palette.text, sky.palette.secondary, sky.palette.error])
+        expect(contrastRatio(foreground, sky.surface)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
 });

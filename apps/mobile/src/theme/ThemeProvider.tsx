@@ -16,6 +16,7 @@ import { useMotionPreferences } from '../lib/useMotionPreferences';
 import { skyAtMinute, type Appearance } from './sky';
 import { createAppearanceStore, type AppearanceStorage } from './appearance';
 import { appearanceStorage } from './appearanceStorage';
+import { useLayoutMetrics } from './layout';
 
 function useThemeState(storage: AppearanceStorage) {
   const [now, setNow] = useState(() => new Date());
@@ -26,6 +27,7 @@ function useThemeState(storage: AppearanceStorage) {
   const [staticPreview, setStaticPreview] = useState(false);
   const [haptics, setHaptics] = useState(true);
   const motion = useMotionPreferences();
+  const { compact } = useLayoutMetrics();
   const [fontsLoaded, fontError] = useFonts({
     Fraunces_500Medium,
     Figtree_400Regular,
@@ -48,6 +50,7 @@ function useThemeState(storage: AppearanceStorage) {
     now,
     minute,
     sky,
+    compact,
     appearance: preference.appearance,
     appearanceReady: preference.status !== 'loading',
     appearanceBusy: preference.busy,

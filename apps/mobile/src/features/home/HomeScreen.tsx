@@ -5,7 +5,6 @@ import { router } from 'expo-router';
 import { affirmationForDay, localDay } from '@solace/shared';
 import { Screen } from '../../components/ui/Screen';
 import { AppText, Action, Surface } from '../../components/ui/primitives';
-import { Icon } from '../../components/ui/Icon';
 import { MoodFace } from '../../components/ui/MoodFace';
 import { IconButton, NavigationRow, layoutStyles } from '../../components/ui/layout';
 import { Companion } from '../../components/sol/Companion';
@@ -19,6 +18,7 @@ import { useStartConversation } from '../chat/useStartConversation';
 import { firstName, homeGreeting } from './greeting';
 import { DailyWellnessCard } from '../wellness/DailyWellnessCard';
 import { CheckinStamp } from '../mood/CheckinStamp';
+import { useLayoutMetrics } from '../../theme/layout';
 
 export function HomeScreen() {
   const auth = useAuth();
@@ -32,6 +32,7 @@ export function HomeScreen() {
 function DailyHome({ name }: { name: string }) {
   const client = useQueryClient();
   const { now, sky } = useTheme();
+  const { compact } = useLayoutMetrics();
   const today = useMoodToday();
   const chat = useStartConversation();
   const [selected, setSelected] = useState(2);
@@ -80,7 +81,7 @@ function DailyHome({ name }: { name: string }) {
         </View>
         <Companion
           mood={showingSaved ? latest.mood - 1 : selected}
-          size={tokens.sol.home}
+          size={compact ? tokens.sol.homeSmall : tokens.sol.home}
           onResponse={setResponse}
         />
       </View>
@@ -104,7 +105,16 @@ function DailyHome({ name }: { name: string }) {
           </>
         ) : showingSaved ? (
           <>
-            <CheckinStamp animate={justSaved === latest.id} onPlayed={() => setJustSaved(null)} />
+            <View style={styles.savedHeading}>
+              <CheckinStamp animate={justSaved === latest.id} onPlayed={() => setJustSaved(null)} />
+              <Action
+                variant="quiet"
+                disabled={chat.isPending || chat.isError}
+                onPress={() => setEditing(true)}
+              >
+                Check in again
+              </Action>
+            </View>
             <View style={layoutStyles.row}>
               <MoodFace mood={latest.mood - 1} />
               <View style={layoutStyles.grow}>
@@ -119,7 +129,6 @@ function DailyHome({ name }: { name: string }) {
                   Feeling {moods[latest.mood - 1]?.label.toLowerCase()}
                 </AppText>
               </View>
-              <Icon name="check" size={tokens.icon.sm} />
             </View>
             {latest.tags.length > 0 && (
               <AppText variant="bodySmall" tone="secondary">
@@ -146,13 +155,6 @@ function DailyHome({ name }: { name: string }) {
                 The conversation couldn’t open. Your check-in is saved; try again.
               </AppText>
             )}
-            <Action
-              variant="quiet"
-              disabled={chat.isPending || chat.isError}
-              onPress={() => setEditing(true)}
-            >
-              Check in again
-            </Action>
           </>
         ) : (
           <>
@@ -178,7 +180,7 @@ function DailyHome({ name }: { name: string }) {
         )}
       </Surface>
       <DailyWellnessCard mood={latest ?? null} moodUnavailable={today.isError || today.isPending} />
-      <View style={[styles.quote, { borderColor: sky.palette.secondary }]}>
+      <View style={[styles.quote, { borderColor: sky.outline }]}>
         <AppText variant="caption" tone="secondary">
           Today’s words
         </AppText>
@@ -200,6 +202,13 @@ function DailyHome({ name }: { name: string }) {
 
 const styles = StyleSheet.create({
   hero: { flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.sm },
-  greeting: { flex: 1, gap: tokens.spacing.xs },
+  greeting: { flex: 1, minWidth: 0, gap: tokens.spacing.xs },
+  savedHeading: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: tokens.spacing.xs,
+  },
   quote: { borderTopWidth: tokens.border, paddingTop: tokens.spacing.md, gap: tokens.spacing.sm },
 });

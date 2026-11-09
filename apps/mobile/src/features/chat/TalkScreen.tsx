@@ -12,10 +12,12 @@ import { ProviderNotice } from './ProviderNotice';
 import { useConversations, useDeleteConversation } from './hooks';
 import { useStartConversation } from './useStartConversation';
 import { conversationTitle, conversationTime } from './titles';
+import { useLayoutMetrics } from '../../theme/layout';
 
 export function TalkScreen() {
   const provider = useChatProvider();
   const { sky } = useTheme();
+  const layout = useLayoutMetrics();
   const { fontScale } = useWindowDimensions();
   const [response, setResponse] = useState<string | null>(null);
   const query = useConversations();
@@ -38,9 +40,13 @@ export function TalkScreen() {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.screen}>
       <FlatList
+        style={styles.screen}
         data={conversations.slice(1)}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingHorizontal: layout.gutter, paddingTop: layout.top },
+        ]}
         refreshing={query.isRefetching}
         onRefresh={() => void query.refetch()}
         ListHeaderComponent={
@@ -112,7 +118,7 @@ export function TalkScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <View style={[styles.entry, layoutStyles.row, { borderColor: sky.surface }]}>
+          <View style={[styles.entry, layoutStyles.row, { borderColor: sky.outline }]}>
             <View style={layoutStyles.grow}>
               <NavigationRow
                 icon="talk"
@@ -169,7 +175,7 @@ export function TalkScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: {
-    padding: tokens.spacing.ml,
+    paddingBottom: tokens.spacing.lg,
     width: '100%',
     maxWidth: tokens.maxWidth + tokens.spacing.ml * 2,
     alignSelf: 'center',

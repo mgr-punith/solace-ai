@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { tokens } from '../../theme/tokens';
+import { useLayoutMetrics } from '../../theme/layout';
 
 export function Screen({
   children,
@@ -22,6 +23,7 @@ export function Screen({
   keyboard?: boolean;
   refreshControl?: ReactElement<RefreshControlProps>;
 }) {
+  const layout = useLayoutMetrics();
   return (
     <SafeAreaView
       edges={inTabs ? ['top', 'left', 'right'] : ['top', 'bottom', 'left', 'right']}
@@ -29,11 +31,16 @@ export function Screen({
     >
       <KeyboardAvoidingView enabled={keyboard} behavior="padding" style={styles.screen}>
         <ScrollView
+          style={styles.screen}
           keyboardShouldPersistTaps="handled"
           refreshControl={refreshControl}
-          contentContainerStyle={[styles.scroll, centered && styles.centered]}
+          contentContainerStyle={[
+            styles.scroll,
+            { paddingHorizontal: layout.gutter, paddingTop: layout.top },
+            centered && styles.centered,
+          ]}
         >
-          <View style={styles.content}>{children}</View>
+          <View style={[styles.content, { gap: layout.gap }]}>{children}</View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -41,7 +48,7 @@ export function Screen({
 }
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  scroll: { flexGrow: 1, alignItems: 'center', padding: tokens.spacing.ml },
+  scroll: { flexGrow: 1, alignItems: 'center', paddingBottom: tokens.spacing.lg },
   centered: { justifyContent: 'center' },
-  content: { width: '100%', maxWidth: tokens.maxWidth, gap: tokens.spacing.ml },
+  content: { width: '100%', maxWidth: tokens.maxWidth },
 });

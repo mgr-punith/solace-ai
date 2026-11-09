@@ -48,16 +48,14 @@ export function MoodChoice({
           minWidth: tokens.moodChoiceWidth * fontScale,
           flex: fontScale <= 1.1 ? 1 : undefined,
           borderColor: selected ? sky.palette.text : tokens.colors.clear,
-          backgroundColor: selected ? tokens.action.background : tokens.colors.clear,
+          backgroundColor: selected ? sky.surface : tokens.colors.clear,
         },
       ]}
     >
       <Animated.View style={faceStyle}>
         <MoodFace mood={index} />
       </Animated.View>
-      <AppText variant="caption" style={selected ? { color: tokens.action.text } : undefined}>
-        {mood.label}
-      </AppText>
+      <AppText variant="caption">{mood.label}</AppText>
     </Pressable>
   );
 }
@@ -65,7 +63,7 @@ const styles = StyleSheet.create({
   choice: {
     alignItems: 'center',
     gap: tokens.spacing.sm,
-    paddingVertical: tokens.spacing.smd,
+    paddingVertical: tokens.spacing.sm,
     borderRadius: tokens.radius.tag,
     borderWidth: tokens.selectedBorder,
     minHeight: tokens.target,

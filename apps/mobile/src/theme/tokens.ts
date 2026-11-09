@@ -3,6 +3,10 @@ export const tokens = {
   day: { background: '#EEF3F2', text: '#1F3A44', secondary: '#4B6670', error: '#914359' },
   night: { background: '#0F1A24', text: '#EAF3F2', secondary: '#B7CBD0', error: '#E59AAB' },
   action: { background: '#9CC9BF', text: '#12303A' },
+  surface: {
+    day: { background: '#FFFFFF', border: '#DDE7E4' },
+    night: { background: '#192B35', border: '#2D424B' },
+  },
   chat: { solDay: '#E1ECE9', solNight: '#1B303A', dotSize: 6, dotLift: 3 },
   spacing: { xs: 4, sm: 8, smd: 12, md: 16, ml: 20, lg: 24, xl: 32, xxl: 40, hero: 56 },
   typography: { title: 24, titleLine: 32, body: 16, bodyLine: 24 },
@@ -10,7 +14,8 @@ export const tokens = {
   target: 48,
   icon: { sm: 16, md: 22, lg: 28, stroke: 1.8 },
   tab: { height: 64, indicatorWidth: 44, indicatorHeight: 28, labelGap: 4 },
-  chart: { height: 140, width: 320 },
+  chart: { height: 140, compactHeight: 108, width: 320 },
+  layout: { compactWidth: 380, compactHeight: 740 },
   colors: {
     seaGlass: '#9CC9BF',
     lantern: '#FFD58A',
@@ -35,6 +40,11 @@ export const tokens = {
     caption: { fontFamily: 'Figtree_500Medium', fontSize: 12, lineHeight: 17 },
     tab: { fontFamily: 'Figtree_500Medium', fontSize: 11, lineHeight: 15 },
     button: { fontFamily: 'Figtree_600SemiBold', fontSize: 16, lineHeight: 22 },
+    buttonSmall: { fontFamily: 'Figtree_600SemiBold', fontSize: 14, lineHeight: 20 },
+  },
+  compactType: {
+    display: { fontSize: 26, lineHeight: 34 },
+    title: { fontSize: 22, lineHeight: 28 },
   },
   motion: {
     startup: 700,
@@ -49,7 +59,16 @@ export const tokens = {
     orbit: 6000,
     response: 3200,
   },
-  sol: { hero: 220, onboarding: 160, home: 120, compact: 56, mini: 28 },
+  sol: {
+    hero: 220,
+    onboarding: 160,
+    home: 120,
+    homeSmall: 88,
+    wellness: 72,
+    compact: 56,
+    mini: 28,
+  },
+  completion: { ringSize: 44, ringStroke: 4 },
 } as const;
 
 export const COMPANION_NAME = 'Sol';

@@ -1,40 +1,49 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { affirmationForDay, localDay } from '@solace/shared';
 import { Screen } from '../../components/ui/Screen';
 import { Action, AppText, Surface } from '../../components/ui/primitives';
 import { PageHeader, NavigationRow, layoutStyles } from '../../components/ui/layout';
 import { Companion } from '../../components/sol/Companion';
 import { useTheme } from '../../theme/ThemeProvider';
-import { tokens } from '../../theme/tokens';
+import { moods, tokens } from '../../theme/tokens';
 import { deviceTimezone } from '../mood/hooks';
+import { useLayoutMetrics } from '../../theme/layout';
 export function WellnessScreen() {
-  const { now, sky } = useTheme();
-  const { fontScale } = useWindowDimensions();
+  const { now } = useTheme();
+  const { compact } = useLayoutMetrics();
   const [response, setResponse] = useState<string | null>(null);
   const today = affirmationForDay(localDay(now, deviceTimezone()));
   return (
     <Screen inTabs>
-      <PageHeader title="Take a break" subtitle="Try a breathing exercise or read today’s words." />
+      <PageHeader title="Take a break" />
       <Surface>
-        <View style={[layoutStyles.row, fontScale > 1.2 && styles.stacked]}>
+        <View style={layoutStyles.row}>
           <View style={layoutStyles.grow}>
             <AppText variant="heading">Breathe with Sol</AppText>
-            <AppText variant="bodySmall" tone="secondary">
-              Start with one minute. Change the rhythm or length in Customize.
+            <AppText variant="caption" tone="secondary">
+              1 minute · at your pace
             </AppText>
           </View>
-          <Companion size={tokens.sol.home} onResponse={setResponse} />
+          <Companion
+            size={compact ? tokens.sol.wellness : tokens.sol.homeSmall}
+            onResponse={setResponse}
+          />
         </View>
-        <AppText variant="caption" accessibilityLiveRegion="polite" tone="secondary">
-          {response ?? 'Tap Sol to say hello. Hold to breathe along.'}
+        <AppText variant="bodySmall" tone="secondary">
+          Follow Sol’s rhythm. Choose a different pace or duration in Customize.
         </AppText>
+        {response && response !== moods[2].response && (
+          <AppText variant="caption" accessibilityLiveRegion="polite" tone="secondary">
+            {response}
+          </AppText>
+        )}
         <Action icon="play" onPress={() => router.push('/breathing')}>
           Take a breathing break
         </Action>
       </Surface>
-      <View style={styles.words}>
+      <Surface style={styles.words}>
         <AppText variant="caption" tone="secondary">
           Today’s words
         </AppText>
@@ -44,8 +53,8 @@ export function WellnessScreen() {
           title="Open affirmations"
           onPress={() => router.push('/affirmations')}
         />
-      </View>
-      <View style={[styles.links, { borderColor: sky.palette.secondary }]}>
+      </Surface>
+      <Surface style={styles.links}>
         <NavigationRow
           icon="heart"
           title="Your saved words"
@@ -58,12 +67,11 @@ export function WellnessScreen() {
           subtitle="Choose the days and times"
           onPress={() => router.push('/reminders')}
         />
-      </View>
+      </Surface>
     </Screen>
   );
 }
 const styles = StyleSheet.create({
-  stacked: { flexDirection: 'column', alignItems: 'stretch' },
-  words: { gap: tokens.spacing.sm, paddingTop: tokens.spacing.sm },
-  links: { borderTopWidth: tokens.border, paddingTop: tokens.spacing.sm },
+  words: { gap: tokens.spacing.smd },
+  links: { gap: 0 },
 });
