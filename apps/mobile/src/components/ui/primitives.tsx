@@ -3,6 +3,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 import { Icon, type IconName } from './Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import { tokens } from '../../theme/tokens';
+import { useLayoutMetrics } from '../../theme/layout';
 
 export function AppText({
   variant = 'body',
@@ -10,12 +11,13 @@ export function AppText({
   style,
   ...props
 }: TextProps & { variant?: keyof typeof tokens.type; tone?: 'text' | 'secondary' | 'error' }) {
-  const { sky, fontsLoaded } = useTheme();
+  const { sky, fontsLoaded, compact } = useTheme();
   return (
     <Text
       {...props}
       style={[
         tokens.type[variant],
+        compact && (variant === 'display' || variant === 'title') && tokens.compactType[variant],
         !fontsLoaded && { fontFamily: undefined },
         { color: sky.palette[tone], flexShrink: 1 },
         style,
@@ -25,12 +27,18 @@ export function AppText({
 }
 export function Surface({ style, ...props }: ViewProps) {
   const { sky } = useTheme();
+  const layout = useLayoutMetrics();
   return (
     <View
       {...props}
       style={[
         styles.surface,
-        { backgroundColor: sky.surface, borderColor: sky.palette.background },
+        {
+          backgroundColor: sky.surface,
+          borderColor: sky.outline,
+          padding: layout.surfacePadding,
+          gap: layout.surfaceGap,
+        },
         style,
       ]}
     />
@@ -61,7 +69,7 @@ export function Action({
   const scale = useSharedValue(1);
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   return (
-    <Animated.View style={animated}>
+    <Animated.View style={[styles.actionContainer, animated]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={label ?? children}
@@ -76,6 +84,7 @@ export function Action({
         }}
         style={({ pressed }) => [
           styles.action,
+          kind === 'quiet' && styles.quiet,
           {
             backgroundColor: filled ? tokens.action.background : tokens.colors.clear,
             borderColor: selected
@@ -95,7 +104,7 @@ export function Action({
           />
         )}
         <AppText
-          variant="button"
+          variant={kind === 'quiet' ? 'buttonSmall' : 'button'}
           style={{
             color: filled ? tokens.action.text : sky.palette.text,
             textAlign: 'center',
@@ -109,11 +118,11 @@ export function Action({
 }
 const styles = StyleSheet.create({
   surface: {
-    padding: tokens.spacing.md,
     borderRadius: tokens.radius.surface,
     borderWidth: tokens.border,
-    gap: tokens.spacing.smd,
   },
+  actionContainer: { maxWidth: '100%', minWidth: 0, flexShrink: 1 },
+  quiet: { paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.sm },
   action: {
     flexDirection: 'row',
     gap: tokens.spacing.sm,

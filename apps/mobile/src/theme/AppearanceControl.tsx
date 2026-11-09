@@ -16,7 +16,11 @@ export function AppearanceControl() {
   return (
     <View style={styles.section}>
       <AppText variant="bodySmall">Appearance</AppText>
-      <View accessibilityRole="radiogroup" accessibilityLabel="Appearance" style={styles.choices}>
+      <View
+        accessibilityRole="radiogroup"
+        accessibilityLabel="Appearance"
+        style={[styles.choices, { backgroundColor: theme.sky.palette.background }]}
+      >
         {options.map(({ value, label }) => {
           const selected = theme.appearance === value;
           return (
@@ -35,7 +39,7 @@ export function AppearanceControl() {
                 styles.option,
                 {
                   backgroundColor: selected ? tokens.action.background : tokens.colors.clear,
-                  borderColor: selected ? theme.sky.palette.text : theme.sky.palette.secondary,
+                  borderColor: selected ? theme.sky.palette.text : tokens.colors.clear,
                   opacity: pressed ? tokens.opacity.pressed : 1,
                 },
               ]}
@@ -83,8 +87,13 @@ export function AppearanceControl() {
   );
 }
 const styles = StyleSheet.create({
-  section: { gap: tokens.spacing.sm, paddingVertical: tokens.spacing.smd },
-  choices: { flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.sm },
+  section: { gap: tokens.spacing.sm },
+  choices: {
+    flexDirection: 'row',
+    gap: tokens.spacing.xs,
+    padding: tokens.spacing.xs,
+    borderRadius: tokens.radius.button + tokens.spacing.xs,
+  },
   option: {
     flex: 1,
     minWidth: tokens.target,

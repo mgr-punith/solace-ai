@@ -626,3 +626,41 @@ Today's affirmation in Fraunces
 ```
 
 Use existing 48 dp targets, wrapping text and selected/checked accessibility semantics. Selection and the save stamp use Reanimated transforms/opacity; nothing animates on a return visit. Reduce Motion and inactive screens show static states with the same labels. Test account/day scoping, refresh and save failures, retry identity, selection persistence, explicit handoffs and completed status. Record the later native visual/motion/login checks separately from automated verification.
+
+## Native layout correction — 9 November 2026
+
+The user reports that several screens feel too large or cramped on the updated APK. The actual vivo display is 1080 × 2400 pixels with a 493 dpi display override, giving roughly 350 dp of width at 100% text. Do not change the phone's display size or text settings to make the app fit. Earlier isolated browser checks did not include the complete native tab/safe-area frame and were insufficient for this complaint.
+
+Use the inspected native captures in `/tmp/solace-daily-native-evidence/` as the constrained baseline: `wellness-before-layout.png`, `progress-before-layout.png`, `you-baseline.png` and `completed-daily-moments.png`. The user also supplied two UI references (770 × 508 and 1600 × 1200), saved in `docs/reference/layout-dashboard.png` and `layout-controls.png`. Borrow their distinct surfaces, consistent internal alignment, compact metrics and grouped selected controls. Adapt those lessons to one mobile column; preserve Fraunces/Figtree, Sol, both palettes and the existing flows. These references and the explicit changes below are the target, without a generated replacement or a claim of a 1:1 copy.
+
+- Below 380 dp wide, or on a short viewport below 740 dp, use 16 dp screen gutters, 12 dp top padding, 16 dp section gaps, 12 dp surface padding and 8 dp surface gaps. Keep body text at 16/24, captions at 12/17, dynamic text scaling and 48 dp touch targets. Compact display text uses 26/34 and page titles 22/28. Wide screens retain the existing scale.
+- Bound each scroll viewport to the available screen and reserve visible breathing room after its last item. Tab screens scroll above the tab bar; standalone screens include the bottom safe area. Long content remains scrollable. Never crop a required action or shrink the entire app to force one viewport.
+- Home uses an 88 dp companion on compact screens. Place “Check in again” alongside saved status instead of giving it another full-width row. Daily suggestions keep a reason, duration, action and alternatives; avoid repeating an instruction already clear from the button and draft disclosure. Preserve every error/retry path and explicit sharing consent.
+- Wellness uses a 72 dp companion, with its explanatory text below the heading/mascot row rather than squeezed beside the illustration. Keep breathing and affirmation entry points together near the top. The breathing setup uses a 120 dp companion at compact widths; active breathing retains its dedicated animation.
+- Progress uses a concise streak summary and a 108 dp chart on compact screens. Seven calendar columns stay aligned with the graph. History remains a virtualized list, with no dropped data or hidden deletion confirmation.
+- You places the greeting with the page header, then appearance and its account rows. Shared quiet buttons use the smaller functional text role while retaining full touch targets; button wrappers and text must shrink/wrap within their containers. Keep selected states, labels and navigation consistent.
+- Distinguish raised content from the page: white (`#FFFFFF`) surfaces on the existing day background, deep blue-green (`#192B35`) surfaces at night, and quiet decorative borders (`#DDE7E4` / `#2D424B`). Sea-glass stays the interactive accent; lantern stays the completion accent. Appearance is one inset segmented group with a filled checked option. Body/caption text must retain at least 4.5:1 contrast on both surfaces.
+- The user explicitly asks to gamify check-ins. Make choosing and saving two visible steps, with progress advancing only after selection and completion only after a confirmed save. The selected mood lifts and changes Sol's expression. A short, one-time lantern stamp confirms saving; a two-stop daily trail shows the persisted check-in and breathing/reading completion with a clear completed state. Every mood receives the same credit. Repeated saves cannot add extra daily credit; failure, cancellation and return visits never award or replay completion. Reduce Motion keeps the same static state. No points for positive moods, leaderboards, streak penalties or new backend achievement model.
+
+```text
+Home                              Wellness
+solace              reminders     Take a break
+Greeting + name          Sol      [Breathe with Sol        Sol]
+[Daily check-in / saved state]     [1 minute · adjustable       ]
+[Choose a mood → Save           ]  [Take a breathing break      ]
+[five expressive mood choices  ]  [Today's words               ]
+[Save check-in                 ]  [Affirmation + open action    ]
+[Today with Sol       0/2 saved ]  Saved words / Reminders
+[  check-in —— breathe/read    ]
+[Daily suggestion + action     ]
+Progress                          You
+Your progress                     You · Hello, name
+[streak summary · total days   ]  [Appearance: Auto Light Dark ]
+[Last seven days               ]  [Preferences + saved words   ]
+[compact aligned mood chart   ]  [Support + introduction      ]
+[breathing minutes + sessions ]  Account actions / AI notice
+Your check-ins
+[saved history entries        ]
+```
+
+Check these changes on the actual 350 dp phone and at 390 dp in the synthetic browser preview, including full tab chrome, light/dark, top and final scroll positions, selection/cancel and activity Back. Recheck a keyboard flow at normal text size. The user asked not to repeat 130% text testing. Do not claim the historical sign-out is fixed: this APK retained its session through cold restart and an animation-setting return, but the earlier failure remains unexplained.

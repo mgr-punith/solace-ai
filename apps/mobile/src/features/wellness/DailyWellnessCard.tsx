@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { dailyRecommendations, type DailyRecommendation, type MoodCheckin } from '@solace/shared';
-import { Action, AppText } from '../../components/ui/primitives';
+import { Action, AppText, Surface } from '../../components/ui/primitives';
 import { Icon, type IconName } from '../../components/ui/Icon';
 import { layoutStyles } from '../../components/ui/layout';
 import { useStartConversation } from '../chat/useStartConversation';
@@ -77,7 +77,7 @@ export function DailyWellnessCard({
         key={option.id}
         style={[
           styles.choice,
-          !primary && { borderTopWidth: tokens.border, borderColor: sky.palette.secondary },
+          !primary && { borderTopWidth: tokens.border, borderColor: sky.outline },
         ]}
       >
         <View style={layoutStyles.row}>
@@ -92,7 +92,6 @@ export function DailyWellnessCard({
         <AppText variant="bodySmall" tone="secondary">
           {option.reason}
         </AppText>
-        {primary && <AppText variant="bodySmall">{option.description}</AppText>}
         {option.completed && (
           <AppText variant="caption" tone="secondary">
             Saved today · revisit anytime
@@ -131,7 +130,7 @@ export function DailyWellnessCard({
           More ideas for today
         </Action>
       ) : (
-        <View style={[styles.recommendation, { backgroundColor: sky.surface }]}>
+        <Surface style={styles.recommendation}>
           <AppText variant="caption" tone="secondary">
             {moodUnavailable
               ? 'A general suggestion · check-in unavailable'
@@ -144,7 +143,7 @@ export function DailyWellnessCard({
             {expanded ? 'Fewer ideas' : 'Other ideas'}
           </Action>
           {expanded && options.slice(1).map((option) => choice(option, false))}
-        </View>
+        </Surface>
       )}
       {daily.isError && (
         <>
@@ -167,8 +166,6 @@ export function DailyWellnessCard({
 const styles = StyleSheet.create({
   section: { gap: tokens.spacing.md },
   recommendation: {
-    padding: tokens.spacing.md,
-    borderRadius: tokens.radius.surface,
     gap: tokens.spacing.xs,
   },
   choice: { gap: tokens.spacing.sm, paddingTop: tokens.spacing.smd },

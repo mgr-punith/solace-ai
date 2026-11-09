@@ -115,12 +115,12 @@ export function NavigationRow({
 export const layoutStyles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.md },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.sm },
-  grow: { flex: 1 },
+  grow: { flex: 1, minWidth: 0 },
   centered: { alignItems: 'center', gap: tokens.spacing.md },
   gap: { gap: tokens.spacing.md },
 });
 const styles = StyleSheet.create({
-  grow: { flex: 1, gap: tokens.spacing.xs },
+  grow: { flex: 1, minWidth: 0, gap: tokens.spacing.xs },
   heading: {
     flexDirection: 'row',
     alignItems: 'center',

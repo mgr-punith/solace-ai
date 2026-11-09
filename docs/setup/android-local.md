@@ -115,6 +115,30 @@ Open Solace's development launcher, choose **Enter URL manually**, and enter the
 
 Android JavaScript exports write to `dist/export` so they cannot erase local APKs in `dist/local`.
 
+### Install and test without a cable (Android 11+)
+
+Wireless debugging lets ADB install APKs, inspect screens and run device checks over Wi-Fi. It is separate from Metro: a standalone preview APK works without Metro, and still uses the Render HTTPS API.
+
+1. Connect the laptop and phone to the same Wi-Fi. On the phone, open **Developer options → Wireless debugging → Pair device with pairing code** and leave that dialog open.
+2. Run the following with the address and pairing port shown in that dialog. ADB prompts for the temporary code; do not put it in a script or committed file.
+
+   ```sh
+   /home/puneet/Android/Sdk/platform-tools/adb pair PHONE_IP:PAIRING_PORT
+   /home/puneet/Android/Sdk/platform-tools/adb mdns services
+   /home/puneet/Android/Sdk/platform-tools/adb devices -l
+   ```
+
+3. The vivo should appear with status `device`, often under an `adb-…._adb-tls-connect._tcp` name. If it does not connect automatically, use the **IP address & port** on the main Wireless debugging screen with `adb connect PHONE_IP:DEBUGGING_PORT`. That port differs from the pairing port and can change.
+4. Use the exact device name from `adb devices -l` when installing, especially if several devices are connected:
+
+   ```sh
+   /home/puneet/Android/Sdk/platform-tools/adb -s DEVICE_NAME install -r apps/mobile/dist/local/solace-preview.apk
+   ```
+
+Pairing and automatic mDNS connection were verified on the vivo V2168 on 9 November 2026 after the user no longer had a USB cable. ADB screen inspection worked over Wi-Fi. The laptop currently has no emulator/system image installed and no available `/dev/kvm`; the existing physical phone is the quickest route for this screen and keyboard QA. If Wi-Fi changes, check Wireless debugging and its current connection port again.
+
+Official instructions: <https://developer.android.com/tools/adb#wireless>.
+
 ## Standalone preview for this ARM64 phone
 
 Run `npm run build:android:preview -w @solace/mobile` from the repository root. The wrapper selects `preview-local`, bundles JavaScript, compiles locally with two workers and saves `apps/mobile/dist/local/solace-preview.apk`. It uses the existing signing credentials. Install with `adb install -r`; Metro is not needed for this APK. The general `preview` profile remains available for all-architecture release work. Deploy backend migrations on Render before testing new API flows on the phone.

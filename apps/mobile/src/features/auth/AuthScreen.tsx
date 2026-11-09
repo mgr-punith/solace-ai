@@ -43,7 +43,7 @@ export function AuthScreen() {
   return (
     <Screen centered={auth.status !== 'signedIn'} inTabs={auth.status === 'signedIn'}>
       {auth.status === 'signedIn' ? (
-        <PageHeader title="You" />
+        <PageHeader title="You" subtitle={`Hello, ${firstName(auth.session?.user.name)}.`} />
       ) : (
         <Companion size={tokens.sol.hero} state="greeting" />
       )}
@@ -51,14 +51,11 @@ export function AuthScreen() {
         accessibilityLiveRegion="polite"
         style={auth.status === 'signedIn' ? styles.account : undefined}
       >
-        <AppText
-          variant={auth.status === 'signedIn' ? 'heading' : 'display'}
-          accessibilityRole="header"
-        >
-          {auth.status === 'signedIn'
-            ? `Hello, ${firstName(auth.session?.user.name)}.`
-            : 'Welcome to Solace.'}
-        </AppText>
+        {auth.status !== 'signedIn' && (
+          <AppText variant="display" accessibilityRole="header">
+            Welcome to Solace.
+          </AppText>
+        )}
         {auth.status === 'restoring' ? (
           <>
             <ActivityIndicator
@@ -106,38 +103,50 @@ export function AuthScreen() {
           ))}
         {auth.status === 'signedIn' && (
           <>
-            <AppearanceControl />
-            <NavigationRow
-              icon="bell"
-              title="Reminders"
-              subtitle="Choose the days and times"
-              disabled={busy}
-              onPress={() => router.push('/reminders')}
-            />
-            <NavigationRow
-              icon="privacy"
-              title="Privacy"
-              subtitle="What Sol can use, and how to delete it"
-              disabled={busy}
-              onPress={() => router.push('/privacy')}
-            />
-            <NavigationRow
-              icon="heart"
-              title="Saved affirmations"
-              subtitle="Read your favorites"
-              disabled={busy}
-              onPress={() => router.push('/affirmations?saved=1')}
-            />
-            <NavigationRow
-              icon="support"
-              title="Need support now?"
-              subtitle="Find a crisis helpline"
-              disabled={busy}
-              onPress={() => router.push('/support')}
-            />
+            <Surface>
+              <AppearanceControl />
+            </Surface>
+            <Surface style={styles.rows}>
+              <NavigationRow
+                icon="bell"
+                title="Reminders"
+                subtitle="Choose the days and times"
+                disabled={busy}
+                onPress={() => router.push('/reminders')}
+              />
+              <NavigationRow
+                icon="privacy"
+                title="Privacy"
+                subtitle="What Sol can use, and how to delete it"
+                disabled={busy}
+                onPress={() => router.push('/privacy')}
+              />
+              <NavigationRow
+                icon="heart"
+                title="Saved affirmations"
+                subtitle="Read your favorites"
+                disabled={busy}
+                onPress={() => router.push('/affirmations?saved=1')}
+              />
+            </Surface>
+            <Surface style={styles.rows}>
+              <NavigationRow
+                icon="support"
+                title="Need support now?"
+                subtitle="Find a crisis helpline"
+                disabled={busy}
+                onPress={() => router.push('/support')}
+              />
+              <NavigationRow
+                icon="book"
+                title="Review introduction"
+                disabled={busy}
+                onPress={() => router.push('/onboarding?review=1')}
+              />
+            </Surface>
           </>
         )}
-        {(auth.status === 'signedOut' || auth.status === 'signedIn') && (
+        {auth.status === 'signedOut' && (
           <NavigationRow
             icon="book"
             title="Review introduction"
@@ -146,7 +155,7 @@ export function AuthScreen() {
           />
         )}
         {auth.status === 'signedIn' && (
-          <>
+          <Surface style={styles.rows}>
             {__DEV__ && (
               <NavigationRow
                 icon="settings"
@@ -168,7 +177,7 @@ export function AuthScreen() {
               disabled={busy}
               onPress={confirmDelete}
             />
-          </>
+          </Surface>
         )}
         <AppText variant="bodySmall" tone="secondary">
           Solace is an AI companion, not a therapist or a substitute for professional care.
@@ -179,10 +188,11 @@ export function AuthScreen() {
 }
 const styles = StyleSheet.create({
   googleButton: { width: '100%', height: tokens.target },
+  rows: { gap: 0 },
   account: {
     backgroundColor: tokens.colors.clear,
     borderWidth: 0,
     padding: 0,
-    gap: tokens.spacing.sm,
+    gap: tokens.spacing.md,
   },
 });

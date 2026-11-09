@@ -54,7 +54,9 @@ it('does not save on mood selection and sends optional details only with explici
   expect(
     screen.getByRole('button', { name: 'Save check-in' }).props.accessibilityState.disabled,
   ).toBe(true);
+  expect(screen.getByLabelText('Step 1 of 2. Choose a mood.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Low, 2 of 5' }));
+  expect(screen.getByLabelText('Step 2 of 2. Save when you’re ready.')).toBeTruthy();
   expect(moodApi.save).not.toHaveBeenCalled();
   await fireEvent.press(screen.getByRole('button', { name: 'Add a note or feelings' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Tired' }));
@@ -74,6 +76,8 @@ it('preserves input on failure, does not claim success, and retries the identica
   await fireEvent.changeText(screen.getByLabelText('Optional check-in note'), 'Keep these words');
   await fireEvent.press(screen.getByRole('button', { name: 'Save check-in' }));
   expect(onSaved).not.toHaveBeenCalled();
+  expect(screen.queryByText('Check-in saved')).toBeNull();
+  expect(screen.getByLabelText('Step 2 of 2. Save when you’re ready.')).toBeTruthy();
   expect(screen.getByRole('alert')).toBeTruthy();
   expect(screen.getByLabelText('Optional check-in note').props.value).toBe('Keep these words');
   const first = jest.mocked(moodApi.save).mock.calls[0]?.[1];

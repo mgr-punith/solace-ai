@@ -24,6 +24,7 @@ import { Companion } from '../../components/sol/Companion';
 import { useAuth } from '../auth/context';
 import { reflectionDraft, seedChatDraft } from '../chat/drafts';
 import { useStartConversation } from '../chat/useStartConversation';
+import { useLayoutMetrics } from '../../theme/layout';
 function MoodRating({
   label,
   value,
@@ -56,6 +57,7 @@ function MoodRating({
   );
 }
 export function BreathingScreen() {
+  const { compact } = useLayoutMetrics();
   const { conversation } = useLocalSearchParams<{ conversation?: string }>();
   const parsedConversation = conversationSchema.shape.id.safeParse(conversation);
   const conversationId = parsedConversation.success ? parsedConversation.data : null;
@@ -152,7 +154,7 @@ export function BreathingScreen() {
       {!practice ? (
         <>
           <View style={layoutStyles.centered}>
-            <Companion size={tokens.sol.onboarding} />
+            <Companion size={compact ? tokens.sol.home : tokens.sol.onboarding} />
             <AppText variant="title">
               {duration === 60
                 ? 'Breathe for one minute.'
