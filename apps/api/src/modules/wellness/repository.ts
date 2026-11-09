@@ -97,6 +97,9 @@ export function createWellnessRepository(db: Database) {
           union all
           select completed_at, null::numeric, duration_seconds, case when type = 'breathing' then 1 else 0 end
           from activity_logs where user_id = ${userId} and completed_at <= ${now.toISOString()}::timestamptz
+          union all
+          select completed_at, null::numeric, 0, 0
+          from questionnaire_completions where user_id = ${userId} and completed_at <= ${now.toISOString()}::timestamptz
         )
         select to_char(happened_at at time zone ${timezone}, 'YYYY-MM-DD') as day,
           avg(mood)::float8 as "moodAverage", count(*)::int as actions,

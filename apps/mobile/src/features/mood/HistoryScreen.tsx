@@ -11,6 +11,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { moods, tokens } from '../../theme/tokens';
 import { useMoodHistory, useDeleteMood } from './hooks';
 import { useLayoutMetrics } from '../../theme/layout';
+import { DailyQuestionsCard } from '../questionnaire/DailyQuestionsCard';
 
 const Entry = memo(function Entry({
   entry,
@@ -97,6 +98,7 @@ export function HistoryScreen() {
           <View style={{ gap: tokens.spacing.md }}>
             <PageHeader title="Your progress" />
             <ProgressSummary />
+            <DailyQuestionsCard compact />
             <View style={styles.header}>
               <AppText variant="heading" accessibilityRole="header">
                 Your check-ins

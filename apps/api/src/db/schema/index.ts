@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import type { ReminderSettings } from '@solace/shared';
 import {
   check,
+  date,
   index,
   integer,
   jsonb,
@@ -200,4 +201,26 @@ export const affirmationFavorites = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex('favorite_user_affirmation_idx').on(t.userId, t.affirmationId)],
+);
+
+// Participation ledger only. Questionnaire answers are never persisted.
+export const questionnaireCompletions = pgTable(
+  'questionnaire_completions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    day: date('day', { mode: 'string' }).notNull(),
+    timezone: text('timezone').notNull(),
+    version: text('version').notNull(),
+    points: integer('points').notNull(),
+    completedAt: timestamp('completed_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('questionnaire_user_day_idx').on(table.userId, table.day),
+    check('questionnaire_points_check', sql`${table.points} = 40`),
+  ],
 );

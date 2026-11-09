@@ -7,12 +7,14 @@ import { HomeScreen } from '../HomeScreen';
 import { moodApi } from '../../mood/api';
 import { chatApi } from '../../chat/api';
 import { chatDraftKey } from '../../chat/drafts';
-import { localDay, type MoodCheckin } from '@solace/shared';
+import { dailyQuestions, localDay, QUESTIONNAIRE_VERSION, type MoodCheckin } from '@solace/shared';
 import { wellnessApi } from '../../wellness/api';
+import { questionnaireApi } from '../../questionnaire/api';
 
 jest.mock('../../mood/api', () => ({ moodApi: { list: jest.fn(), save: jest.fn() } }));
 jest.mock('../../chat/api', () => ({ chatApi: { create: jest.fn(), send: jest.fn() } }));
 jest.mock('../../wellness/api', () => ({ wellnessApi: { daily: jest.fn() } }));
+jest.mock('../../questionnaire/api', () => ({ questionnaireApi: { today: jest.fn() } }));
 jest.mock('../../auth/context', () => ({
   useAuth: () => ({
     session: { user: { id: 'a', name: 'MAYA' } },
@@ -28,6 +30,7 @@ jest.mock('../../../lib/haptics', () => ({ gentleHaptic: jest.fn() }));
 jest.mock('expo-font', () => ({ useFonts: () => [true, null], isLoaded: () => true }));
 jest.mock('expo-router', () => ({
   useIsFocused: () => true,
+  useFocusEffect: jest.fn(),
   router: { push: jest.fn(), navigate: jest.fn() },
 }));
 const entry: MoodCheckin = {
@@ -41,6 +44,15 @@ const entry: MoodCheckin = {
 beforeEach(() => {
   jest.clearAllMocks();
   jest.mocked(moodApi.list).mockResolvedValue({ items: [entry], nextCursor: null });
+  jest.mocked(questionnaireApi.today).mockImplementation(async (_token, timezone) => ({
+    day: localDay(new Date(), timezone),
+    timezone,
+    version: QUESTIONNAIRE_VERSION,
+    questions: dailyQuestions(localDay(new Date(), timezone)),
+    pointsAvailable: 40,
+    totalPoints: 0,
+    completion: null,
+  }));
   jest.mocked(wellnessApi.daily).mockImplementation(async (_token, timezone) => ({
     day: localDay(new Date(), timezone),
     timezone,

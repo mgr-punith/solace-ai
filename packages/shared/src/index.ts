@@ -38,3 +38,4 @@ export * from './support.ts';
 export * from './reminders.ts';
 export * from './wellness.ts';
 export * from './daily.ts';
+export * from './questionnaire.ts';

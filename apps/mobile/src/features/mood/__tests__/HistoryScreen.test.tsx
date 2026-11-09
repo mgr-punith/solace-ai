@@ -8,6 +8,7 @@ import { moodApi } from '../api';
 import type { MoodCheckin } from '@solace/shared';
 
 jest.mock('../../progress/ProgressSummary', () => ({ ProgressSummary: () => null }));
+jest.mock('../../questionnaire/DailyQuestionsCard', () => ({ DailyQuestionsCard: () => null }));
 jest.mock('../api', () => ({ moodApi: { list: jest.fn(), remove: jest.fn() } }));
 jest.mock('../../auth/context', () => ({
   useAuth: () => ({
