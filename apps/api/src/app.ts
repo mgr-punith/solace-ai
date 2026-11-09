@@ -16,6 +16,8 @@ import type { HealthResponse, ReadyResponse, ErrorResponse, ChatProvider } from 
 import type { AuthService } from './modules/auth/service.js';
 import { authRoutes } from './modules/auth/routes.js';
 import { ApiError } from './modules/auth/errors.js';
+import { questionnaireRoutes } from './modules/questionnaire/routes.js';
+import type { QuestionnaireService } from './modules/questionnaire/service.js';
 
 type AppDependencies = {
   checkDatabase: () => Promise<void>;
@@ -26,6 +28,7 @@ type AppDependencies = {
   chat?: ConversationService;
   reminders?: ReminderService;
   wellness?: WellnessService;
+  questionnaire?: QuestionnaireService;
   chatProvider?: ChatProvider;
   trustProxy?: number;
 };
@@ -39,6 +42,7 @@ export function createApp({
   chat,
   reminders,
   wellness,
+  questionnaire,
   chatProvider,
   trustProxy = 0,
 }: AppDependencies) {
@@ -106,6 +110,8 @@ export function createApp({
   if (auth && mood) app.use('/v1/mood-checkins', moodRoutes(auth, mood));
   if (auth && chat) app.use('/v1/conversations', conversationRoutes(auth, chat));
   if (auth && reminders) app.use('/v1/reminders', reminderRoutes(auth, reminders));
+  if (auth && questionnaire)
+    app.use('/v1/daily-questions', questionnaireRoutes(auth, questionnaire));
   if (auth && wellness) app.use('/v1', wellnessRoutes(auth, wellness));
   app.use((_req, res) => {
     res.status(404).json({

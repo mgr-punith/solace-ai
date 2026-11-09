@@ -54,6 +54,13 @@ function AppNavigation() {
                 <Stack.Screen name="reminder" />
                 <Stack.Screen name="breathing" />
                 <Stack.Screen name="affirmations" />
+                <Stack.Screen
+                  name="daily-questions"
+                  options={{
+                    presentation: 'modal',
+                    animation: reduceMotion ? 'none' : 'slide_from_bottom',
+                  }}
+                />
               </Stack.Protected>
               <Stack.Protected guard={__DEV__}>
                 <Stack.Screen name="design-preview" />

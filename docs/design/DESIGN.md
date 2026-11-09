@@ -664,3 +664,31 @@ Your check-ins
 ```
 
 Check these changes on the actual 350 dp phone and at 390 dp in the synthetic browser preview, including full tab chrome, light/dark, top and final scroll positions, selection/cancel and activity Back. Recheck a keyboard flow at normal text size. The user asked not to repeat 130% text testing. Do not claim the historical sign-out is fixed: this APK retained its session through cold restart and an animation-setting return, but the earlier failure remains unexplained.
+
+## Daily four — 9 November 2026
+
+The user defers session-reliability and final-release work and requests four daily questions with points. They confirmed that the questions should rotate. Build one short, four-question daily reflection, with a seven-day rotation of original questions about rest, energy, focus and connection. This is everyday reflection, not a health assessment. Every answer, including “Prefer to skip”, has equal participation value. Finishing all four earns 40 points once per local date; returning or retrying cannot earn another award. Missed days never subtract points. No leaderboard, clinical score, redemption system or new AI call.
+
+Use the existing compact Home and saved-state screenshots in `apps/mobile/dist/qa/native-layout-2026-11-09/` plus the supplied references in `docs/reference/` as the visual baseline. Keep Fraunces headings, Figtree controls, sea-glass selection, lantern completion, both palettes and 48 dp touch targets. This is an extension of the approved system; no image-generation service is connected. A small card on Home introduces “Your daily four”, the 40-point award and the total earned so far. A compact total appears in Progress; Wellness offers a second entry point.
+
+The user confirmed a modal presentation. Open one protected native modal for the whole flow, with a visible Close control and one question at a time, its topic, “Question 1 of 4”, and four full-width radio choices. Selecting never auto-advances or sends. Next moves forward; Back revisits the previous answer. A four-segment progress strip reflects answered questions. After question four, show a review of the chosen labels and an explicit “Finish and earn 40 points” button. Offer “Prefer to skip” on each question without withholding points. Keep the whole form scrollable at 350 dp and larger text sizes. Closing preserves an account-scoped draft for the current app session; reopening resumes the same question. Avoid nesting a new modal for each question.
+
+Only a confirmed server response shows the completed state and points. Reopening a completed day shows “40 points saved today” and the running total. The answers guide one optional next step in the current app session, using existing breathing, affirmation or Talk destinations. Opening a destination never starts/saves an activity or sends answers into chat. Store only completion, date, timezone and awarded points on the server; answers are validated for the save but not retained or logged. Explain this beneath the review: “Solace saves your completion and points. Your answers aren’t stored.” An account-scoped in-memory draft survives Back, tab changes and retries during this app session; it does not become a plaintext device record. Account changes clear it.
+
+The server determines the day using its clock and the validated IANA timezone. A new save for an expired question set is rejected with a clear new-day action; already-accepted retries return their original completion, even after midnight. Pending saves freeze their exact day and answers. Failed saves retain the draft and offer a deliberate retry. Unknown points/completion are shown as loading or unavailable, never as zero. Day changes refresh the Home card without silently discarding an open questionnaire draft.
+
+```text
+Home card                       Daily four                     Review / saved
+Your daily four      +40 pts     [Back] Your daily four         Your four answers
+Four questions. About a minute. Question 2 of 4 · Energy       Rest       Chosen label
+120 points so far               ━━━ ━━━ ─── ───                Energy     Chosen label
+[Answer today's four]           How much energy ...?           Focus      Chosen label
+                                ( ) Not much                   Connection Chosen label
+Completed                       ( ) Enough for a few things    [Edit answers]
+✓ 40 points saved today         ( ) I have some to spare       [Finish and earn 40 points]
+160 points so far               ( ) Prefer to skip             → ✓ Your points are saved
+[See today's result]            [Next question]                   160 points total
+                                                                  Optional existing activity
+```
+
+Verify deterministic four-question rotation, strict question/option matching, owner isolation, one award under concurrent requests, local midnight and DST, retry after midnight, account deletion cascade, draft/review/back behavior, no premature credit, loading/error recovery and reduced-motion static completion. Add a generated migration; deploy it on Render before installed-app testing. The user's deferred broad release checks remain deferred.

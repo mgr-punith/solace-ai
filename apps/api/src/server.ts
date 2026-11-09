@@ -16,6 +16,8 @@ import { createAuthRepository } from './modules/auth/repository.js';
 import { createAuthService } from './modules/auth/service.js';
 import { createTokens } from './modules/auth/tokens.js';
 import { createGoogleVerifier } from './modules/auth/google.js';
+import { createQuestionnaireRepository } from './modules/questionnaire/repository.js';
+import { createQuestionnaireService } from './modules/questionnaire/service.js';
 
 loadLocalEnv();
 const env = parseEnv(process.env);
@@ -38,6 +40,10 @@ const app = createApp({
   corsOrigins: env.CORS_ORIGINS,
   chatProvider: env.LLM_PROVIDER,
   auth,
+  questionnaire: createQuestionnaireService({
+    repository: createQuestionnaireRepository(database.db),
+    clock,
+  }),
   wellness: createWellnessService({ repository: createWellnessRepository(database.db), clock }),
   reminders: createReminderService({ repository: createReminderRepository(database.db), clock }),
   mood: createMoodService({ repository: createMoodRepository(database.db), clock }),

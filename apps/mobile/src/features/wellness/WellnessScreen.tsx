@@ -56,6 +56,12 @@ export function WellnessScreen() {
       </Surface>
       <Surface style={styles.links}>
         <NavigationRow
+          icon="sparkles"
+          title="Your daily four"
+          subtitle="Four questions · 40 points each day"
+          onPress={() => router.push('/daily-questions')}
+        />
+        <NavigationRow
           icon="heart"
           title="Your saved words"
           subtitle="Affirmations you’ve saved"

@@ -19,6 +19,7 @@ import { firstName, homeGreeting } from './greeting';
 import { DailyWellnessCard } from '../wellness/DailyWellnessCard';
 import { CheckinStamp } from '../mood/CheckinStamp';
 import { useLayoutMetrics } from '../../theme/layout';
+import { DailyQuestionsCard } from '../questionnaire/DailyQuestionsCard';
 
 export function HomeScreen() {
   const auth = useAuth();
@@ -53,6 +54,7 @@ function DailyHome({ name }: { name: string }) {
           onRefresh={() => {
             void today.refetch();
             void client.invalidateQueries({ queryKey: ['daily-wellness'] });
+            void client.invalidateQueries({ queryKey: ['questionnaire'], type: 'active' });
           }}
           tintColor={sky.palette.text}
         />
@@ -179,6 +181,7 @@ function DailyHome({ name }: { name: string }) {
           </>
         )}
       </Surface>
+      <DailyQuestionsCard />
       <DailyWellnessCard mood={latest ?? null} moodUnavailable={today.isError || today.isPending} />
       <View style={[styles.quote, { borderColor: sky.outline }]}>
         <AppText variant="caption" tone="secondary">

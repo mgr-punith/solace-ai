@@ -17,6 +17,17 @@ Only check items after observing them. Automated checks are run with `npm run ve
 
 Browser captures and receipt: `/tmp/solace-daily-ux-evidence/visual-evidence.json`. No phone, authentication state, settings or real wellness records were changed during this implementation.
 
+## Daily four questionnaire (9 November 2026)
+
+- [x] `npm run verify` passed: lint, formatting, all workspace typechecks and 302 tests (139 API, 140 mobile, 23 shared). API tests used disposable local PostgreSQL and never loaded Neon credentials.
+- [x] Automated checks cover seven stable rotating sets, strict question and option IDs, equal 40-point awards, concurrent and repeated saves, account isolation, local midnight and repeated DST hours, account deletion, draft Close/reopen, review/edit, pending and failed saves, and stale account-response protection.
+- [x] React Native Web synthetic review at 350 × 760 covered the first question, four-answer review, confirmed result, dark mode and failed-save retry. All controls remained reachable, no horizontal overflow appeared and the browser reported no console errors. These fixtures do not establish native modal presentation or live API behavior.
+- [ ] Deploy migration `0007_daily_questionnaire_points.sql` and the API to Render before installed-app testing.
+- [ ] On the signed Android update, confirm Home → Your daily four opens one modal; Back revisits the saved choice; Close and reopen resume the same question; the review edits answers; one completion adds 40 points; a second attempt cannot add points; Progress shows the new total.
+- [ ] Confirm native TalkBack order, system Back/dismissal, completion haptic and reduced-motion result on the phone. The user continues to defer broader release checks and 130% text testing.
+
+Synthetic captures and evidence: `apps/mobile/dist/qa/daily-questions-2026-11-09/`. No real questionnaire response, account record or wellness data was created during this implementation review.
+
 ## Phase 0
 
 - [x] Install the EAS Android development build on the real phone (cloud and local ARM64 APKs; vivo V2168, Android 14).
