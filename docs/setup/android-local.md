@@ -1,6 +1,6 @@
 # Local Android builds on Fedora Linux
 
-The setup uses Google Android command-line tools and a user-installed Temurin JDK. Android Studio and an emulator are optional when testing on the physical vivo phone.
+The setup uses Google Android command-line tools and a user-installed Temurin JDK. Android Studio and an emulator are optional when testing on the physical vivo phone. These paths record the maintainer's environment; use the [developer guide](../DEVELOPMENT.md) to configure your own fork and toolchain.
 
 ## Installed paths
 
@@ -83,7 +83,7 @@ adb shell am start -W -a android.intent.action.VIEW \
   com.puneet.solace
 ```
 
-Save a TypeScript or UI file: Fast Refresh updates the phone in seconds. Keep USB debugging authorized and repeat `adb reverse` after reconnecting the cable. If Metro stops, restart it with the same port and reopen the link. A rebuild is only needed for new native dependencies or native app configuration. The submission preview APK is self-contained and does not use Metro.
+Save a TypeScript or UI file: Fast Refresh updates the phone in seconds. Keep USB debugging authorized and repeat `adb reverse` after reconnecting the cable. If Metro stops, restart it with the same port and reopen the link. A rebuild is only needed for new native dependencies or native app configuration. The shared preview APK is self-contained and does not use Metro.
 
 The Phase 2 native build completed Gradle compilation in **17 minutes 15 seconds** (the first foundation build took 27 minutes 33 seconds). Dependency and EAS setup add time before compilation; the APK was approximately 121 MiB. All compilation happened on this Linux machine.
 

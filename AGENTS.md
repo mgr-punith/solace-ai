@@ -8,7 +8,7 @@ If something here is outdated or wrong (a library changed, a decision no longer 
 
 ## 1. Project in one paragraph
 
-Solace AI is a mobile AI wellness companion: mood check-ins, an empathetic AI chat with memory, breathing exercises, affirmations, streaks and gentle reminders. It is a **hackathon prototype** for a founding-team job opportunity. Deliverables are an **Android APK + demo video** (TestFlight later). Judges look at UI/UX, working end-to-end flows, an API-driven backend, code quality, creativity and smart use of AI. Source code is not submitted, but winners keep building it, so write it as if a real team will inherit it.
+Solace AI is **Punith Moger's personal open-source project**, released under the MIT license: a mobile AI wellness companion with mood check-ins, persistent chat, breathing exercises, affirmations, daily questions, progress and reminders. Public deliverables include source code, an **Android APK + walkthrough video**, and a user guide (TestFlight later). Build for usable end-to-end flows, clear data controls and maintainable code. Sol uses the current conversation; cross-conversation memory remains future work requiring fresh consent and view/delete controls. This framing supersedes the original hackathon/founding-team brief, as requested on 10 November 2026.
 
 Solace is a **companion, not a therapist or medical device**. Safety and privacy rules in sections 7 and 12 are non-negotiable.
 
@@ -25,7 +25,7 @@ You act as a **senior software engineer** pairing with the user.
 5. **Be honest about verification.** Say exactly what you ran (tests, typecheck, device) and what you could not verify. Never claim something works if you did not run it.
 6. **Secrets.** Never commit, print or log secrets. If the user pastes a secret into chat (for example the Neon URL), tell them to rotate it if it could have leaked, and move it to `.env`.
 7. **Stay in scope.** Do not add features, dependencies or refactors that were not asked for without saying why. Prefer boring, well-documented libraries.
-8. **Do one thing extremely well** rather than everything badly (hackathon rule). Protect P0 scope (section 3).
+8. **Do one thing extremely well** rather than everything badly. Protect P0 scope (section 3).
 
 ### First-session kickoff protocol
 
@@ -60,7 +60,7 @@ Splash, onboarding and the design system are built early and polished throughout
 | Language | TypeScript, `strict: true`, everywhere. No `any` without a comment explaining why |
 | Mobile | Expo (current stable SDK) + React Native, **Expo Router** (file-based routing) |
 | Mobile builds | **Development builds via EAS locally on Linux**, not Expo Go. Google Sign-In and reliable notifications need native code that Expo Go does not include |
-| Mobile state/data | TanStack Query (server state), Zustand (small client state) |
+| Mobile state/data | TanStack Query (server state), small React-backed stores exposed through context / `useSyncExternalStore` (current client state; Zustand is not installed) |
 | Mobile UI libs | `react-native-reanimated` (animation), `expo-haptics`, `expo-linear-gradient`, `expo-font`, `expo-secure-store`, `expo-notifications`; Skia + Reanimated for Sol, with SVG + Reanimated fallback (validate in Phase 2 per DESIGN.md) |
 | Backend | Node.js LTS, Express (current major), TypeScript, Zod validation, Pino logging |
 | Database | Neon PostgreSQL via `pg` Pool; **Drizzle ORM + drizzle-kit migrations** |
@@ -113,7 +113,7 @@ solace/
 - Screens in `src/app/` stay thin; logic lives in `src/features/*` hooks and services.
 - **Theme tokens only**: no hard-coded colors, font sizes or spacing in screens.
 - Every screen has **loading, error and empty states**. Network failures are handled and recoverable; never a blank screen or a raw error.
-- Chat uses a virtualized list. Animate with Reanimated on the UI thread. Avoid re-render storms (memoize list items, narrow Zustand selectors).
+- Chat uses a virtualized list. Animate with Reanimated on the UI thread. Avoid re-render storms (memoize list items and keep client-state subscriptions focused).
 - Accessibility floor: contrast ≥ 4.5:1, touch targets ≥ 44pt, screen-reader labels, support dynamic text size, honor **Reduce Motion** with a calm static alternative.
 - Haptics go through one wrapper (`lib/haptics.ts`) so they can be toggled in settings.
 - Tokens (access/refresh) live in `expo-secure-store`, never AsyncStorage.
@@ -202,7 +202,7 @@ The user has never done this. **Walk them through one step at a time. Wait for c
 **Step B — Google Cloud project and consent screen.**
 - Open Google Cloud Console → create project "Solace AI".
 - Go to Google Auth Platform (formerly "OAuth consent screen") → set app name, support email, audience **External**, developer contact email.
-- Keep it in **Testing** and add the user's Google account(s) and any teammates' accounts as **test users** (only listed accounts can sign in while in Testing). Basic sign-in scopes (`openid`, `email`, `profile`) are non-sensitive, but confirm the current publishing rules in the console before the demo.
+- For a new fork, start in **Testing** and configure test users as required by Google's current rules, then review publishing requirements before broad distribution. The owner confirmed on 10 November 2026 that the maintained Solace OAuth app is published for other Google accounts; do not describe it as restricted to the original test accounts. Basic sign-in scopes are `openid`, `email`, and `profile`.
 
 **Step C — Create OAuth client IDs** (Google Auth Platform → Clients → Create client).
 1. **Web application** → copy the Client ID. This is `GOOGLE_WEB_CLIENT_ID`: the app passes it as `webClientId` so Google returns an ID token, and the backend uses it as the expected audience. (Not a secret, but still keep it in env config.)
@@ -281,8 +281,8 @@ Reorder if the user says so, but never leave P0 half-done to start P1.
 
 - The backend **must be publicly reachable over HTTPS**; an APK on a phone cannot reach `localhost`. Deploy to the host the user chooses (Render, Railway or Fly.io), set env vars there, run migrations on deploy, configure a health check. Free tiers may cold-start: warm the server before recording the demo.
 - Phone testing uses the Render-hosted HTTPS backend only, as confirmed by the user on 6 November 2026. Do not switch the app to a local API or tunnel. Local Android builds and Wi-Fi Metro remain the development workflow; automated API tests use disposable local PostgreSQL without Neon credentials.
-- `eas.json` profiles: `development` (dev client), `preview` (`"android": { "buildType": "apk" }`, internal distribution) for the submission APK, `production` later. Register each keystore's SHA-1 in the Google Android client.
-- iOS/TestFlight comes later: needs an Apple Developer account, an EAS iOS build and `eas submit`. The hackathon team has offered help.
+- `eas.json` profiles: `development` (dev client), `preview` (`"android": { "buildType": "apk" }`, internal distribution) for the shared APK, `production` later. Register each keystore's SHA-1 in the Google Android client.
+- iOS/TestFlight comes later: needs an Apple Developer account, an EAS iOS build and `eas submit`.
 - **Release checklist:** `npm run verify` green · API deployed and `/ready` OK · fresh install of the preview APK on a clean phone · sign-in works · chat persists across restarts · reminder fires with the app closed · tapping it opens the right screen · airplane-mode error states look good · no secrets in the bundle.
 - **Demo video script:** splash → onboarding → Google sign-in → home → mood check-in → chat (including memory and a suggested activity) → breathing → reminder firing on the lock screen → tap to open → history and delete.
 
@@ -323,6 +323,8 @@ npm run db:check       # verify configured DB connections without printing crede
 - Claim "done" without running the verification above.
 
 ## Confirmed kickoff decisions
+
+- Public project presentation confirmed 10 November 2026: describe Solace as Punith Moger's personal project, use the MIT license, document the current user flows, AI reply design and Git/PR-backed development milestones, and link the supplied APK and walkthrough. Include reviewed app/chat screenshots and distinguish whole-computer build resource usage from phone runtime memory. Google OAuth publishing for other accounts is owner-confirmed. The APK remains version 0.1.0; do not invent semantic releases for the development milestones.
 
 - Daily UX scope confirmed 9 November 2026: build persisted Auto/Light/Dark appearance in You, server-backed affirmation read status, playful check-in feedback and daily wellness suggestions using existing activities. Preserve the established design and explicit chat-draft sharing. The user deferred login investigation and mobile testing until the new update is built; do not interrupt implementation for phone checks.
 
