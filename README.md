@@ -1,135 +1,282 @@
 # Solace AI
 
-An Android-first wellness companion built with Expo, React Native, Express, and Neon. Phase 0 creates the foundation; product features follow in small verified slices.
+<img src="apps/mobile/assets/sol-icon.png" alt="Sol, the Solace companion" width="80" />
 
-## Prerequisites
+**My personal project: an Android wellness app for talking with Sol, checking in, and taking a break.**
 
-- Node 24.20.0 and npm 11 (see `.node-version` / `.nvmrc`).
-- One Neon branch for the Render-hosted app.
-- Podman or Docker running for automated API tests (already installed on this Linux machine).
-- An Expo account and Android phone for the development build.
+I'm [Punith Moger](https://github.com/mgr-punith). I built Solace's Android app, API, and database, then kept improving it through real phone checks. **Sol is the AI companion at the center of it.** You can talk through your day, ask it to listen, or take a breathing break from a conversation. Check-ins, daily questions, and progress give you a few other ways to use the app.
 
-## Install and configure
+[Download Android APK](https://drive.google.com/file/d/1WgamEj4WnLPNyVg7xF2_Wu5IzA6QZOvQ/view?usp=sharing) · [Watch the walkthrough](https://drive.google.com/file/d/16QlPT8gkgczPtxabPB8WtEDlsXR6eIsj/view?usp=sharing) · [APK and video folder](https://drive.google.com/drive/folders/1j8RrbAC4PEYAw3HPHSGQNZnoNHrWJofu?usp=sharing)
 
-After cloning this repository, run from its root:
+[![Verify](https://github.com/mgr-punith/solace-ai/actions/workflows/verify.yml/badge.svg)](https://github.com/mgr-punith/solace-ai/actions/workflows/verify.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-9CC9BF.svg)](LICENSE)
 
-```sh
-npm ci
-cp apps/api/.env.example apps/api/.env
-cp apps/mobile/.env.example apps/mobile/.env
+> **The first request can be slow.** I host the backend on Render's free tier. It sleeps after 15 minutes without traffic and takes about a minute to wake, sometimes longer. If opening the app, signing in, or getting a reply times out, wait a moment and retry. See [startup help](#startup-and-troubleshooting).
+
+Sol is an AI wellness companion, not a therapist or a medical device. It can make mistakes and does not provide emergency monitoring or professional care.
+
+[App interface](#app-interface) · [AI chat and response design](#ai-chat-and-response-design) · [User guide](#user-guide) · [Build history](#build-history) · [Engineering practices](#engineering-practices) · [Run the project](#run-the-project)
+
+## App interface
+
+I kept the screens quiet: sea-glass colors, Fraunces headings, Figtree body text, and Sol's face. You can choose Light or Dark, or let Auto follow the time of day. Most of the motion is in Sol, breathing, and chat; the app also supports Reduce Motion.
+
+<p>
+  <img src="docs/images/home.jpg" alt="Home: Sol, a saved mood check-in, Talk about this, and daily completion" width="250" />
+  <img src="docs/images/daily-four.jpg" alt="Daily Four: 40 points saved today and an optional Open Talk action" width="250" />
+  <img src="docs/images/progress.jpg" alt="Progress: days with Sol, the weekly mood chart, breathing minutes, and points" width="250" />
+</p>
+
+Home, Daily Four, and Progress on Android. I cropped the system bars and kept the app content unchanged. The [chat screenshot](#ai-chat-and-response-design) shows Sol's reply and its activity button.
+
+The [6-minute walkthrough](https://drive.google.com/file/d/16QlPT8gkgczPtxabPB8WtEDlsXR6eIsj/view?usp=sharing) takes you through onboarding, a check-in shared into chat, Daily Four completion, breathing, and the rest of the app.
+
+## AI chat and response design
+
+I spent the most time on how Sol replies. If you say “just listen,” it should let you talk. If a breathing break didn't help, it should accept that. I used prompt revisions, server-side rules, and tests to work toward those responses.
+
+<img src="docs/images/ai-chat.jpg" alt="A saved test conversation: the user requests a breathing break, Sol replies with one-minute breathing guidance and a Breathe for a minute button, and the footer names Groq" width="360" />
+
+In this saved test chat, I asked for a breathing break. Sol replied with a **Breathe for a minute** button. Tapping it opens the exercise; you still choose when to start. The line below the composer tells you that Groq receives messages for replies.
+
+**An example I put in the prompt to show the intended tone** (illustrative, not a recorded reply):
+
+> **You:** I keep replaying that awkward thing I said in the meeting. I just want to vent.
+>
+> **Sol:** Go ahead. Tell me what happened in the meeting; I won't jump in with advice.
+
+The [current prompt](apps/api/src/ai/prompts/sol-v2.ts) asks for short, specific replies: often one to three sentences and one useful question at most. I removed stock reassurance, therapy jargon, and exaggerated praise from the guidance. Longer answers are fine when needed. The model can still miss the mark, so the prompt is only one part of the implementation.
+
+| Decision                                      | How it helps the conversation                                                                                                                                                                                                                                               |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Use relevant conversation context**         | Include up to 20 recent messages within a 12,000-byte UTF-8 conversation budget, plus the fixed prompt. Do not infer a profile or access unshared mood notes.                                                                                                               |
+| **Respect “just listen” and declined advice** | The prompt says to stay with the conversation after a decline or an exercise that did not help. The server also blocks activity offers on consecutive replies.                                                                                                              |
+| **Ground suggestions in the app**             | The model can suggest breathing or an affirmation. It receives the actual breathing rhythms and durations from shared app constants. It cannot change settings or start a session.                                                                                          |
+| **Validate a structured reply**               | Groq returns `content`, `activity`, and `needsSupport`. Zod checks the object and a 1,600-character reply limit. The app maps allowed activities to its own routes; the model supplies no navigation URL.                                                                   |
+| **Use layered support handling**              | Deterministic checks run before the provider call. A model support flag also selects the support response. Crisis and failed replies cannot attach an activity. This reduces some failure modes; it is not complete crisis detection.                                       |
+| **Keep failures recoverable**                 | A 45-second provider deadline covers at most two attempts. Specific rate-limit, server, and Groq format errors get a bounded retry. Invalid or incomplete output becomes a saved fallback with a retry action.                                                              |
+| **Evaluate behavior beyond the happy path**   | The synthetic evaluation script covers anxiety, sadness, anger, loneliness, listening, declined activities, disappointing practice results, app controls, crisis cases, and prompt injection. Automated tests mock the provider; live evaluations need an explicit command. |
+
+The configured model is **`openai/gpt-oss-120b` through Groq**, with low reasoning effort, a 1,024-token completion ceiling, and final text only. A provider interface keeps transport details out of conversation logic. VyceAi remains an explicit alternative; there is no automatic switch that sends a conversation to another provider after a failure.
+
+```mermaid
+flowchart TD
+    A[You choose what to send] --> B[Authorize and save the message]
+    B --> C{Deterministic support check}
+    C -->|Flagged| S[Support response without activity]
+    C -->|Not flagged| D[Bound current conversation context]
+    D --> E[Versioned Sol prompt and Groq request]
+    E --> F{Validate reply and support flag}
+    F -->|Needs support| S
+    F -->|Valid| G[Apply activity policy]
+    F -->|Unavailable or invalid| H[Saved fallback with retry]
+    S --> I[Persist and display the reply]
+    G --> I
+    H --> I
 ```
 
-On an existing checkout, keep your saved `.env` files instead of overwriting them.
+One useful lesson came from a failed follow-up after an activity suggestion. The model saw plain-text assistant history while I was asking it to return JSON. A matched test reproduced the format error. I changed the history to use the same structured reply format and added a targeted retry for `json_validate_failed`. The affected synthetic cases then passed. I kept the [investigation](docs/decisions/0010-sol-activity-replies.md) in the repo because it explains the fix better than “improved AI responses.”
 
-In `apps/api/.env`, fill `DATABASE_URL` with your single Neon branch's pooled URL and `DATABASE_URL_DIRECT` with the same branch's direct URL. No `DATABASE_URL_TEST` is required. Copy URLs from Neon's Connect dialog with SSL enabled. Never paste credentials into chat, commit them, or place them in mobile configuration.
+## User guide
 
-Google authentication requires `GOOGLE_WEB_CLIENT_ID` and different random values of at least 32 characters for `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`. Chat uses `LLM_PROVIDER=groq`, `LLM_BASE_URL=https://api.groq.com/openai/v1`, `LLM_MODEL=openai/gpt-oss-120b`, and a private `LLM_API_KEY`. Enable Zero Data Retention in Groq Settings → Data Controls. `openai/gpt-oss-20b` is also supported. The explicit `vyceai` provider remains available with its own base URL/key/model; there is no automatic provider fallback. `CORS_ORIGINS` is a comma-separated allowlist for browser clients; native Android requests need no origin entry.
+### Install and sign in
+
+1. Open the [APK download](https://drive.google.com/file/d/1WgamEj4WnLPNyVg7xF2_Wu5IzA6QZOvQ/view?usp=sharing) on an Android phone and download **`solace-puneet.apk`**. The [shared folder](https://drive.google.com/drive/folders/1j8RrbAC4PEYAw3HPHSGQNZnoNHrWJofu?usp=sharing) contains the same file and the walkthrough.
+2. Open the downloaded file. If Android asks, allow installation from the browser or file manager you used, then tap **Install**. You can turn that permission off afterward.
+3. Open **Solace**, go through the introduction and privacy information, and tap **Sign in with Google**. The project's Google sign-in is published for other Google accounts.
+4. Choose your Google account. Home shows your greeting and check-in. If startup takes a while, give Render time to wake, then use the retry action.
+
+This is a standalone preview APK: you do not need a laptop, Expo Go, or a development server to use it. Account features and AI replies need an internet connection. Google sign-in requires Google Play services.
+
+| Download detail                 | Current shared build               |
+| ------------------------------- | ---------------------------------- |
+| Version                         | `0.1.0` · Android version code `1` |
+| Built                           | 9 November 2026                    |
+| Size                            | 51.0 MB · 51,011,942 bytes         |
+| Device architecture             | ARM64 (`arm64-v8a`)                |
+| Android minimum declared by APK | Android 7.0 / API 24               |
+| Device used for hands-on checks | vivo V2168, Android 14             |
+| Package                         | `com.puneet.solace`                |
+
+<details>
+<summary>Verify the downloaded APK</summary>
+
+The shared file matches the signed local preview build. Its SHA-256 is:
+
+```text
+8867dd9de2918bb9738c18a0cdfff51372014897db55ac0de59743a7c837d69c
+```
+
+On Linux, run `sha256sum solace-puneet.apk` in the download directory and compare the result. A different file or a later build will have a different hash.
+
+</details>
+
+### Find your way around
+
+| Tab          | What you can do                                                                                                  |
+| ------------ | ---------------------------------------------------------------------------------------------------------------- |
+| **Home**     | Save a mood check-in, open Your daily four, choose a suggested activity, and see today's words.                  |
+| **Wellness** | Start a breathing session, read affirmations, open daily questions, or manage reminders.                         |
+| **Talk**     | Start a conversation with Sol, continue a saved chat, or delete one.                                             |
+| **Progress** | See check-in history, seven days of mood, breathing minutes, participation points, and days with Sol.            |
+| **You**      | Change appearance, manage reminders, revisit privacy, open saved affirmations, sign out, or delete your account. |
+
+### Check in and choose what to share
+
+On **Home**, choose **Heavy, Low, Okay, Good, or Glowing**. Add feelings and a note if you want, then tap **Save check-in**. You can save another check-in later; Progress keeps the history.
+
+**Talk about this** opens a chat with an editable draft based on that check-in. Read it, change or remove details, then tap the send arrow when ready. Sol only receives that draft after you send it. Saving a check-in alone does not share it with the AI provider.
+
+Home also offers a suggested activity with a reason and duration, plus **Other ideas**. These choices use curated rules based on today's mood and feelings; they do not read private notes or call a model. **Today with Sol** has two completion markers: a saved check-in, and a saved breathing session or affirmation read. After both, **More ideas for today** keeps further activities available.
+
+### Talk with Sol
+
+Open **Talk → New conversation**, type your message, and tap the send arrow, labelled **Send message** for screen readers. Sol can listen, ask a follow-up, or answer a question. You can say that you want to vent or that you do not want advice.
+
+- Continue a saved conversation from Talk to keep its context. Start a new conversation for a separate chat.
+- If a reply offers **Breathe for a minute** or **Read today's words**, tap it to open that activity. You choose whether to start or save anything.
+- Return to the conversation after an activity. A prepared reflection remains editable and waits for you to send it.
+- If a reply fails, use **Retry** on that turn. The saved request keeps a retry from duplicating your message. An unconfirmed send has its own retry state.
+- Use the delete control beside a conversation and confirm to remove the conversation and its messages.
+
+The provider notice in chat identifies the service receiving messages for replies. The current deployment uses Groq. See [how the responses work](#ai-chat-and-response-design) below.
+
+### Answer Your daily four
+
+Open **Your daily four** from Home or Wellness. Answer the questions about rest, energy, focus, and connection; **Prefer to skip** is a valid choice. Use Back to change an answer, review the four choices, then tap **Finish and earn 40 points**.
+
+You earn **40 participation points once per local day**, regardless of your answers. Points do not score your mental health and have no monetary value. Seven curated question sets rotate by date. Closing and reopening the modal resumes the draft during the app session; unsaved answers do not survive app termination.
+
+The server validates the answers and stores the completion and points, not the answers. Your saved total appears in Progress and remains after reopening the app. Repeating a save does not award more points.
+
+### Breathe and read affirmations
+
+Open **Wellness → Take a breathing break**. The default is one minute of Coherent breathing. Tap **Customize** to choose **Coherent, Box, or 4–7–8** and **1, 3, or 5 minutes**, then start. Follow Sol's pacing; pause or end whenever you need. Leaving the foreground pauses the practice, and you choose when to resume. Stop if it feels uncomfortable.
+
+After finishing, you can note how you feel and tap **Save session** to add it to Progress. An optional conversation draft lets you talk about the experience without assuming that you feel better.
+
+**Wellness → Open affirmations** shows today's line from 60 original affirmations. Tap **I've read this** to record the read; the action changes to **Read today**. **Save to favorites** is a separate action. Open favorites from **You → Saved affirmations**.
+
+### Set reminders and appearance
+
+Open **You → Reminders**, allow notifications when you want them, and enable the types you need: mood check-in, affirmation, breathing, self-care, or a custom reminder. Choose one time and the weekdays for each type, set quiet hours, and tap **Save reminders**. Times within quiet hours are skipped.
+
+Your phone schedules these notifications; Render does not need to be awake for them to fire. Tapping a notification opens the matching screen, after sign-in if needed. Android battery settings can delay delivery, and using **Force stop** prevents notifications until you open the app again. Reminder text may appear on the lock screen.
+
+In **You → Appearance**, choose **Auto, Light, or Dark**. Auto follows your local time of day. Solace saves this choice on the device.
+
+### Privacy and deletion
+
+Google supplies your account identity, name, email, and profile image when available. The Render API stores account data in Neon PostgreSQL. Chat messages go to the AI provider named in the app so it can generate replies. This is not end-to-end encrypted chat.
+
+Sol uses a bounded part of the **current conversation**. It does not have cross-conversation memory or access to unshared check-ins. Sharing a check-in makes a separate chat message: deleting the original check-in does not remove that shared copy.
+
+Delete check-ins from **Progress**, conversations from **Talk**, or the account and its saved data from **You → Delete account**. Account deletion requires confirmation and a successful server response. **You → Privacy** explains these controls in the app.
+
+**Need support now?** opens the configured support resources and a region choice. The resource screen is available offline; calling requires phone service and your tap. For immediate danger, contact local emergency services or someone you trust.
+
+### Startup and troubleshooting
+
+| What you see                                      | What to try                                                                                                                                                                                                                          |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| First launch, sign-in, or first reply is slow     | Wait about a minute for Render to wake, then use the screen's retry action. The [backend readiness page](https://solace-ai-n8s4.onrender.com/ready) also wakes the service; it should report `status: ok` and `database: connected`. |
+| **Reload chat details**                           | The app could not load its AI provider disclosure. Reload it before sending; support resources remain available.                                                                                                                     |
+| A saved message has no reply                      | Use **Retry**. A cold start, provider timeout, or rate limit can interrupt a reply. Avoid retyping it as a new message.                                                                                                              |
+| Sign-in appears again after reopening or updating | Sign in with the same Google account to reconnect to your saved data. An intermittent session-restoration issue remains under investigation.                                                                                         |
+| Google sign-in fails                              | Check connectivity and Google Play services, allow Render to wake, and retry. Report the error label without tokens or account details.                                                                                              |
+| Android cannot install the APK                    | Check that the device supports ARM64. An existing build signed with a different key cannot be updated in place. This download has no iOS or x86 emulator build.                                                                      |
+| A reminder did not arrive                         | Check notification permission, selected days, quiet hours, and Android battery restrictions. Open Solace again after a force-stop.                                                                                                   |
+| A save fails while offline                        | Keep the screen open and retry after reconnecting. Unsaved drafts are not a durable offline queue.                                                                                                                                   |
+
+Render documents its [free-service startup behavior](https://render.com/docs/free#spinning-down-on-idle). This personal project uses a shared demo backend and provider quotas, so availability and reply times vary.
+
+## Build history
+
+I built this one working slice at a time. First the API and sign-in, then the check-ins, chat, and activities. Phone testing led to several fixes after the first implementation. **The APK is still version `0.1.0`; these are the milestones within that version.** The links lead to the commits and pull requests.
+
+| Milestone                                    | What changed                                                                                                             | Trace                                                                                                          |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| Foundation · 5 Nov                           | npm workspaces, Expo app, Express health/readiness endpoints, Neon, Drizzle, TypeScript, and CI.                         | [Initial commit](https://github.com/mgr-punith/solace-ai/commit/df4a5cc)                                       |
+| Google identity and Android builds · 5–6 Nov | Native Google sign-in, rotating app sessions, SecureStore, and local signed development builds.                          | [#1](https://github.com/mgr-punith/solace-ai/pull/1), [#2](https://github.com/mgr-punith/solace-ai/pull/2)     |
+| Sol and onboarding · 6 Nov                   | Design tokens, character, fonts, introduction, and privacy flow.                                                         | [#3](https://github.com/mgr-punith/solace-ai/pull/3)                                                           |
+| Mood check-ins and isolated tests · 6 Nov    | Saved moods, notes, history, deletion, and disposable PostgreSQL for API tests.                                          | [#4](https://github.com/mgr-punith/solace-ai/pull/4), [#5](https://github.com/mgr-punith/solace-ai/pull/5)     |
+| Persistent AI chat · 6 Nov                   | Conversation history, context and safety handling, a provider interface, then Groq and bounded deadlines.                | [#6](https://github.com/mgr-punith/solace-ai/pull/6), [#7](https://github.com/mgr-punith/solace-ai/pull/7)     |
+| Reminders and usable Android forms · 7 Nov   | Local notification schedules, account sync, safe tap routing, and keyboard/accessibility fixes.                          | [#9](https://github.com/mgr-punith/solace-ai/pull/9), [#10](https://github.com/mgr-punith/solace-ai/pull/10)   |
+| Wellness and navigation · 8 Nov              | Breathing patterns, affirmations, favorites, weekly progress, streaks, and native Back/layout refinements.               | [#11](https://github.com/mgr-punith/solace-ai/pull/11), [#12](https://github.com/mgr-punith/solace-ai/pull/12) |
+| Connected daily flow · 8 Nov                 | Editable check-in and reflection drafts, improved chat presentation, and clearer privacy boundaries.                     | [#13](https://github.com/mgr-punith/solace-ai/pull/13)                                                         |
+| More specific Sol replies · 8 Nov            | Versioned reply guidance, structured activity buttons, chat motion, and accurate breathing-control answers.              | [#14](https://github.com/mgr-punith/solace-ai/pull/14), [#15](https://github.com/mgr-punith/solace-ai/pull/15) |
+| Provider-format recovery · 8 Nov             | Reproduced a failed follow-up, preserved structured assistant history, and added a targeted retry.                       | [#16](https://github.com/mgr-punith/solace-ai/pull/16)                                                         |
+| Daily experience and layout · 9 Nov          | Persisted appearance, affirmation read status, daily activity suggestions, check-in feedback, and compact phone layouts. | [#17](https://github.com/mgr-punith/solace-ai/pull/17), [#18](https://github.com/mgr-punith/solace-ai/pull/18) |
+| Your daily four · 9 Nov                      | Rotating questions, review before save, 40 points per day, retry protection, and account-backed totals.                  | [#19](https://github.com/mgr-punith/solace-ai/pull/19)                                                         |
+
+I kept the tradeoffs in [short architecture notes](docs/decisions/). Read them by date: the later notes explain changes to earlier decisions.
+
+### The laptop needed a breathing break
+
+At 2 a.m., I was building a wellness app with **8.5 GB of RAM in use, 13.4 GB of swap, and eight CPU readings around 97–98%**. Sol had the calmer evening.
+
+<img src="docs/images/android-build-resources.png" alt="Linux system monitor during an Android build: 8.5 GB of 12.4 GB memory used, 13.4 GB of 21.5 GB swap used, and CPU readings at 97–98 percent" width="760" />
+
+The screenshot shows **whole-computer usage during one local Android build**, including the other tools I had open. It isn't a measurement of Solace's RAM use on a phone. I cropped it to the system monitor.
+
+## Engineering practices
+
+| Practice                          | How I used it in Solace                                                                                                                                                           |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Small vertical slices**         | I took each feature through its contract, API, screen, and tests. Feature branches and Conventional Commits made the pull requests easier to review.                              |
+| **Clear boundaries**              | Screen routes stay thin. Backend services handle business rules; repositories handle SQL. Injected providers, databases, and clocks let tests control failures and time.          |
+| **Contracts and validation**      | Mobile and API share TypeScript types and Zod schemas. Requests and model output get runtime validation. Database changes use checked-in Drizzle migrations.                      |
+| **Safe retries and concurrency**  | I used request IDs, transactions, and reply leases to protect saved messages from duplicate retries. A unique account/day record prevents awarding daily points twice.            |
+| **Tests with the implementation** | I tested account isolation, deletion, pagination, midnight and DST boundaries, safety phrases, failed saves, and reminder scheduling. Reproduced bugs got regression tests.       |
+| **An isolated test database**     | Vitest starts a disposable PostgreSQL container and runs real migrations. Tests mock Google and the model, and never use the app's Neon credentials.                              |
+| **Privacy in the data flow**      | Provider keys stay on the server, app tokens use SecureStore, and the database stores refresh-token hashes. Queries check ownership; logs omit conversation text and credentials. |
+| **Design before screen code**     | I wrote the [tokens and screen flows](docs/design/DESIGN.md) first, then refined them on the phone. Loading, empty, retry, and reduced-motion states are part of the screens.     |
+| **CI and phone checks**           | `npm run verify` checks formatting, lint, types, and tests. CI also builds the API and exports Android JavaScript. I checked signed APKs and phone behavior separately.           |
+
+The [QA checklist](docs/qa-checklist.md) records both passes and unfinished checks. Session-restoration investigation, a full clean-install release pass, and broader TalkBack/motion checks remain open. iOS/TestFlight, cross-conversation memory with fresh consent and view/delete controls, and data export are future work.
+
+## Run the project
+
+Solace uses **npm workspaces**:
+
+```text
+apps/mobile/       Expo 58, React Native 0.88, Expo Router
+apps/api/          Node.js, Express 5, Groq adapter, Drizzle migrations
+packages/shared/   Zod schemas, types, and shared wellness logic
+docs/              Design, setup, decisions, and QA evidence
+```
+
+Mobile uses TanStack Query for server state, small React-backed stores for client state, Skia and Reanimated for Sol and motion, SecureStore, and local Expo notifications. The API uses PostgreSQL on Neon, Zod, Pino, and Google's token verifier. [Package manifests](package.json) and the lockfile contain the installed versions.
+
+For a fresh checkout, use **Node 24.20.0, npm 11, and a running Podman or Docker runtime**:
 
 ```sh
+git clone https://github.com/mgr-punith/solace-ai.git
+cd solace-ai
+npm ci
+npm run verify
+```
+
+Tests do not need Google, Groq, or Neon credentials. The first test run may download the PostgreSQL container image.
+
+To run your own API, copy the examples and fill the server configuration with your own credentials:
+
+```sh
+cp apps/api/.env.example apps/api/.env
+cp apps/mobile/.env.example apps/mobile/.env
+# Fill the environment files before the next commands.
 npm run db:check
 npm run db:migrate
 npm run dev:api
 ```
 
-The API listens on port 4000. From another terminal:
+From another terminal, `curl http://localhost:4000/ready` should return `{"status":"ok","database":"connected"}`. Deploy your API to Render over HTTPS before testing it from an installed app. The published APK points at this project's demo backend; changing a local `.env` cannot change that APK.
 
-```sh
-curl http://localhost:4000/health
-curl http://localhost:4000/ready
-```
+Follow the [developer guide](docs/DEVELOPMENT.md) for environment variables, fork-specific Google/EAS configuration, Render deployment, local Android builds, and the command reference. A development build includes the native Google sign-in code; Metro serves JavaScript updates during development. A preview build bundles that JavaScript into the APK for standalone use.
 
-Expected responses: `{"status":"ok"}` and `{"status":"ok","database":"connected"}`. A database failure returns HTTP 503 with a safe error message.
+## Contributing and license
 
-## Run on Android
+Found a bug or have an idea? Open an [issue](https://github.com/mgr-punith/solace-ai/issues) or send a focused pull request. Include steps to reproduce a bug and what you tested. For UI changes, screenshots with sample data help. Please keep private conversations, account details, credentials, and signing files out of issues and commits.
 
-See [Android setup](docs/setup/android.md). The app uses a development build, your own installable test version of Solace. EAS compiles it locally on this Linux machine; Metro serves JavaScript changes from the computer. Follow [local Android setup](docs/setup/android-local.md) and run `npm run build:android:local -w @solace/mobile`.
+Run `npm run verify` before a pull request. See the [contribution notes](docs/DEVELOPMENT.md#contributing) and [agent instructions](AGENTS.md) for the repository conventions.
 
-The installed app always uses the API hosted at `https://solace-ai-n8s4.onrender.com`, including during local Android development. Do not point the app at a local API or tunnel. Merge backend changes to `main` and wait for Render deployment before testing new endpoints on the phone. Set this as `EXPO_PUBLIC_API_URL` and set `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` to the same public Web OAuth client ID as the API. EAS profiles include these public values so ignored local environment files are not required for a cloud build. No private keys or database URLs belong in `EXPO_PUBLIC_*` variables.
-
-```sh
-npm run dev:mobile
-```
-
-Rebuild the development APK after installing Google Sign-In and SecureStore, then connect it to Metro. First launch shows four introduction pages. “Skip intro” still opens privacy; saving continues to sign-in. You can replay the introduction or review privacy from You. Sol uses the current conversation, including check-ins you choose to send as messages. Cross-conversation memory is not active and requires fresh consent and deletion controls before implementation.
-
-The sign-in screen opens Google's native account picker; a successful sign-in shows your name. Tokens are saved in SecureStore and restored on relaunch. The foundation connection screen remains at `/connection`.
-
-Auth endpoints: `POST /v1/auth/google`, `POST /v1/auth/refresh`, `POST /v1/auth/logout`, `GET /v1/me`, and `DELETE /v1/me`. Protected requests use `Authorization: Bearer <access-token>`. Refresh tokens rotate once, replay revokes their session, and logout invalidates access immediately. See [authentication setup](docs/setup/google-auth.md).
-
-## Checks and database changes
-
-```sh
-npm run verify       # formatting, lint, types, all workspace tests
-npm run build        # compile shared contracts and API
-npm run db:generate  # generate a migration after a schema change
-npm run db:migrate   # apply generated migrations to development
-npm run db:studio    # development database viewer; schema changes use migrations
-```
-
-API tests automatically start an official PostgreSQL 17 container, apply the real migrations and exercise the SQL repositories. The container uses temporary storage, a random local port and credentials, and is removed after the run, including test failures. The first run downloads `postgres:17-alpine`; later runs reuse the image. Tests use only the container settings supplied by Vitest and never read your Neon URLs. If neither Podman nor Docker is running, verification fails with setup instructions rather than skipping tests.
-
-GitHub Actions uses the same temporary container and needs no database secrets or Neon test branch. `DATABASE_URL_TEST` is unused and can be removed from old local/Render/GitHub configuration. Keep `npm run db:check` and real-device checks against Render to verify Neon connectivity; local PostgreSQL does not reproduce hosted TLS/network behavior. See [single Neon branch testing](docs/decisions/0005-single-neon-branch.md).
-
-## Structure
-
-- `apps/mobile/src/app`: thin Expo Router routes.
-- `apps/mobile/src/features`: feature UI, API calls, and tests.
-- `apps/api/src`: Express application, configuration, migrations, and modules.
-- `packages/shared`: Zod response schemas and TypeScript types.
-- `docs/design/DESIGN.md`: proposed visual direction and Phase 2 approval gate.
-- `docs/decisions`: architecture choices.
-- `docs/qa-checklist.md`: device checks that automation cannot replace.
-
-Render hosts the foundation API. Set `TRUST_PROXY=1` there and add the auth environment values before deploying the auth slice. The start command applies migrations before starting the API. See [foundation decisions](docs/decisions/0001-foundation.md).
-
-## Phase 2 design preview
-
-In the updated development app, tap **Meet Sol · Preview** from the signed-in screen. Tap Sol, choose a mood, try a slow breath, then scroll to the sky and motion controls. The preview does not save check-ins. Splash and onboarding follow the phone design review.
-
-For browser review only, run `npm run setup:web -w @solace/mobile` before opening `/design-preview` through Metro. This serves the matching CanvasKit file locally. Repeat setup after upgrading Skia; the generated WASM file is ignored. Android does not use this file.
-
-## Home and mood check-ins
-
-Phase 3 adds Home, Progress and You tabs. Choose a mood, optionally add up to five emotion tags and a 500-character note, then tap **Save check-in**. Saved entries appear on Home and in Progress; deletion removes the mood, tags and note. Other planned tabs appear when their features are implemented.
-
-Phase 5 adds **You → Reminders**. Allow notifications when ready, enable a type, choose its time and weekdays, and tap **Save reminders**. Preferences are cached securely on the phone and synced to the account; a failed sync stays pending for retry. Quiet hours skip matching times. Notifications are scheduled by the phone and can fire after swiping the app away, though Android battery policy can delay them. Force-stop prevents delivery until reopening. Non-mood reminders open a matching gentle prompt; breathing and affirmation prompts now link into the full activity.
-
-This phase needs migration `0004_flat_shiva.sql` deployed on Render and a new local APK for `expo-notifications`. No new environment variables or push-service setup are needed. Run `npm run build:android:local -w @solace/mobile`, install with `adb install -r apps/mobile/dist/local/solace-development.apk`, and reconnect to Metro. See [reminder decisions](docs/decisions/0008-local-reminders.md) and [device checks](docs/qa-checklist.md).
-
-The API exposes `POST /v1/mood-checkins`, `GET /v1/mood-checkins`, `GET /v1/mood-checkins/:id` and `DELETE /v1/mood-checkins/:id`. Requests require the current access token and only access the caller’s entries. Creation accepts `requestId`, `mood` (1–5), `tags`, `note`, and an IANA `timezone`. Reusing a request ID with identical input returns the existing check-in; different input returns 409. Lists support `limit` (1–30), `cursor`, and `period=today&timezone=Asia/Kolkata`. New records update the profile timezone. Account deletion cascades mood and profile rows.
-
-Failed saves keep their input while the form stays mounted and retry the same request ID. Unsaved drafts are not persisted across app termination. Query data stays in memory, is scoped to the signed-in account, and clears on logout. Notes and tokens are not written to logs or unencrypted disk caches.
-
-Render’s existing start command applies the checked-in Drizzle migration before serving. The app cannot verify new mood flows against an older Render deployment; finish deployment before the phone QA pass.
-
-## AI chat
-
-Talk opens saved conversations. Choose **New conversation**, type a message and tap **Send message**. Sol replies using the AI provider shown in chat; close and reopen to continue. Retries reuse the saved turn, and deleting a conversation removes its messages. **Support** opens verified region-specific helplines even offline, with an explicit dialer action. Sol is a companion, not professional care.
-
-Before merging the chat feature, set the four `LLM_*` values above in Render's environment. Copy the key privately from `apps/api/.env`; never put it in a PR, screenshot, mobile variable or log. The API now fails at startup if the key/model are missing. Render's normal start command applies the conversation migration. Check `/ready` and that an unauthenticated `/v1/conversations` returns 401 before phone QA.
-
-Chat endpoints: `POST/GET /v1/conversations`, `GET/DELETE /v1/conversations/:id`, and `GET/POST /v1/conversations/:id/messages`. Creation requires a `requestId`; sending requires a `requestId` and `content` (1–2,000 characters). Lists use cursor pagination. Replies are non-streaming, bounded and saved. See [chat decisions](docs/decisions/0006-persistent-chat.md).
-
-Run `npm run ai:eval` only when you want a manual evaluation against the real configured provider; it may incur provider usage. Its 13 scenarios are synthetic, and the command prints their responses plus HTTP status/error codes for review, without upstream error messages or credentials. To check specific cases, run `npm run ai:eval -w @solace/api -- declined-activity after-breathing`. Automated tests always mock the model. Memory across conversations, automatic mood context and summaries remain deferred to Phase 7 consent controls.
-
-Sol may attach **Breathe for a minute** or **Read today’s words** to a reply. These open the existing activities and preserve your chat draft. Breathing waits for Start; reading and saving stay explicit. Sol does not offer another button on the immediately following reply. Crisis, failed and pending replies suppress activity invitations. Old chats stay readable. The v2 prompt favors short, specific replies; `npm run ai:eval` checks the reply format and activity choices, while tone still needs review.
-
-Deploy migration `0006_chat_activities.sql` with the backend before testing suggestions on the phone. Groq uses its supported strict JSON schema mode; the server validates reply text and the activity allowlist. The existing provider-failure retry flow handles invalid output. No new environment variable or native dependency is required. See [reply and activity decisions](docs/decisions/0010-sol-activity-replies.md).
-
-### Switching the deployed AI provider
-
-Deploy code that supports the new provider before changing `LLM_PROVIDER` on Render. This version accepts both Groq and VyceAi; the older Phase 4 version accepts only VyceAi. After this version is live, update all four `LLM_*` variables together in Render and redeploy. Local `.env` changes never update Render automatically. Verify `GET /v1/chat-provider` returns `{"provider":"groq"}` and `/ready` reports the database connected before testing the installed app.
-
-The app fetches the provider name from Render for its disclosure. If this cannot be loaded, saved chats and Support remain available, while send/retry waits for **Reload chat details**. Keys and model credentials are never returned to the app. The adapter uses a 45-second total deadline across both attempts and response reading, honors bounded `Retry-After`, and persists the existing fallback on failure. Groq GPT-OSS uses low reasoning effort, a 1,024-token completion ceiling and final text only; incomplete responses are rejected. No native dependency or APK rebuild is needed for this change.
-
-## Wellness and progress
-
-Phase 6 adds the Wellness tab and a consistent Lucide icon set. Open **Wellness → Take a breathing break**, choose Coherent, Box or 4–7–8 and 1/3/5 minutes, then start. Leaving the foreground pauses practice; resume explicitly. After completion, optionally rate your mood and **Save session**. A failed save retries the same request while you keep the screen open.
-
-**Wellness → Open affirmations** shows one of 60 original daily lines. **I’ve read this** adds a wellness action and changes to **Read today**, including on a return visit. **Save to favorites** stores it separately in your account. Progress combines saved activities with check-ins, displays seven local days of average mood and breathing minutes, and counts consecutive days without pressure after gaps. Dates follow the phone's current timezone; a delayed save counts when received by the server.
-
-Deploy migration `0005_curved_master_chief.sql` through Render's normal deployment before phone testing. No new environment variables are needed. Build a new local APK for the added `react-native-svg` native module; `lucide-react-native` provides the icons. Preserve the registered signing certificate and install with `adb install -r`. API endpoints: `POST /v1/activities`, `GET /v1/progress?timezone=Asia%2FKolkata`, `GET /v1/affirmation-favorites`, `PUT/DELETE /v1/affirmation-favorites/:id`. See [wellness decisions](docs/decisions/0009-wellness-progress.md) and [QA checklist](docs/qa-checklist.md).
-
-**You → Appearance** offers Auto, Light and Dark and saves the choice on this device. Auto follows local time. Home adds an expressive check-in and two daily moments: a saved check-in and a saved breathing session or affirmation. After both, further activities stay behind **More ideas for today**.
-
-Home's daily suggestions use today's mood and selected feelings to offer a curated activity with a reason, duration and alternatives. They do not read private notes or call the AI provider. **Reflect with Sol** opens an editable prompt; only tapping Send shares it. `GET /v1/wellness/today?timezone=Asia%2FKolkata` supplies account-scoped daily completion and affirmation read IDs from the existing tables. Deploy this endpoint to Render before testing the updated APK. This extension needs no migration, environment change or new dependency. See [daily UX decisions](docs/decisions/0011-daily-wellness-ux.md).
+**[MIT licensed](LICENSE).** Copyright © 2026 Punith Moger. Retain the license and attribution when reusing the project. The Expo template's [original notice](apps/mobile/LICENSE) and dependencies' licenses still apply.
