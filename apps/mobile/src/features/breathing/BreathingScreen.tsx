@@ -1,7 +1,7 @@
 import { useScreenBack } from '../../lib/useScreenBack';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, Alert, Platform, Pressable, Switch, View } from 'react-native';
+import { ActivityIndicator, Pressable, Switch, View } from 'react-native';
 import { router, useLocalSearchParams, usePreventRemove } from 'expo-router';
 import {
   breathingPatterns,
@@ -25,6 +25,7 @@ import { useAuth } from '../auth/context';
 import { reflectionDraft, seedChatDraft } from '../chat/drafts';
 import { useStartConversation } from '../chat/useStartConversation';
 import { useLayoutMetrics } from '../../theme/layout';
+import { ConfirmSheet, type ConfirmSheetState } from '../../components/ui/ConfirmSheet';
 function MoodRating({
   label,
   value,
@@ -75,10 +76,12 @@ export function BreathingScreen() {
   const [saved, setSaved] = useState(false);
   const [discard, setDiscard] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmation, setConfirmation] = useState<ConfirmSheetState | null>(null);
   const payload = useRef<ActivityInput | null>(null);
   const saving = useRef(false);
   const mutation = useSaveActivity();
   const { sky, haptics, setHaptics } = useTheme();
+  const dismissConfirmation = useCallback(() => setConfirmation(null), []);
   usePreventRemove(!!practice && !saved && !discard, ({ repeat }) => {
     pause();
     const leave = () => {
@@ -89,14 +92,17 @@ export function BreathingScreen() {
       practice?.status === 'complete'
         ? 'This completed session has not been saved. Leave without saving it?'
         : 'This practice will end without being saved.';
-    if (Platform.OS === 'web') {
-      if (window.confirm(message)) leave();
-      return;
-    }
-    Alert.alert('Leave this session?', message, [
-      { text: 'Stay here', style: 'cancel' },
-      { text: 'Leave session', onPress: leave },
-    ]);
+    setConfirmation({
+      title: 'Leave this session?',
+      message,
+      cancelLabel: 'Stay',
+      confirmLabel: 'Leave',
+      icon: 'wind',
+      onConfirm: () => {
+        setConfirmation(null);
+        leave();
+      },
+    });
   });
   async function save() {
     if (practice?.status !== 'complete' || saving.current || saved) return;
@@ -128,18 +134,17 @@ export function BreathingScreen() {
       setAfterMood(null);
       setError(null);
     };
-    if (Platform.OS === 'web') {
-      if (window.confirm('End this practice without saving?')) clear();
-      return;
-    }
-    Alert.alert(
-      'End this practice?',
-      'You can begin again whenever you like. Partial sessions are not saved.',
-      [
-        { text: 'Keep session', style: 'cancel' },
-        { text: 'End session', onPress: clear },
-      ],
-    );
+    setConfirmation({
+      title: 'End this practice?',
+      message: 'You can begin again whenever you like. Partial sessions are not saved.',
+      cancelLabel: 'Keep',
+      confirmLabel: 'End',
+      icon: 'wind',
+      onConfirm: () => {
+        setConfirmation(null);
+        clear();
+      },
+    });
   }
   function reflect() {
     const draft = reflectionDraft(duration, afterMood);
@@ -149,202 +154,209 @@ export function BreathingScreen() {
     } else void chat.start(draft);
   }
   return (
-    <Screen>
-      <PageHeader title="Breathe" back={goBack} />
-      {!practice ? (
-        <>
-          <View style={layoutStyles.centered}>
-            <Companion size={compact ? tokens.sol.home : tokens.sol.onboarding} />
-            <AppText variant="title">
-              {duration === 60
-                ? 'Breathe for one minute.'
-                : `Breathe for ${duration / 60} minutes.`}
+    <>
+      <Screen>
+        <PageHeader title="Breathe" back={goBack} />
+        {!practice ? (
+          <>
+            <View style={layoutStyles.centered}>
+              <Companion size={compact ? tokens.sol.home : tokens.sol.onboarding} />
+              <AppText variant="title">
+                {duration === 60
+                  ? 'Breathe for one minute.'
+                  : `Breathe for ${duration / 60} minutes.`}
+              </AppText>
+              <AppText variant="bodySmall" tone="secondary">
+                {breathingPatterns[pattern].name} · {breathingPatterns[pattern].description}
+              </AppText>
+            </View>
+            <Action icon="play" onPress={() => start(duration)}>
+              Start breathing
+            </Action>
+            <AppText variant="caption" tone="secondary">
+              Breathe comfortably. Pause or stop if it doesn’t feel right.
             </AppText>
-            <AppText variant="bodySmall" tone="secondary">
-              {breathingPatterns[pattern].name} · {breathingPatterns[pattern].description}
-            </AppText>
-          </View>
-          <Action icon="play" onPress={() => start(duration)}>
-            Start breathing
-          </Action>
-          <AppText variant="caption" tone="secondary">
-            Breathe comfortably. Pause or stop if it doesn’t feel right.
-          </AppText>
-          <Action variant="quiet" icon="settings" onPress={() => setCustomizing(!customizing)}>
-            {customizing ? 'Close customization' : 'Customize'}
-          </Action>
-          {customizing && (
-            <>
-              <View style={layoutStyles.gap}>
-                <View style={layoutStyles.row}>
-                  <Icon name="wind" />
-                  <AppText variant="heading">Breathing rhythm</AppText>
-                </View>
-                {(['coherent', 'box', '478'] as BreathingPattern[]).map((key) => (
-                  <Pressable
-                    key={key}
-                    accessibilityRole="button"
-                    accessibilityLabel={breathingPatterns[key].name}
-                    accessibilityState={{ selected: pattern === key }}
-                    onPress={() => setPattern(key)}
-                    style={({ pressed }) => [
-                      {
-                        minHeight: tokens.target,
-                        padding: tokens.spacing.smd,
-                        borderRadius: tokens.radius.tag,
-                        borderWidth: tokens.border,
-                        borderColor: pattern === key ? sky.palette.text : sky.surface,
-                        backgroundColor: sky.surface,
-                        opacity: pressed ? tokens.opacity.pressed : 1,
-                      },
-                      layoutStyles.row,
-                    ]}
-                  >
-                    <View style={layoutStyles.grow}>
-                      <AppText>{breathingPatterns[key].name}</AppText>
-                      <AppText variant="caption" tone="secondary">
-                        {breathingPatterns[key].description}
-                      </AppText>
-                    </View>
-                    {pattern === key && <Icon name="check" />}
-                  </Pressable>
-                ))}
-              </View>
-              <View style={layoutStyles.gap}>
-                <AppText variant="heading">Session length</AppText>
-                <View style={layoutStyles.wrap}>
-                  {practiceDurations.map((seconds) => (
-                    <Action
-                      key={seconds}
-                      secondary
-                      selected={duration === seconds}
-                      onPress={() => setDuration(seconds)}
-                    >{`${seconds / 60} min`}</Action>
+            <Action variant="quiet" icon="settings" onPress={() => setCustomizing(!customizing)}>
+              {customizing ? 'Close customization' : 'Customize'}
+            </Action>
+            {customizing && (
+              <>
+                <View style={layoutStyles.gap}>
+                  <View style={layoutStyles.row}>
+                    <Icon name="wind" />
+                    <AppText variant="heading">Breathing rhythm</AppText>
+                  </View>
+                  {(['coherent', 'box', '478'] as BreathingPattern[]).map((key) => (
+                    <Pressable
+                      key={key}
+                      accessibilityRole="button"
+                      accessibilityLabel={breathingPatterns[key].name}
+                      accessibilityState={{ selected: pattern === key }}
+                      onPress={() => setPattern(key)}
+                      style={({ pressed }) => [
+                        {
+                          minHeight: tokens.target,
+                          padding: tokens.spacing.smd,
+                          borderRadius: tokens.radius.tag,
+                          borderWidth: tokens.border,
+                          borderColor: pattern === key ? sky.palette.text : sky.surface,
+                          backgroundColor: sky.surface,
+                          opacity: pressed ? tokens.opacity.pressed : 1,
+                        },
+                        layoutStyles.row,
+                      ]}
+                    >
+                      <View style={layoutStyles.grow}>
+                        <AppText>{breathingPatterns[key].name}</AppText>
+                        <AppText variant="caption" tone="secondary">
+                          {breathingPatterns[key].description}
+                        </AppText>
+                      </View>
+                      {pattern === key && <Icon name="check" />}
+                    </Pressable>
                   ))}
                 </View>
-                <Action variant="quiet" onPress={() => setShowBeforeMood(!showBeforeMood)}>
-                  {showBeforeMood ? 'Hide starting mood' : 'Add a starting mood · optional'}
-                </Action>
-                {showBeforeMood && (
-                  <MoodRating
-                    label="Before your session"
-                    value={beforeMood}
-                    onChange={setBeforeMood}
-                    disabled={false}
-                  />
-                )}
-                <View style={layoutStyles.row}>
-                  <AppText style={layoutStyles.grow}>Vibrate with each breath</AppText>
-                  <Switch
-                    accessibilityLabel="Breathing haptics"
-                    value={haptics}
-                    onValueChange={setHaptics}
-                    trackColor={{ true: tokens.action.background, false: sky.palette.secondary }}
-                  />
+                <View style={layoutStyles.gap}>
+                  <AppText variant="heading">Session length</AppText>
+                  <View style={layoutStyles.wrap}>
+                    {practiceDurations.map((seconds) => (
+                      <Action
+                        key={seconds}
+                        secondary
+                        selected={duration === seconds}
+                        onPress={() => setDuration(seconds)}
+                      >{`${seconds / 60} min`}</Action>
+                    ))}
+                  </View>
+                  <Action variant="quiet" onPress={() => setShowBeforeMood(!showBeforeMood)}>
+                    {showBeforeMood ? 'Hide starting mood' : 'Add a starting mood · optional'}
+                  </Action>
+                  {showBeforeMood && (
+                    <MoodRating
+                      label="Before your session"
+                      value={beforeMood}
+                      onChange={setBeforeMood}
+                      disabled={false}
+                    />
+                  )}
+                  <View style={layoutStyles.row}>
+                    <AppText style={layoutStyles.grow}>Vibrate with each breath</AppText>
+                    <Switch
+                      accessibilityLabel="Breathing haptics"
+                      value={haptics}
+                      onValueChange={setHaptics}
+                      trackColor={{ true: tokens.action.background, false: sky.palette.secondary }}
+                    />
+                  </View>
                 </View>
-              </View>
-            </>
-          )}
-        </>
-      ) : (
-        <Surface>
-          <AppText variant="caption" tone="secondary">
-            {breathingPatterns[pattern].name} · {duration / 60} minute{duration === 60 ? '' : 's'}
-          </AppText>
-          <BreathingGuide pattern={pattern} practice={practice} />
-          <View
-            accessibilityRole="progressbar"
-            accessibilityLabel="Session progress"
-            accessibilityValue={{
-              min: 0,
-              max: duration,
-              now: Math.floor(practice.elapsedMs / 1000),
-            }}
-            style={{
-              height: tokens.spacing.xs,
-              borderRadius: tokens.radius.pill,
-              backgroundColor: sky.palette.background,
-              overflow: 'hidden',
-            }}
-          >
+              </>
+            )}
+          </>
+        ) : (
+          <Surface>
+            <AppText variant="caption" tone="secondary">
+              {breathingPatterns[pattern].name} · {duration / 60} minute{duration === 60 ? '' : 's'}
+            </AppText>
+            <BreathingGuide pattern={pattern} practice={practice} />
             <View
-              style={{
-                height: '100%',
-                width: `${(100 * practice.elapsedMs) / practice.durationMs}%`,
-                backgroundColor: sky.palette.text,
+              accessibilityRole="progressbar"
+              accessibilityLabel="Session progress"
+              accessibilityValue={{
+                min: 0,
+                max: duration,
+                now: Math.floor(practice.elapsedMs / 1000),
               }}
-            />
-          </View>
-          {practice.status !== 'complete' ? (
-            <>
-              <AppText variant="caption" tone="secondary" style={{ textAlign: 'center' }}>
-                {Math.ceil((practice.durationMs - practice.elapsedMs) / 1000)} seconds remaining
-              </AppText>
-              <Action
-                icon={practice.status === 'running' ? 'pause' : 'play'}
-                onPress={practice.status === 'running' ? pause : resume}
-              >
-                {practice.status === 'running' ? 'Pause session' : 'Resume session'}
-              </Action>
-              <Action secondary onPress={stop}>
-                End session
-              </Action>
-            </>
-          ) : saved ? (
-            <>
-              <Icon name="complete" />
-              <AppText accessibilityLiveRegion="polite" variant="heading">
-                Your session is saved.
-              </AppText>
-              <AppText tone="secondary">Want to talk about how you feel now?</AppText>
-              <Action icon="talk" disabled={chat.isPending} onPress={reflect}>
-                {chat.isPending
-                  ? 'Opening conversation…'
-                  : chat.isError
-                    ? 'Retry opening chat'
-                    : 'Reflect with Sol'}
-              </Action>
-              <AppText variant="caption" tone="secondary">
-                Opens an editable message.{' '}
-                {conversationId
-                  ? 'Any draft you already wrote is kept.'
-                  : 'Send it when you’re ready.'}
-              </AppText>
-              {chat.isError && (
-                <AppText tone="error" accessibilityRole="alert">
-                  Your session is saved. The conversation couldn’t open; try again.
-                </AppText>
-              )}
-              <Action variant="quiet" onPress={goBack}>
-                {conversationId ? 'Back to conversation' : 'Done'}
-              </Action>
-            </>
-          ) : (
-            <>
-              <MoodRating
-                label="After your session"
-                value={afterMood}
-                onChange={setAfterMood}
-                disabled={mutation.isPending || !!payload.current}
+              style={{
+                height: tokens.spacing.xs,
+                borderRadius: tokens.radius.pill,
+                backgroundColor: sky.palette.background,
+                overflow: 'hidden',
+              }}
+            >
+              <View
+                style={{
+                  height: '100%',
+                  width: `${(100 * practice.elapsedMs) / practice.durationMs}%`,
+                  backgroundColor: sky.palette.text,
+                }}
               />
-              <AppText variant="caption" tone="secondary">
-                Save this session to your progress.
-              </AppText>
-              {error && (
-                <AppText accessibilityRole="alert" tone="error">
-                  {error}
+            </View>
+            {practice.status !== 'complete' ? (
+              <>
+                <AppText variant="caption" tone="secondary" style={{ textAlign: 'center' }}>
+                  {Math.ceil((practice.durationMs - practice.elapsedMs) / 1000)} seconds remaining
                 </AppText>
-              )}
-              {mutation.isPending && (
-                <ActivityIndicator accessibilityLabel="Saving session" color={sky.palette.text} />
-              )}
-              <Action icon="check" disabled={mutation.isPending} onPress={() => void save()}>
-                {error ? 'Retry saving session' : 'Save session'}
-              </Action>
-            </>
-          )}
-        </Surface>
-      )}
-    </Screen>
+                <Action
+                  icon={practice.status === 'running' ? 'pause' : 'play'}
+                  onPress={practice.status === 'running' ? pause : resume}
+                >
+                  {practice.status === 'running' ? 'Pause session' : 'Resume session'}
+                </Action>
+                <Action secondary onPress={stop}>
+                  End session
+                </Action>
+              </>
+            ) : saved ? (
+              <>
+                <Icon name="complete" />
+                <AppText accessibilityLiveRegion="polite" variant="heading">
+                  Your session is saved.
+                </AppText>
+                <AppText tone="secondary">Want to talk about how you feel now?</AppText>
+                <Action icon="talk" disabled={chat.isPending} onPress={reflect}>
+                  {chat.isPending
+                    ? 'Opening conversation…'
+                    : chat.isError
+                      ? 'Retry opening chat'
+                      : 'Reflect with Sol'}
+                </Action>
+                <AppText variant="caption" tone="secondary">
+                  Opens an editable message.{' '}
+                  {conversationId
+                    ? 'Any draft you already wrote is kept.'
+                    : 'Send it when you’re ready.'}
+                </AppText>
+                {chat.isError && (
+                  <AppText tone="error" accessibilityRole="alert">
+                    Your session is saved. The conversation couldn’t open; try again.
+                  </AppText>
+                )}
+                <Action variant="quiet" onPress={goBack}>
+                  {conversationId ? 'Back to conversation' : 'Done'}
+                </Action>
+              </>
+            ) : (
+              <>
+                <MoodRating
+                  label="After your session"
+                  value={afterMood}
+                  onChange={setAfterMood}
+                  disabled={mutation.isPending || !!payload.current}
+                />
+                <AppText variant="caption" tone="secondary">
+                  Save this session to your progress.
+                </AppText>
+                {error && (
+                  <AppText accessibilityRole="alert" tone="error">
+                    {error}
+                  </AppText>
+                )}
+                {mutation.isPending && (
+                  <ActivityIndicator accessibilityLabel="Saving session" color={sky.palette.text} />
+                )}
+                <Action icon="check" disabled={mutation.isPending} onPress={() => void save()}>
+                  {error ? 'Retry saving session' : 'Save session'}
+                </Action>
+              </>
+            )}
+          </Surface>
+        )}
+      </Screen>
+      <ConfirmSheet
+        state={confirmation}
+        onDismiss={dismissConfirmation}
+        pending={mutation.isPending}
+      />
+    </>
   );
 }

@@ -39,6 +39,15 @@ export function useMoodHistory() {
     retry: false,
   });
 }
+export function useRecentMoods(limit = 3) {
+  const auth = useAuth();
+  return useQuery({
+    queryKey: ['mood', auth.session?.user.id, 'recent', limit],
+    queryFn: () => auth.request((token) => moodApi.list(token, { limit })),
+    enabled: auth.status === 'signedIn',
+    retry: false,
+  });
+}
 export function useSaveMood() {
   const auth = useAuth();
   const client = useQueryClient();

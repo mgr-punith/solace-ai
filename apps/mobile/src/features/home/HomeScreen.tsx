@@ -20,6 +20,7 @@ import { DailyWellnessCard } from '../wellness/DailyWellnessCard';
 import { CheckinStamp } from '../mood/CheckinStamp';
 import { useLayoutMetrics } from '../../theme/layout';
 import { DailyQuestionsCard } from '../questionnaire/DailyQuestionsCard';
+import { MoodCheckinModal } from '../mood/MoodCheckinModal';
 
 export function HomeScreen() {
   const auth = useAuth();
@@ -37,11 +38,11 @@ function DailyHome({ name }: { name: string }) {
   const today = useMoodToday();
   const chat = useStartConversation();
   const [selected, setSelected] = useState(2);
-  const [editing, setEditing] = useState(false);
+  const [checkinOpen, setCheckinOpen] = useState(false);
   const [response, setResponse] = useState<string | null>(null);
   const [justSaved, setJustSaved] = useState<string | null>(null);
   const latest = today.data?.items[0];
-  const showingSaved = !!latest && !editing;
+  const showingSaved = !!latest;
   const affirmation = affirmationForDay(localDay(now, deviceTimezone()));
 
   return (
@@ -112,7 +113,7 @@ function DailyHome({ name }: { name: string }) {
               <Action
                 variant="quiet"
                 disabled={chat.isPending || chat.isError}
-                onPress={() => setEditing(true)}
+                onPress={() => setCheckinOpen(true)}
               >
                 Check in again
               </Action>
@@ -159,16 +160,15 @@ function DailyHome({ name }: { name: string }) {
             )}
           </>
         ) : (
-          <>
-            <MoodForm
-              onMood={setSelected}
-              onSaved={(entry) => {
-                setJustSaved(entry.id);
-                setEditing(false);
-              }}
-              onCancel={latest ? () => setEditing(false) : undefined}
-            />
-          </>
+          <View style={layoutStyles.row}>
+            <View style={layoutStyles.grow}>
+              <AppText variant="heading">How are you feeling?</AppText>
+              <AppText variant="bodySmall" tone="secondary">
+                Save one feeling for today.
+              </AppText>
+            </View>
+            <Action onPress={() => setCheckinOpen(true)}>Check in</Action>
+          </View>
         )}
         {today.isError && today.data && (
           <>
@@ -187,7 +187,7 @@ function DailyHome({ name }: { name: string }) {
         <AppText variant="caption" tone="secondary">
           Today’s words
         </AppText>
-        <AppText variant="heading">{affirmation.text}</AppText>
+        <AppText variant="expressive">{affirmation.text}</AppText>
         <NavigationRow
           icon="heart"
           title="Open affirmations"
@@ -199,6 +199,16 @@ function DailyHome({ name }: { name: string }) {
         title="Your check-ins and progress"
         onPress={() => router.navigate('/progress')}
       />
+      <MoodCheckinModal visible={checkinOpen} onDismiss={() => setCheckinOpen(false)}>
+        <MoodForm
+          onMood={setSelected}
+          onSaved={(entry) => {
+            setJustSaved(entry.id);
+            setCheckinOpen(false);
+          }}
+          onCancel={() => setCheckinOpen(false)}
+        />
+      </MoodCheckinModal>
     </Screen>
   );
 }

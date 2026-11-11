@@ -1,6 +1,5 @@
 import { beforeEach, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, waitFor, act } from '@testing-library/react-native';
-import { Alert } from 'react-native';
 import { router } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
@@ -13,6 +12,13 @@ const conversation = {
   createdAt: '2026-11-06T12:00:00Z',
   updatedAt: '2026-11-06T12:00:00Z',
 };
+const anotherConversation = (index: number) => ({
+  ...conversation,
+  id: `conversation-${index}`,
+  title: `Chat ${index}`,
+  createdAt: `2026-11-0${index}T12:00:00Z`,
+  updatedAt: `2026-11-0${index}T12:00:00Z`,
+});
 jest.mock('../../../components/sol/Companion', () => ({ Companion: () => null }));
 jest.mock('../api', () => ({ chatApi: { list: jest.fn(), create: jest.fn(), remove: jest.fn() } }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
@@ -75,7 +81,6 @@ it('opens existing conversations and retries creation with the same ID after a l
   expect(jest.mocked(chatApi.create).mock.calls[1]?.[1]).toBe(first);
 });
 it('requires confirmation before deleting all messages in a conversation', async () => {
-  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   jest.mocked(chatApi.remove).mockResolvedValue(undefined);
   await mount();
   await waitFor(() =>
@@ -83,13 +88,29 @@ it('requires confirmation before deleting all messages in a conversation', async
   );
   await fireEvent.press(screen.getByRole('button', { name: 'Delete conversation' }));
   expect(chatApi.remove).not.toHaveBeenCalled();
+  expect(screen.getByText('Delete this conversation?')).toBeTruthy();
+  expect(screen.getByText('Its messages will be permanently removed.')).toBeTruthy();
   jest.mocked(chatApi.list).mockResolvedValue({ items: [], nextCursor: null });
   await act(async () => {
-    alert.mock.calls[0]?.[2]?.find((button) => button.text === 'Delete conversation')?.onPress?.();
+    const actions = screen.getAllByRole('button', { name: 'Delete' });
+    fireEvent.press(actions[actions.length - 1]!);
   });
   await waitFor(() =>
     expect(screen.getByText('Tell Sol about your day, or ask a question.')).toBeTruthy(),
   );
   expect(chatApi.remove).toHaveBeenCalledWith('token', conversation.id);
-  alert.mockRestore();
+});
+it('keeps Talk compact and opens the full conversation archive', async () => {
+  jest.mocked(chatApi.list).mockResolvedValue({
+    items: [1, 2, 3, 4, 5].map(anotherConversation),
+    nextCursor: 'older',
+  });
+  await mount();
+  expect(await screen.findByText('Chat 1')).toBeTruthy();
+  expect(screen.getByText('Chat 2')).toBeTruthy();
+  expect(screen.getByText('Chat 3')).toBeTruthy();
+  expect(screen.getByText('Chat 4')).toBeTruthy();
+  expect(screen.queryByText('Chat 5')).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: 'View all' }));
+  expect(router.push).toHaveBeenCalledWith('/conversations');
 });

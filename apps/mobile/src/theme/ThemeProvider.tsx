@@ -8,10 +8,12 @@ import {
   type ReactNode,
 } from 'react';
 import { useFonts } from 'expo-font';
-import { Fraunces_500Medium } from '@expo-google-fonts/fraunces/500Medium';
 import { Figtree_400Regular } from '@expo-google-fonts/figtree/400Regular';
 import { Figtree_500Medium } from '@expo-google-fonts/figtree/500Medium';
 import { Figtree_600SemiBold } from '@expo-google-fonts/figtree/600SemiBold';
+import { Figtree_700Bold } from '@expo-google-fonts/figtree/700Bold';
+import { Geist_500Medium } from '@expo-google-fonts/geist/500Medium';
+import { Geist_600SemiBold } from '@expo-google-fonts/geist/600SemiBold';
 import { useMotionPreferences } from '../lib/useMotionPreferences';
 import { skyAtMinute, type Appearance } from './sky';
 import { createAppearanceStore, type AppearanceStorage } from './appearance';
@@ -29,10 +31,12 @@ function useThemeState(storage: AppearanceStorage) {
   const motion = useMotionPreferences();
   const { compact } = useLayoutMetrics();
   const [fontsLoaded, fontError] = useFonts({
-    Fraunces_500Medium,
     Figtree_400Regular,
     Figtree_500Medium,
     Figtree_600SemiBold,
+    Figtree_700Bold,
+    Geist_500Medium,
+    Geist_600SemiBold,
   });
   useEffect(() => {
     void store.restore();

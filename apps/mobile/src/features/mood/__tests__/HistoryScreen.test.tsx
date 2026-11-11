@@ -1,6 +1,5 @@
 import { expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, waitFor, act } from '@testing-library/react-native';
-import { Alert } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 import { HistoryScreen } from '../HistoryScreen';
@@ -50,19 +49,19 @@ async function mount() {
 it('shows saved entries and requires confirmation before deleting their content', async () => {
   jest.mocked(moodApi.list).mockResolvedValue({ items: [entry], nextCursor: null });
   jest.mocked(moodApi.remove).mockResolvedValue(undefined);
-  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   await mount();
   await waitFor(() => expect(screen.getByText('A long day')).toBeTruthy());
   await fireEvent.press(screen.getByRole('button', { name: /Delete Low check-in/ }));
   expect(moodApi.remove).not.toHaveBeenCalled();
+  expect(screen.getByText('Delete this check-in?')).toBeTruthy();
   jest.mocked(moodApi.list).mockResolvedValue({ items: [], nextCursor: null });
   await act(async () => {
-    alert.mock.calls[0]?.[2]?.find((b) => b.text === 'Delete check-in')?.onPress?.();
+    const actions = screen.getAllByRole('button', { name: 'Delete' });
+    fireEvent.press(actions[actions.length - 1]!);
   });
   await waitFor(() => expect(screen.queryByText('A long day')).toBeNull());
   expect(moodApi.remove).toHaveBeenCalledWith('test-token', entry.id);
   expect(screen.getByText('Your first check-in can be today.')).toBeTruthy();
-  alert.mockRestore();
 });
 it('offers recovery after a list failure and does not mislabel the failure as an empty history', async () => {
   jest
@@ -72,6 +71,6 @@ it('offers recovery after a list failure and does not mislabel the failure as an
   await mount();
   await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy());
   expect(screen.queryByText('Your first check-in can be today.')).toBeNull();
-  await fireEvent.press(screen.getByRole('button', { name: 'Try loading again' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
   await waitFor(() => expect(screen.getByText('Your first check-in can be today.')).toBeTruthy());
 });

@@ -47,7 +47,7 @@ export function WellnessScreen() {
         <AppText variant="caption" tone="secondary">
           Today’s words
         </AppText>
-        <AppText variant="title">{today.text}</AppText>
+        <AppText variant="expressive">{today.text}</AppText>
         <NavigationRow
           icon="book"
           title="Open affirmations"

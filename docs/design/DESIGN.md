@@ -692,3 +692,45 @@ Completed                       ( ) Enough for a few things    [Edit answers]
 ```
 
 Verify deterministic four-question rotation, strict question/option matching, owner isolation, one award under concurrent requests, local midnight and DST, retry after midnight, account deletion cascade, draft/review/back behavior, no premature credit, loading/error recovery and reduced-motion static completion. Add a generated migration; deploy it on Render before installed-app testing. The user's deferred broad release checks remain deferred.
+
+## Modern mobile hierarchy and Solace confirmations — 11 November 2026
+
+The user supplied a 1024 × 768 mobile finance reference and a 576 × 1280 native Talk capture. Use the reference for hierarchy, density and surface discipline: strong sans-serif page titles, compact section labels, crisp white/deep surfaces, thin separators and clear primary actions. Do not copy its finance content, blue brand color, navigation labels or exact card composition. Solace keeps Sol, sea glass, lantern, its day/night palettes and its current flows.
+
+Use Figtree as the application workhorse. Page titles, section headings, controls, lists, sheets and functional metrics use Figtree with clear 700/600/500 weight steps. Reserve Fraunces for short reflective or emotional content: greetings, affirmations, breathing phases and Sol's expressive moments. This removes the oversized editorial feel from utility screens while preserving the established Solace identity. Keep native text scaling, readable line heights and the existing compact rules for the 351 dp vivo viewport.
+
+Replace every app-authored `Alert.alert` and browser `window.confirm` with one shared centered Solace confirmation dialog. Android and Google system permission/update prompts remain platform-owned. The dialog sits above a dimmed scrim, follows the current light/dark theme, keeps its icon, title and consequence together, and places the safe action before the destructive action. It closes through the safe action, Android Back or the scrim when no request is pending. Destructive actions use the semantic error color and plain labels such as “Delete conversation”; they do not use all caps. Pending actions disable dismissal and preserve the underlying data until the request resolves.
+
+Talk is the first full screen-level application of the new hierarchy. Keep a concise header and Sol introduction, feature the newest conversation in one clean raised surface, place “New conversation” as an obvious compact action, and render earlier conversations as aligned divided rows. Keep delete targets at 48 dp, preserve pull-to-refresh, pagination, errors, provider disclosure and support. All shared surface, header and action changes must remain compatible with Home, Wellness, Progress and You in both themes.
+
+Verify the sheet for conversation, check-in and account deletion plus breathing stop/leave paths. On the physical Android phone, inspect Talk with the sheet closed and open, cancel and confirm without touching private chat content, then check light/dark rendering, Back dismissal, screen-reader labels, 48 dp targets and the 351 dp layout. Fast Refresh may verify JavaScript-only changes; rebuild the APK only if native configuration or dependencies change.
+
+Home keeps the daily check-in visible without placing the whole form in the feed. Before a check-in, show one compact status surface with a clear “Check in” action. Open the five mood choices in a centered, theme-aware modal; reuse that modal for “Check in again.” The modal uses one compact row of 48 dp mood targets, a visible selected state, “Add details,” “Save” and “Cancel” labels, with fuller intent retained in accessibility labels. Android Back, the close control and Cancel dismiss without saving. The form may scroll when details or the keyboard increase its height.
+
+The selected mood uses depth instead of an outline: sea-glass fill, a short upward lift, a soft bottom shadow and a small check badge. Unselected moods remain flat. Pressing the selected tile settles it toward the surface, giving the control a restrained physical response without making all five choices look like raised cards.
+
+Keep the mood row visual: do not repeat five text labels beneath the faces. Before selection, center “Choose a mood” above the row. After selection, replace it with the chosen mood name and announce the change; each face retains its full accessible label and position in the five-choice set.
+
+Every face stays centered in an equal-width slot. Selection lifts the tile, not the face inside it; scaling remains centered so the chosen expression does not jump toward an edge.
+
+Use a pearl top surface for the selected mood so each face color remains distinct. A sea-glass base supplies the visible 3D edge. The centered mood name and raised tile communicate selection without a corner badge. In dark mode, use the equivalent raised deep-slate surface and muted sea-glass base.
+
+Optional feeling words use compact 32 dp visual pills with 13 px labels. Their surrounding press targets remain at least 48 dp, so words such as Calm and Grateful look light without becoming difficult to tap. Selected pills use sea glass; unselected pills use the current background and outline tokens.
+
+Place Cancel and Save side by side at the bottom of the check-in modal. Cancel uses the secondary treatment and comes first; Save uses the primary treatment. Both retain 48 dp targets and concise visible labels.
+
+## Two-font consolidation — 12 November 2026
+
+The user reduced the app to two font families. Figtree remains the normal interface family for page titles, lists, controls, chat and supporting copy. Geist replaces Fraunces for expressive text: affirmations, breathing phases, onboarding moments and Sol's short reflective lines. Remove the Fraunces package and do not introduce a third family.
+
+Use Geist Medium at 18/25 for “Today’s words” and saved affirmations. Utility titles use Figtree Bold at 19/24; headings 15/20; body 14/21; small body 13/18; buttons 14/19. Keep dynamic text scaling and 48 dp targets. Long reflective copy should wrap with calm line height instead of becoming a large card headline.
+
+## Progress and check-in archive — 12 November 2026
+
+Progress must remain a summary, not an infinitely growing feed. Show at most the three newest check-ins beneath the weekly progress and points, using compact divided rows inside one surface. Add a clear “View all check-ins” action that pushes a dedicated archive screen.
+
+The archive owns the virtualized cursor-paginated list, pull-to-refresh, empty/loading/error states and per-item deletion. It loads ten records at a time and exposes “Load earlier” only while another cursor exists. Deleting an archive item refreshes both the archive and the three-item Progress preview. Android Back returns to Progress without losing tab state.
+
+Talk uses the same archive density. Earlier conversations are compact divided rows with a small leading chat icon, title and timestamp in one text block, a row-wide open target, and a separate 48 dp delete target. The newest conversation remains featured but uses compact padding and a short Continue action so the first history rows stay visible.
+
+Talk is also a summary rather than an unbounded feed: feature the newest conversation, show only the next three recent rows, and use “View all” to open a dedicated conversation archive. Give each divided conversation row a small 8 dp vertical breathing area while preserving the 48 dp open and delete targets. The archive owns the virtualized cursor-paginated history, pull-to-refresh, loading/error/empty states and centered delete confirmation; Android Back returns to Talk.
