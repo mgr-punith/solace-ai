@@ -6,7 +6,9 @@
     "base": {
       "env": {
         "EXPO_PUBLIC_API_URL": "https://solace-ai-n8s4.onrender.com",
-        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "51298963652-ob3ustbcpsg2hc9igaddbo27srpcj7ot.apps.googleusercontent.com"
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "51298963652-ob3ustbcpsg2hc9igaddbo27srpcj7ot.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "51298963652-3oaoaah4heq2d76j3b8dqg5ce7gafqjv.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME": "com.googleusercontent.apps.51298963652-3oaoaah4heq2d76j3b8dqg5ce7gafqjv"
       }
     },
     "development": {
@@ -22,6 +24,9 @@
       "extends": "base",
       "node": "24.20.0",
       "distribution": "internal",
+      "ios": {
+        "simulator": false
+      },
       "android": {
         "buildType": "apk"
       }

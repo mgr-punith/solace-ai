@@ -2,8 +2,8 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 
 export default function appConfig({ config }: ConfigContext): ExpoConfig {
   const iosUrlScheme = process.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME;
-  // Google Sign-In autolinks on Android. Its non-Firebase plugin configures only
-  // the iOS callback, which must come from a real iOS OAuth client (set up later).
+  // Google Sign-In autolinks on Android. Its non-Firebase plugin configures the
+  // iOS callback URL scheme supplied by the matching iOS OAuth client.
   return {
     ...config,
     name: config.name ?? 'Solace',
