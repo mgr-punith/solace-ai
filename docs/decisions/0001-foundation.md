@@ -12,7 +12,7 @@ Route files stay in `apps/mobile/src/app/`, the current Expo template's conventi
 
 The temporary foundation screen checks `/ready`; it is a development diagnostic, not the final Home design. It uses a small subset of the supplied color and spacing tokens and system typography. Fraunces, Figtree, the sky, and Sol's animation remain behind the Phase 2 design gate.
 
-The app identifier is `com.puneet.solace`, with URL scheme `solace`. EAS development builds are used from the beginning. Render deployment is deferred to the release phase.
+The original app identifier was `com.puneet.solace`, with URL scheme `solace`. Android retains that package. The later iOS App Store identifier decision is recorded in [ADR 0013](0013-ios-app-store-identity.md). EAS development builds are used from the beginning. Render deployment is deferred to the release phase.
 
 Neon uses `pg` Pool and stable Drizzle 0.45.x rather than the release-candidate driver examples currently shown in some Drizzle docs. Runtime connections use the pooled endpoint, while migrations use direct endpoints. PostgreSQL certificate verification is explicitly `verify-full`. Tests require a separate branch endpoint and roll back their data changes.
 

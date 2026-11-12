@@ -7,7 +7,7 @@
     "scheme": "solace",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.puneet.solace",
+      "bundleIdentifier": "com.humanityfounders.solaceai",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }

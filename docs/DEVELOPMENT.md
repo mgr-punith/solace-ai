@@ -88,13 +88,13 @@ The maintained demo API is `https://solace-ai-n8s4.onrender.com`. Its free Rende
 
 The downloadable APK already contains this project's public API URL, app identifier, and Google client ID. Building a fork requires your own service configuration and signing registration.
 
-1. Choose your `android.package` and, for future iOS work, `ios.bundleIdentifier` in `apps/mobile/app.json`. These identifiers must match the OAuth registrations for your app.
+1. Choose your `android.package` and `ios.bundleIdentifier` in `apps/mobile/app.json`. These identifiers must match the OAuth registrations and store records for your app.
 2. In that file, remove the original `owner` and `extra.eas.projectId`. Inside `apps/mobile`, run `npx eas-cli@latest login`, then `npx eas-cli@latest init` to link your own Expo project. Review the resulting config before building.
 3. Follow [Google authentication setup](setup/google-auth.md). Create your own Web and Android OAuth clients, and register the SHA-1 of each key that signs your builds. The Web client ID on mobile must match the API's expected audience. Your fork has its own Google publishing/test-user settings.
 4. Set `EXPO_PUBLIC_API_URL` and `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` in `apps/mobile/.env`. Update the same values under `build.base.env` in `apps/mobile/eas.json`, because the checked-in build profiles contain the original project's public values. Use your Render HTTPS URL for installed-app checks.
 5. Set up Android signing credentials in your own EAS project before the wrapper's non-interactive build. Do not commit a keystore or ask for the original project's private signing key.
 
-The optional `EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME` needs a real iOS OAuth callback scheme; Android does not require it. iOS/TestFlight is not a verified release target yet.
+The optional `EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME` needs a real iOS OAuth callback scheme; Android does not require it. The maintained project now produces a signed local Xcode archive for `com.humanityfounders.solaceai`; App Store Connect validation, upload, and real-iPhone TestFlight checks remain release gates until recorded in the QA checklist.
 
 All `EXPO_PUBLIC_*` values are visible in the APK. They may contain public URLs and OAuth client IDs, never provider keys, database URLs, or app signing secrets.
 
