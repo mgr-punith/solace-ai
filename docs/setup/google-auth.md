@@ -1,10 +1,12 @@
 # Google authentication
 
-The maintained Android package is `com.puneet.solace`. The owner confirmed on 10 November 2026 that this project's Google OAuth app is published for other Google accounts.
+The maintained Android package is `com.puneet.solace`. The maintained iOS bundle identifier is `com.humanityfounders.solaceai`, matching the existing Humanity Founders App Store Connect record for **Solace by Puneet**. The owner confirmed on 10 November 2026 that this project's Google OAuth app is published for other Google accounts.
 
 For a fork, use your own app identifier and Google Auth Platform project. Set the audience and test users for your development setup, then review Google's current publishing requirements before distributing the fork. See [fork configuration](../DEVELOPMENT.md#configure-your-android-fork).
 
 Create a Web OAuth client and put its public ID in `GOOGLE_WEB_CLIENT_ID` on the API and `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` on mobile. Create an Android OAuth client for the package and each signing certificate used by an APK. The development APK fingerprint verified during setup is `FE:E4:83:FB:36:A2:D4:DA:51:7F:1E:12:EB:95:52:3D:15:4A:A7:74`. Verify the fingerprint again if EAS credentials change. The Android client ID is registered with Google; the app's `webClientId` uses the Web client.
+
+For iOS, use the OAuth client registered for `com.humanityfounders.solaceai`. Set its public client ID in `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` and its reversed client ID in `EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME`. Expo's Google Sign-In config plugin adds that scheme to the generated iOS project. The Web client remains the ID-token audience on both platforms.
 
 ## Render environment before merging
 
@@ -27,4 +29,4 @@ Google Sign-In and SecureStore contain native code. Install the new APK, then ru
 
 `DEVELOPER_ERROR` or code 10 means the package or SHA-1 registration does not match the installed APK. A missing ID token means the Web client ID is missing or wrong. Backend audience failure means the API and app use different Web client IDs. A fork's test-user or publishing settings may restrict access. Use devices/emulators with Google Play services.
 
-iOS OAuth client and URL scheme are deferred. Android autolinks Google Sign-In; the dynamic Expo config adds the library's non-Firebase iOS plugin only when `EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME` is set to the real reversed iOS client ID. Do not invent a callback scheme for iOS.
+Android autolinks Google Sign-In. The dynamic Expo config adds the library's non-Firebase iOS plugin only when `EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME` is set to the real reversed iOS client ID. After changing the iOS bundle identifier or OAuth client, regenerate the native project with `npx expo prebuild --platform ios --clean` before archiving.
