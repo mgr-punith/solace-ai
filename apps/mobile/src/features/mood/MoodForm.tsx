@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { emotionTags, moodInputSchema, type MoodCheckin, type MoodInput } from '@solace/shared';
 import { Action, AppText } from '../../components/ui/primitives';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -7,7 +7,6 @@ import { moods, tokens } from '../../theme/tokens';
 import { gentleHaptic } from '../../lib/haptics';
 import { deviceTimezone, useSaveMood } from './hooks';
 import { MoodChoice } from './MoodChoice';
-import { Icon } from '../../components/ui/Icon';
 
 // A non-secret retry key, not an authentication credential.
 const requestId = () =>
@@ -67,60 +66,25 @@ export function MoodForm({
       <AppText variant="heading" accessibilityRole="header">
         How are you feeling?
       </AppText>
+      <AppText variant="bodySmall" tone="secondary">
+        Pick the closest match.
+      </AppText>
+      <View style={styles.selectionName}>
+        <AppText
+          variant="heading"
+          accessibilityLiveRegion="polite"
+          tone={mood === null ? 'secondary' : 'text'}
+        >
+          {mood === null ? 'Choose a mood' : moods[mood - 1]!.label}
+        </AppText>
+      </View>
       <View
-        style={styles.steps}
+        style={styles.moods}
         accessible
         accessibilityLabel={
-          mood === null ? 'Step 1 of 2. Choose a mood.' : 'Step 2 of 2. Save when you’re ready.'
+          mood === null ? 'Choose one mood' : `${moods[mood - 1]!.label} selected`
         }
       >
-        <View style={styles.step}>
-          <View
-            style={[
-              styles.marker,
-              { backgroundColor: mood === null ? tokens.action.background : tokens.colors.lantern },
-            ]}
-          >
-            {mood === null ? (
-              <AppText variant="caption" style={{ color: tokens.action.text }}>
-                1
-              </AppText>
-            ) : (
-              <Icon name="check" size={tokens.icon.sm} color={tokens.colors.face} />
-            )}
-          </View>
-          <AppText variant="caption">
-            {mood === null ? 'Choose a mood' : `${moods[mood - 1]!.label} selected`}
-          </AppText>
-        </View>
-        <View
-          style={[
-            styles.stepLine,
-            { backgroundColor: mood === null ? sky.outline : tokens.action.background },
-          ]}
-        />
-        <View style={styles.step}>
-          <View
-            style={[
-              styles.marker,
-              {
-                backgroundColor: mood === null ? sky.palette.background : tokens.action.background,
-              },
-            ]}
-          >
-            <AppText
-              variant="caption"
-              style={{ color: mood === null ? sky.palette.secondary : tokens.action.text }}
-            >
-              2
-            </AppText>
-          </View>
-          <AppText variant="caption" tone={mood === null ? 'secondary' : 'text'}>
-            Save
-          </AppText>
-        </View>
-      </View>
-      <View style={[styles.moods, { backgroundColor: sky.palette.background }]}>
         {moods.map((item, index) => (
           <MoodChoice
             key={item.label}
@@ -135,8 +99,14 @@ export function MoodForm({
           />
         ))}
       </View>
-      <Action variant="quiet" icon="plus" disabled={locked} onPress={() => setExpanded(!expanded)}>
-        {expanded ? 'Hide extra details' : 'Add a note or feelings'}
+      <Action
+        variant="quiet"
+        icon="plus"
+        label={expanded ? 'Hide check-in details' : 'Add a note or feelings'}
+        disabled={locked}
+        onPress={() => setExpanded(!expanded)}
+      >
+        {expanded ? 'Hide details' : 'Add details'}
       </Action>
       {expanded && (
         <>
@@ -145,9 +115,8 @@ export function MoodForm({
           </AppText>
           <View style={styles.tags}>
             {emotionTags.map((tag) => (
-              <Action
+              <EmotionChip
                 key={tag}
-                secondary
                 selected={tags.includes(tag)}
                 disabled={locked || (!tags.includes(tag) && tags.length >= 5)}
                 onPress={() =>
@@ -157,9 +126,8 @@ export function MoodForm({
                       : [...current, tag],
                   )
                 }
-              >
-                {tag}
-              </Action>
+                label={tag}
+              />
             ))}
           </View>
           <AppText variant="heading">A note to yourself</AppText>
@@ -195,13 +163,21 @@ export function MoodForm({
       {mutation.isPending && (
         <ActivityIndicator accessibilityLabel="Saving your check-in" color={sky.palette.text} />
       )}
-      <Action
-        icon="check"
-        disabled={mutation.isPending || (mood === null && !retryInput.current)}
-        onPress={() => void save()}
-      >
-        {error && retryInput.current ? 'Retry saving check-in' : 'Save check-in'}
-      </Action>
+      <View style={styles.actions}>
+        {onCancel && (
+          <Action label="Cancel check-in" secondary disabled={locked} onPress={onCancel}>
+            Cancel
+          </Action>
+        )}
+        <Action
+          icon="check"
+          label={error && retryInput.current ? 'Retry saving check-in' : 'Save check-in'}
+          disabled={mutation.isPending || (mood === null && !retryInput.current)}
+          onPress={() => void save()}
+        >
+          {error && retryInput.current ? 'Retry' : 'Save'}
+        </Action>
+      </View>
       {error && retryInput.current && (
         <>
           <AppText variant="bodySmall" tone="secondary">
@@ -220,39 +196,72 @@ export function MoodForm({
           </Action>
         </>
       )}
-      {onCancel && (
-        <Action variant="quiet" disabled={locked} onPress={onCancel}>
-          Cancel check-in
-        </Action>
-      )}
     </>
+  );
+}
+
+function EmotionChip({
+  label,
+  selected,
+  disabled,
+  onPress,
+}: {
+  label: string;
+  selected: boolean;
+  disabled: boolean;
+  onPress: () => void;
+}) {
+  const { sky } = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected, disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.tagTarget,
+        { opacity: disabled ? tokens.opacity.disabled : pressed ? tokens.opacity.pressed : 1 },
+      ]}
+    >
+      <View
+        style={[
+          styles.tagPill,
+          {
+            backgroundColor: selected ? tokens.action.background : sky.palette.background,
+            borderColor: selected ? tokens.action.background : sky.outline,
+          },
+        ]}
+      >
+        <AppText
+          variant="buttonSmall"
+          style={{ color: selected ? tokens.action.text : sky.palette.text }}
+        >
+          {label}
+        </AppText>
+      </View>
+    </Pressable>
   );
 }
 const styles = StyleSheet.create({
   moods: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'center',
     gap: tokens.spacing.xs,
-    padding: tokens.spacing.xs,
-    borderRadius: tokens.radius.input,
-  },
-  steps: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: tokens.spacing.sm,
     paddingVertical: tokens.spacing.xs,
   },
-  step: { flexDirection: 'row', alignItems: 'center', gap: tokens.spacing.xs, flexShrink: 1 },
-  marker: {
-    width: tokens.spacing.lg,
-    height: tokens.spacing.lg,
-    borderRadius: tokens.radius.pill,
+  selectionName: { minHeight: tokens.type.heading.lineHeight, alignItems: 'center' },
+  tags: { flexDirection: 'row', flexWrap: 'wrap', columnGap: tokens.spacing.xs },
+  actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: tokens.spacing.sm },
+  tagTarget: { minHeight: tokens.target, justifyContent: 'center' },
+  tagPill: {
+    minHeight: tokens.spacing.xl,
     justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: tokens.spacing.smd,
+    paddingVertical: tokens.spacing.xs,
+    borderRadius: tokens.radius.pill,
+    borderWidth: tokens.border,
   },
-  stepLine: { flex: 1, minWidth: tokens.spacing.sm, height: tokens.selectedBorder },
-  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.sm },
   input: {
     ...tokens.type.body,
     minHeight: tokens.target * 3,

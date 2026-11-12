@@ -54,6 +54,8 @@ function AppNavigation() {
                 <Stack.Screen name="reminder" />
                 <Stack.Screen name="breathing" />
                 <Stack.Screen name="affirmations" />
+                <Stack.Screen name="check-ins" />
+                <Stack.Screen name="conversations" />
                 <Stack.Screen
                   name="daily-questions"
                   options={{

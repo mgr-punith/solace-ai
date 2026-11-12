@@ -111,7 +111,7 @@ function AccountAffirmations() {
           <AppText variant="caption" tone="secondary">
             {displayedDay === day ? 'A thought for today' : 'Your earlier words, ready to save'}
           </AppText>
-          <AppText variant="display">{today.text}</AppText>
+          <AppText variant="expressive">{today.text}</AppText>
           <AppText variant="bodySmall" tone="secondary">
             Try reading it to yourself.
           </AppText>
@@ -194,7 +194,7 @@ function AccountAffirmations() {
           {favorites.data.items.length === 0 ? (
             <Surface>
               <Icon name="heart" />
-              <AppText variant="title">No saved affirmations yet.</AppText>
+              <AppText variant="heading">No saved affirmations yet.</AppText>
               <AppText tone="secondary">
                 Tap Save to favorites on an affirmation to find it here later.
               </AppText>
@@ -203,7 +203,7 @@ function AccountAffirmations() {
           ) : (
             favorites.data.items.map((item) => (
               <Surface key={item.id}>
-                <AppText variant="title">{item.text}</AppText>
+                <AppText variant="expressive">{item.text}</AppText>
                 <Action
                   secondary
                   icon="heart"

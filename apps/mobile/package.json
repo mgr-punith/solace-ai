@@ -4,7 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/figtree": "^0.4.1",
-    "@expo-google-fonts/fraunces": "^0.4.1",
+    "@expo-google-fonts/geist": "^0.4.2",
     "@react-native-community/slider": "5.2.1",
     "@react-native-google-signin/google-signin": "^17.0.0",
     "@shopify/react-native-skia": "2.14.0",

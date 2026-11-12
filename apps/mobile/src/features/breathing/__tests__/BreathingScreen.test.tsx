@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
-import { AppState, Alert, type AppStateStatus } from 'react-native';
+import { AppState, type AppStateStatus } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 import { BreathingScreen } from '../BreathingScreen';
@@ -94,14 +94,13 @@ it('pauses on background, excludes background time and saves only after completi
   expect(screen.getByText('Your session is saved.')).toBeTruthy();
 });
 it('ending early requires confirmation and never logs an incomplete session', async () => {
-  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   await mount();
   await fireEvent.press(screen.getByRole('button', { name: 'Start breathing' }));
   await advance(10000);
   await fireEvent.press(screen.getByRole('button', { name: 'End session' }));
-  await act(async () => {
-    alert.mock.calls[0]?.[2]?.find((button) => button.text === 'End session')?.onPress?.();
-  });
+  expect(screen.getByText('End this practice?')).toBeTruthy();
+  const actions = screen.getAllByRole('button', { name: 'End' });
+  await fireEvent.press(actions[actions.length - 1]!);
   expect(screen.getByRole('button', { name: 'Start breathing' })).toBeTruthy();
   expect(wellnessApi.save).not.toHaveBeenCalled();
 });

@@ -17,7 +17,9 @@ export function AppText({
       {...props}
       style={[
         tokens.type[variant],
-        compact && (variant === 'display' || variant === 'title') && tokens.compactType[variant],
+        compact &&
+          variant in tokens.compactType &&
+          tokens.compactType[variant as keyof typeof tokens.compactType],
         !fontsLoaded && { fontFamily: undefined },
         { color: sky.palette[tone], flexShrink: 1 },
         style,

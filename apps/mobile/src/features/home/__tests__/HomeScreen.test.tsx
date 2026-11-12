@@ -101,9 +101,11 @@ it('shows a saved daily state on return and opens an editable chat draft without
 it('allows another check-in explicitly and keeps the previous one when cancelled', async () => {
   await mount();
   await waitFor(() => expect(screen.getByRole('button', { name: 'Check in again' })).toBeTruthy());
+  expect(screen.queryByRole('button', { name: 'Save check-in' })).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'Check in again' }));
   expect(screen.getByRole('button', { name: 'Save check-in' })).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Cancel check-in' }));
+  expect(screen.queryByRole('button', { name: 'Save check-in' })).toBeNull();
   expect(screen.getByText('Synthetic check-in')).toBeTruthy();
   expect(moodApi.save).not.toHaveBeenCalled();
 });
@@ -123,13 +125,16 @@ it('shows the newly saved mood immediately and reflects deletion after refreshin
     return entry;
   });
   const client = await mount();
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Low, 2 of 5' })).toBeTruthy());
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Check in' })).toBeTruthy());
+  expect(screen.queryByRole('button', { name: 'Low, 2 of 5' })).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: 'Check in' }));
+  expect(screen.getByRole('button', { name: 'Low, 2 of 5' })).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Low, 2 of 5' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Save check-in' }));
   await waitFor(() => expect(screen.getByRole('button', { name: 'Talk about this' })).toBeTruthy());
   jest.mocked(moodApi.list).mockResolvedValue({ items: [], nextCursor: null });
   await client.invalidateQueries({ queryKey: ['mood', 'a'] });
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Save check-in' })).toBeTruthy());
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Check in' })).toBeTruthy());
   expect(screen.queryByText('Synthetic check-in')).toBeNull();
 });
 

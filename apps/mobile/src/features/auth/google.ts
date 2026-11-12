@@ -8,15 +8,21 @@ import { Platform } from 'react-native';
 
 export type GoogleSignIn = { signIn: () => Promise<string | null>; signOut: () => Promise<void> };
 let configured = false;
+
+export function googleConfigureOptions(platform: typeof Platform.OS) {
+  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+  if (!webClientId)
+    throw new Error('Google sign-in is not configured. Check the app configuration.');
+  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+  if (platform === 'ios' && !iosClientId)
+    throw new Error('Google sign-in is not configured for iOS. Check the app configuration.');
+  return { webClientId, ...(platform === 'ios' ? { iosClientId } : {}) };
+}
+
 export const googleSignIn: GoogleSignIn = {
   async signIn() {
-    const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
-    if (!webClientId)
-      throw new Error('Google sign-in is not configured. Check the app configuration.');
-    if (Platform.OS !== 'android')
-      throw new Error('Google sign-in is being set up for Android first.');
     if (!configured) {
-      GoogleSignin.configure({ webClientId });
+      GoogleSignin.configure(googleConfigureOptions(Platform.OS));
       configured = true;
     }
     try {

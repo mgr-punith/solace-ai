@@ -1,6 +1,5 @@
 import { expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
-import { Alert } from 'react-native';
 import { AuthScreen } from '../AuthScreen';
 import { useAuth } from '../context';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
@@ -46,7 +45,6 @@ const state = {
 };
 it('requires a destructive confirmation before deleting an account', async () => {
   jest.mocked(useAuth).mockReturnValue(state);
-  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   await render(
     <ThemeProvider>
       <AuthScreen />
@@ -55,15 +53,11 @@ it('requires a destructive confirmation before deleting an account', async () =>
   expect(screen.getByText('Hello, Maya.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Delete account' }));
   expect(deleteAccount).not.toHaveBeenCalled();
-  expect(alert).toHaveBeenCalledWith(
-    'Delete your Solace account?',
-    expect.any(String),
-    expect.any(Array),
-  );
-  const buttons = alert.mock.calls[0]?.[2];
-  buttons?.find((button) => button.text === 'Delete account')?.onPress?.();
+  expect(screen.getByText('Delete your Solace account?')).toBeTruthy();
+  expect(screen.getByText(/everything you saved in Solace/)).toBeTruthy();
+  const actions = screen.getAllByRole('button', { name: 'Delete' });
+  await fireEvent.press(actions[actions.length - 1]!);
   expect(deleteAccount).toHaveBeenCalledTimes(1);
-  alert.mockRestore();
 });
 it('shows a startup network error with a retry action instead of signed-in content', async () => {
   jest
