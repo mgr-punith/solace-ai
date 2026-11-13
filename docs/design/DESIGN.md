@@ -380,6 +380,8 @@ Native launch shows the static Sol mark on Dawn Mist / Night Ink. A short in-app
 
 Four pages introduce Sol, a practice mood choice (never saved), a clearly labeled example conversation, and privacy. Back preserves progress; **Skip intro** goes directly to privacy. The final page always explains that Sol is an AI companion and not a substitute for professional care. Personalization is off by default. Saving is explicit, with a recoverable error if secure storage fails. A signed-out visitor proceeds to Google's branded sign-in; an existing signed-in user continues to their account screen.
 
+The onboarding header uses equal left and right action zones so the progress pill stays at the true horizontal center even when “Back,” “Close,” and “Skip intro” have different widths. Keep the four markers and “1 of 4” together as one compact control. Onboarding cards start directly with their title; decorative sparkle, heart, chat and privacy icons do not sit above the copy. The practice check-in remains inline inside page 2 and never opens a modal.
+
 Local scope for this slice: onboarding progress is installation-wide, and the personalization preference is saved separately for each account in SecureStore. A pending pre-sign-in choice may be claimed once by the next signed-in account; it must never silently transfer to another account. Account deletion clears its local preference, and privacy settings allow changing the choice. No memory collection or LLM call is enabled by this preference yet. On Android reinstall or a new device, users choose again. iOS Keychain may persist through reinstall; do not assume it clears there. Phase 7 must migrate preferences to the backend and implement memory view/delete before using personalization.
 
 ```text
@@ -709,9 +711,11 @@ Verify the sheet for conversation, check-in and account deletion plus breathing 
 
 Home keeps the daily check-in visible without placing the whole form in the feed. Before a check-in, show one compact status surface with a clear “Check in” action. Open the five mood choices in a centered, theme-aware modal; reuse that modal for “Check in again.” The modal uses one compact row of 48 dp mood targets, a visible selected state, “Add details,” “Save” and “Cancel” labels, with fuller intent retained in accessibility labels. Android Back, the close control and Cancel dismiss without saving. The form may scroll when details or the keyboard increase its height.
 
+Use one shared five-choice mood selector in the inline onboarding practice and the signed-in modal. Every equal-width choice shows its face and the plain labels Heavy, Low, Okay, Good and Glowing. Keep all five choices in one deliberate row at normal phone text sizes; scale the faces and spacing to the available width instead of wrapping the last choice onto a second line. Selection and haptic behavior stay identical in both contexts, while only the signed-in form can reveal notes and save data.
+
 The selected mood uses depth instead of an outline: sea-glass fill, a short upward lift, a soft bottom shadow and a small check badge. Unselected moods remain flat. Pressing the selected tile settles it toward the surface, giving the control a restrained physical response without making all five choices look like raised cards.
 
-Keep the mood row visual: do not repeat five text labels beneath the faces. Before selection, center “Choose a mood” above the row. After selection, replace it with the chosen mood name and announce the change; each face retains its full accessible label and position in the five-choice set.
+Keep the mood row quickly scannable with one short label beneath each face. Announce the selected mood and Sol's response below the row; each face retains its full accessible label and position in the five-choice set.
 
 Every face stays centered in an equal-width slot. Selection lifts the tile, not the face inside it; scaling remains centered so the chosen expression does not jump toward an edge.
 
