@@ -26,7 +26,8 @@ export const googleSignIn: GoogleSignIn = {
       configured = true;
     }
     try {
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      if (Platform.OS === 'android')
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       const result = await GoogleSignin.signIn();
       if (!isSuccessResponse(result)) return null;
       if (!result.data.idToken)

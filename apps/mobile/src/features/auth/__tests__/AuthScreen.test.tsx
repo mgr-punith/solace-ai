@@ -1,5 +1,6 @@
-import { expect, it, jest } from '@jest/globals';
+import { afterEach, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { Platform } from 'react-native';
 import { AuthScreen } from '../AuthScreen';
 import { useAuth } from '../context';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
@@ -13,12 +14,20 @@ jest.mock('expo-font', () => ({ useFonts: () => [true, null], isLoaded: () => tr
 jest.mock('../../onboarding/context', () => ({
   useOnboarding: () => ({ busy: false, error: null, removeAccount: async () => true }),
 }));
-jest.mock('@react-native-google-signin/google-signin', () => ({
-  GoogleSigninButton: Object.assign(() => null, {
-    Size: { Wide: 1 },
-    Color: { Light: 'light', Dark: 'dark' },
-  }),
-}));
+jest.mock('@react-native-google-signin/google-signin', () => {
+  const { Pressable } = jest.requireActual<typeof import('react-native')>('react-native');
+  return {
+    GoogleSigninButton: Object.assign(
+      (props: import('@react-native-google-signin/google-signin').GoogleSigninButtonProps) => (
+        <Pressable {...props} accessibilityRole="button" />
+      ),
+      {
+        Size: { Wide: 1 },
+        Color: { Light: 'light', Dark: 'dark' },
+      },
+    ),
+  };
+});
 const signOut = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
 const deleteAccount = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
 const restore = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
@@ -43,6 +52,53 @@ const state = {
   deleteAccount,
   restore,
 };
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
+it.each(['ios', 'android'] as const)('offers actionable Google sign-in on %s', async (platform) => {
+  jest.replaceProperty(Platform, 'OS', platform);
+  jest.mocked(useAuth).mockReturnValue({ ...state, status: 'signedOut', session: null });
+  await render(
+    <ThemeProvider>
+      <AuthScreen />
+    </ThemeProvider>,
+  );
+  await fireEvent.press(screen.getByRole('button', { name: 'Sign in with Google' }));
+  expect(state.signIn).toHaveBeenCalledTimes(1);
+  expect(screen.queryByText(/Open the Android app/)).toBeNull();
+});
+
+it.each(['ios', 'android'] as const)(
+  'prevents duplicate sign-in while busy on %s',
+  async (platform) => {
+    jest.replaceProperty(Platform, 'OS', platform);
+    jest
+      .mocked(useAuth)
+      .mockReturnValue({ ...state, status: 'signedOut', session: null, busy: true });
+    await render(
+      <ThemeProvider>
+        <AuthScreen />
+      </ThemeProvider>,
+    );
+    const button = screen.getByRole('button', { name: 'Sign in with Google' });
+    await fireEvent.press(button);
+    expect(state.signIn).not.toHaveBeenCalled();
+  },
+);
+
+it('directs browser visitors to either supported native app', async () => {
+  jest.replaceProperty(Platform, 'OS', 'web');
+  jest.mocked(useAuth).mockReturnValue({ ...state, status: 'signedOut', session: null });
+  await render(
+    <ThemeProvider>
+      <AuthScreen />
+    </ThemeProvider>,
+  );
+  expect(screen.queryByRole('button', { name: 'Sign in with Google' })).toBeNull();
+  expect(screen.getByText('Open the iOS or Android app to sign in with Google.')).toBeTruthy();
+});
+
 it('requires a destructive confirmation before deleting an account', async () => {
   jest.mocked(useAuth).mockReturnValue(state);
   await render(

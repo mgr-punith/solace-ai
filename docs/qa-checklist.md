@@ -41,6 +41,7 @@ Synthetic captures and evidence: `apps/mobile/dist/qa/daily-questions-2026-11-09
 ## Phase 1
 
 - [x] Signed-in welcome screen is visible on the real Android phone.
+- [ ] On TestFlight Build 2, confirm iOS shows the native “Sign in with Google” button, opens the Google account flow, reaches Home, and restores the session after relaunch. Build 1 exposed an Android-only message and does not contain the fix.
 - [x] Session stays signed in after closing and reopening the app through USB Metro.
 - [x] Native Google account selection completed by the user on both test phones; Home opened. Credentials and Google screens were left to the user.
 - [ ] Confirm access-token refresh on the device.

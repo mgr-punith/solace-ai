@@ -4,6 +4,8 @@ Source of truth for every visual and interaction decision. Status: **v1 approved
 
 Phase 1 uses the existing foundation tokens for a temporary sign-in and signed-in account screen. It uses Google's native branded button, a plain privacy/care notice, loading and recoverable error states, sign-out, and confirmed account deletion. Full onboarding, profile questions, fonts, sky, and mascot remain Phase 2 work. The Phase 2 prototype gate applies to the full visual implementation; it does not block the earlier authentication slice.
 
+The native Google sign-in button is required on both iOS and Android, including iOS builds distributed through TestFlight. Keep the existing full-width branded button, theme, pending state and recoverable errors. Only browser previews show “Open the iOS or Android app to sign in with Google.”
+
 ```text
 +----------------------------+
 | Solace                     |
