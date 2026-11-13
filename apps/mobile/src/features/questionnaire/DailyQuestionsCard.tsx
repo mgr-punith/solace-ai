@@ -14,7 +14,7 @@ export function DailyQuestionsCard({ compact = false }: { compact?: boolean }) {
   return (
     <Surface>
       <View style={layoutStyles.row}>
-        <Icon name={today?.completion ? 'complete' : 'sparkles'} />
+        <Icon name={today?.completion ? 'complete' : 'questions'} />
         <View style={layoutStyles.grow}>
           <AppText variant="heading">{compact ? 'Your points' : 'Your daily four'}</AppText>
           {today && (
