@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
@@ -7,6 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { MoodFace } from '../../components/ui/MoodFace';
+import { AppText } from '../../components/ui/primitives';
 import { useTheme } from '../../theme/ThemeProvider';
 import { moods, tokens } from '../../theme/tokens';
 
@@ -14,15 +15,16 @@ export function MoodChoice({
   index,
   selected,
   disabled,
+  faceSize,
   onPress,
 }: {
   index: number;
   selected: boolean;
   disabled: boolean;
+  faceSize: number;
   onPress: () => void;
 }) {
   const { sky, reduceMotion, active } = useTheme();
-  const { fontScale, width } = useWindowDimensions();
   const lift = useSharedValue(selected ? 1 : 0);
   useEffect(() => {
     cancelAnimation(lift);
@@ -34,19 +36,8 @@ export function MoodChoice({
     transform: [{ scale: 1 + 0.08 * lift.value }],
   }));
   const mood = moods[index]!;
-  const compact = width < tokens.layout.compactWidth;
-  const widthStyle = compact ? tokens.moodChoiceWidth : tokens.moodChoiceWidth + tokens.spacing.sm;
   return (
-    <View
-      style={[
-        styles.slot,
-        {
-          width: widthStyle,
-          minWidth: tokens.moodChoiceWidth,
-          flex: fontScale > 1.3 ? undefined : 1,
-        },
-      ]}
-    >
+    <View style={styles.slot}>
       {selected && (
         <View
           aria-hidden
@@ -76,14 +67,26 @@ export function MoodChoice({
         ]}
       >
         <Animated.View style={faceStyle}>
-          <MoodFace mood={index} size={compact ? 32 : tokens.moodFace} />
+          <MoodFace mood={index} size={faceSize} />
         </Animated.View>
+        <AppText
+          variant="caption"
+          numberOfLines={1}
+          style={{ color: sky.palette.text, textAlign: 'center' }}
+        >
+          {mood.label}
+        </AppText>
       </Pressable>
     </View>
   );
 }
 const styles = StyleSheet.create({
-  slot: { minHeight: tokens.target + tokens.spacing.sm, justifyContent: 'flex-end' },
+  slot: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: tokens.target + tokens.spacing.ml,
+    justifyContent: 'flex-end',
+  },
   depth: {
     position: 'absolute',
     left: 0,
@@ -100,6 +103,6 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.spacing.xs,
     paddingHorizontal: tokens.spacing.xs,
     borderRadius: tokens.radius.tag,
-    minHeight: tokens.target,
+    minHeight: tokens.target + tokens.spacing.sm,
   },
 });

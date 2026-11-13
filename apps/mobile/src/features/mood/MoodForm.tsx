@@ -3,10 +3,10 @@ import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react
 import { emotionTags, moodInputSchema, type MoodCheckin, type MoodInput } from '@solace/shared';
 import { Action, AppText } from '../../components/ui/primitives';
 import { useTheme } from '../../theme/ThemeProvider';
-import { moods, tokens } from '../../theme/tokens';
+import { tokens } from '../../theme/tokens';
 import { gentleHaptic } from '../../lib/haptics';
 import { deviceTimezone, useSaveMood } from './hooks';
-import { MoodChoice } from './MoodChoice';
+import { MoodSelector } from './MoodSelector';
 
 // A non-secret retry key, not an authentication credential.
 const requestId = () =>
@@ -69,36 +69,16 @@ export function MoodForm({
       <AppText variant="bodySmall" tone="secondary">
         Pick the closest match.
       </AppText>
-      <View style={styles.selectionName}>
-        <AppText
-          variant="heading"
-          accessibilityLiveRegion="polite"
-          tone={mood === null ? 'secondary' : 'text'}
-        >
-          {mood === null ? 'Choose a mood' : moods[mood - 1]!.label}
-        </AppText>
-      </View>
-      <View
-        style={styles.moods}
-        accessible
-        accessibilityLabel={
-          mood === null ? 'Choose one mood' : `${moods[mood - 1]!.label} selected`
-        }
-      >
-        {moods.map((item, index) => (
-          <MoodChoice
-            key={item.label}
-            index={index}
-            selected={mood === index + 1}
-            disabled={locked}
-            onPress={() => {
-              setMood(index + 1);
-              onMood(index);
-              void gentleHaptic(haptics, 'selection');
-            }}
-          />
-        ))}
-      </View>
+      <MoodSelector
+        selected={mood === null ? null : mood - 1}
+        disabled={locked}
+        response
+        onSelect={(index) => {
+          setMood(index + 1);
+          onMood(index);
+          void gentleHaptic(haptics, 'selection');
+        }}
+      />
       <Action
         variant="quiet"
         icon="plus"
@@ -244,13 +224,6 @@ function EmotionChip({
   );
 }
 const styles = StyleSheet.create({
-  moods: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: tokens.spacing.xs,
-    paddingVertical: tokens.spacing.xs,
-  },
-  selectionName: { minHeight: tokens.type.heading.lineHeight, alignItems: 'center' },
   tags: { flexDirection: 'row', flexWrap: 'wrap', columnGap: tokens.spacing.xs },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: tokens.spacing.sm },
   tagTarget: { minHeight: tokens.target, justifyContent: 'center' },

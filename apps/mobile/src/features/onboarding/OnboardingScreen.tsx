@@ -1,11 +1,8 @@
-import { Icon } from '../../components/ui/Icon';
-import { MoodFace } from '../../components/ui/MoodFace';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import {
   ActivityIndicator,
   BackHandler,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   View,
@@ -17,11 +14,12 @@ import { useCallback } from 'react';
 import { Action, AppText, Surface } from '../../components/ui/primitives';
 import { Companion } from '../../components/sol/Companion';
 import { useTheme } from '../../theme/ThemeProvider';
-import { moods, tokens } from '../../theme/tokens';
+import { tokens } from '../../theme/tokens';
 import { gentleHaptic } from '../../lib/haptics';
 import { useAuth } from '../auth/context';
 import { useOnboarding } from './context';
 import { PrivacyChoice } from './PrivacyChoice';
+import { MoodSelector } from '../mood/MoodSelector';
 
 const pages = [
   {
@@ -91,43 +89,48 @@ export function OnboardingScreen() {
       <ScrollView ref={scroll} contentContainerStyle={styles.scroll}>
         <View style={styles.column}>
           <View style={styles.top}>
-            {step > 0 ? (
-              <Action secondary disabled={onboarding.busy} onPress={() => void move(step - 1)}>
-                Back
-              </Action>
-            ) : reviewing ? (
-              <Action secondary onPress={() => router.replace('/')}>
-                Close
-              </Action>
-            ) : (
-              <View style={styles.placeholder} />
-            )}
+            <View style={styles.topSide}>
+              {step > 0 ? (
+                <Action secondary disabled={onboarding.busy} onPress={() => void move(step - 1)}>
+                  Back
+                </Action>
+              ) : reviewing ? (
+                <Action secondary onPress={() => router.replace('/')}>
+                  Close
+                </Action>
+              ) : null}
+            </View>
             <Surface style={styles.progress}>
-              <View style={{ flexDirection: 'row', gap: tokens.spacing.xs }} accessible={false}>
+              <View style={styles.progressMarkers} accessible={false}>
                 {pages.map((_, index) => (
                   <View
                     key={index}
-                    style={{
-                      width: index === step ? tokens.spacing.lg : tokens.spacing.sm,
-                      height: tokens.spacing.xs,
-                      borderRadius: tokens.radius.pill,
-                      backgroundColor:
-                        index === step ? theme.sky.palette.text : theme.sky.palette.secondary,
-                    }}
+                    style={[
+                      styles.progressMarker,
+                      {
+                        width: index === step ? tokens.spacing.lg : tokens.spacing.sm,
+                        backgroundColor:
+                          index === step ? theme.sky.palette.text : theme.sky.palette.secondary,
+                      },
+                    ]}
                   />
                 ))}
               </View>
-              <AppText variant="caption" accessibilityLabel={`Introduction, step ${step + 1} of 4`}>
+              <AppText
+                variant="caption"
+                accessibilityLabel={`Introduction, step ${step + 1} of 4`}
+                style={styles.progressLabel}
+              >
                 {step + 1} of 4
               </AppText>
             </Surface>
-            {step < 3 ? (
-              <Action secondary disabled={onboarding.busy} onPress={() => void move(3)}>
-                Skip intro
-              </Action>
-            ) : (
-              <View style={styles.placeholder} />
-            )}
+            <View style={[styles.topSide, styles.topSideEnd]}>
+              {step < 3 ? (
+                <Action secondary disabled={onboarding.busy} onPress={() => void move(3)}>
+                  Skip intro
+                </Action>
+              ) : null}
+            </View>
           </View>
           {step < 3 && (
             <Companion
@@ -136,12 +139,7 @@ export function OnboardingScreen() {
               size={compact ? tokens.sol.onboarding : tokens.sol.hero}
             />
           )}
-          <Surface style={{ paddingVertical: tokens.spacing.xl }}>
-            <Icon
-              name={
-                step === 0 ? 'sparkles' : step === 1 ? 'heart' : step === 2 ? 'talk' : 'privacy'
-              }
-            />
+          <Surface style={styles.page}>
             <AppText accessibilityRole="header" variant="display">
               {page.title}
             </AppText>
@@ -151,34 +149,14 @@ export function OnboardingScreen() {
             )}
             {step === 1 && (
               <>
-                <View style={styles.moods}>
-                  {moods.map((item, index) => (
-                    <Pressable
-                      key={item.label}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${item.label}, ${index + 1} of 5`}
-                      accessibilityState={{ selected: mood === index }}
-                      onPress={() => {
-                        setMood(index);
-                        void gentleHaptic(theme.haptics, 'selection');
-                      }}
-                      style={[
-                        styles.mood,
-                        {
-                          minWidth: tokens.moodChoiceWidth * fontScale,
-                          borderColor:
-                            mood === index ? theme.sky.palette.text : tokens.colors.clear,
-                        },
-                      ]}
-                    >
-                      <MoodFace mood={index} />
-                      <AppText variant="caption">{item.label}</AppText>
-                    </Pressable>
-                  ))}
-                </View>
-                <AppText accessibilityLiveRegion="polite">
-                  {mood === null ? 'Try a mood and watch Sol respond.' : moods[mood]?.response}
-                </AppText>
+                <MoodSelector
+                  selected={mood}
+                  response
+                  onSelect={(index) => {
+                    setMood(index);
+                    void gentleHaptic(theme.haptics, 'selection');
+                  }}
+                />
                 <AppText variant="caption" tone="secondary">
                   This is a practice check-in. Solace won’t save it.
                 </AppText>
@@ -235,34 +213,29 @@ const styles = StyleSheet.create({
   column: { maxWidth: tokens.maxWidth, width: '100%', gap: tokens.spacing.md },
   top: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'space-between',
     gap: tokens.spacing.xs,
   },
-  placeholder: { width: tokens.target },
-  progress: { padding: tokens.spacing.smd, borderRadius: tokens.radius.pill },
-  moods: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: tokens.spacing.sm,
-  },
-  mood: {
+  topSide: { flex: 1, minWidth: 0, alignItems: 'flex-start' },
+  topSideEnd: { alignItems: 'flex-end' },
+  progress: {
     alignItems: 'center',
-    gap: tokens.spacing.sm,
-    padding: tokens.spacing.sm,
-    borderRadius: tokens.radius.tag,
-    borderWidth: tokens.selectedBorder,
-    minHeight: tokens.target,
-  },
-  dot: {
-    width: tokens.spacing.xl,
-    height: tokens.spacing.xl,
+    gap: tokens.spacing.xs,
+    paddingHorizontal: tokens.spacing.smd,
+    paddingVertical: tokens.spacing.sm,
     borderRadius: tokens.radius.pill,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
+  progressMarkers: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: tokens.spacing.xs,
+  },
+  progressMarker: {
+    height: tokens.spacing.xs,
+    borderRadius: tokens.radius.pill,
+  },
+  progressLabel: { fontVariant: ['tabular-nums'], textAlign: 'center' },
+  page: { paddingVertical: tokens.spacing.xl },
   example: {
     paddingLeft: tokens.spacing.md,
     borderLeftWidth: tokens.selectedBorder,
