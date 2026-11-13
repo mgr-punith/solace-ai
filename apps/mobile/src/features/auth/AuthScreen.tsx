@@ -94,7 +94,7 @@ export function AuthScreen() {
             </Action>
           )}
           {auth.status === 'signedOut' &&
-            (Platform.OS === 'android' ? (
+            (Platform.OS === 'android' || Platform.OS === 'ios' ? (
               <GoogleSigninButton
                 size={GoogleSigninButton.Size.Wide}
                 color={sky.night ? GoogleSigninButton.Color.Dark : GoogleSigninButton.Color.Light}
@@ -104,7 +104,9 @@ export function AuthScreen() {
                 onPress={() => void auth.signIn()}
               />
             ) : (
-              <AppText tone="secondary">Open the Android app to sign in with Google.</AppText>
+              <AppText tone="secondary">
+                Open the iOS or Android app to sign in with Google.
+              </AppText>
             ))}
           {auth.status === 'signedIn' && (
             <>

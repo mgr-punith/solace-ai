@@ -3,7 +3,7 @@ import { expect, it, jest } from '@jest/globals';
 interface AppJson {
   expo: {
     android: { package: string };
-    ios: { bundleIdentifier: string };
+    ios: { bundleIdentifier: string; buildNumber: string };
   };
 }
 
@@ -33,4 +33,8 @@ it('uses the Google iOS client registered for the App Store bundle', () => {
   expect(easJson.build.base.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME).toBe(
     'com.googleusercontent.apps.51298963652-sbafqm93dnnhgu76svghvuvmo8rknh14',
   );
+});
+
+it('advances the iOS build number for the corrected TestFlight upload', () => {
+  expect(appJson.expo.ios.buildNumber).toBe('2');
 });
